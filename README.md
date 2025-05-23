@@ -1,6 +1,7 @@
 # Waterfall History Card for Home Assistant
 
-<img width="509" alt="Screenshot 2025-05-23 at 09 37 31" src="https://github.com/user-attachments/assets/b97c069e-e7aa-4810-9194-884f100a4b85" />
+<img width="498" alt="Screenshot 2025-05-23 at 10 06 21" src="https://github.com/user-attachments/assets/7d408327-196b-42fa-9d9c-3ab3b12b2da8" />
+
 
 ## Installation
 
