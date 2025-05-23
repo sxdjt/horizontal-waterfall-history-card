@@ -34,6 +34,8 @@ max_value: 85               # Force maximum value (optional)
 unit: "°F"                  # Unit display (default: °F)
 show_current: true          # Show current value (default: true)
 show_labels: true           # Show time labels (default: true)
+show_min_max: true          # Show the MIN and MAX values (default: true)
+
 
 # Color thresholds
 thresholds:
