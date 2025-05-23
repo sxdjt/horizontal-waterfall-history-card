@@ -115,8 +115,8 @@ card_mod:
 - **No data showing**: Check that the entity exists and has historical data
 - **Card not loading**: Verify the resource is added correctly and Home Assistant restarted
 - **Colors not working**: Ensure threshold values are appropriate for your sensor range
-- **Performance issues**: Reduce `intervals` for longer time periods (e.g., use 48 intervals for 7 days instead of 168)
-- 
+- **Performance issues**: Reduce `intervals` for longer time periods 
+
 ## Disclaimers
 
 1. This was created using Claude.ai.
