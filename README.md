@@ -25,9 +25,9 @@ title: "House Temperature"
 type: custom:waterfall-history-card
 entity: sensor.living_room_temperature
 title: "Temperature History" 
-hours: 24                    # Time range (default: 24)
-intervals: 48                # Number of segments (default: 48)
-height: 60                   # Card height in pixels (default: 60)
+hours: 24                   # Time range in hours (default: 24)
+intervals: 48               # Number of segments to show (default: 48)
+height: 60                  # Card height in pixels (default: 60)
 min_value: 60               # Force minimum value (optional)
 max_value: 85               # Force maximum value (optional)
 unit: "°F"                  # Unit display (default: °F)
@@ -39,7 +39,7 @@ thresholds:
   cold: 65                  # Below this = cold color
   cool: 72                  # Below this = cool color  
   warm: 78                  # Below this = warm color
-                           # Above warm = hot color
+                            # Above warm = hot color
 
 # Custom colors (hex or CSS color names)
 colors:
