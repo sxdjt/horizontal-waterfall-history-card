@@ -6,7 +6,7 @@
 ## Installation
 
 1. Copy `waterfall-history-card.js` to `/config/www/waterfall-history-card/`
-2. Add resource in Configuration > Lovelace Dashboards > Resources:
+2. Add resource in Configuration > Dashboards > Resources:
    ```
    URL: /local/waterfall-history-card/waterfall-history-card.js
    Type: JavaScript Module
