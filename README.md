@@ -1,7 +1,8 @@
 # Waterfall History Card for Home Assistant
 
-<img width="498" alt="Screenshot 2025-05-23 at 10 06 21" src="https://github.com/user-attachments/assets/7d408327-196b-42fa-9d9c-3ab3b12b2da8" />
+This card shows a sensors historical data with "now" on the right side of the graph and the historical data trailing off to the left.
 
+<img width="498" alt="Screenshot 2025-05-23 at 10 06 21" src="https://github.com/user-attachments/assets/7d408327-196b-42fa-9d9c-3ab3b12b2da8" />
 
 ## Installation
 
