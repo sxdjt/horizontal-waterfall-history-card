@@ -3,8 +3,7 @@
   "content_in_root": true,
   "filename": "horizontal-waterfall-history-card.js",
   "category": "plugin",
-  "domain": "Horizontal Waterfall History Card",
-  "country": "US",
+  "domain": "horizontal_waterfall_history_card",
   "type": "module",
   "render_readme": true
 }
