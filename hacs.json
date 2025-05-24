@@ -1,0 +1,10 @@
+{
+  "name": "Horizontal Waterfall History Card",
+  "content_in_root": true,
+  "filename": "horizontal-waterfall-history-card.js",
+  "category": "plugin",
+  "domain": "Horizontal Waterfall History Card",
+  "country": "US",
+  "type": "module",
+  "render_readme": true
+}
