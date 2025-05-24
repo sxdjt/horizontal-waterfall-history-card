@@ -7,17 +7,17 @@ This card shows a sensors historical data with "now" on the right side of the gr
 
 ## Installation
 
-1. Copy `waterfall-history-card.js` to `/config/www/waterfall-history-card/`
-2. Add resource in Configuration > Dashboards > Resources:
+1. Copy `waterfall-history-card.js` to `/config/www/horizontal-waterfall-history-card/`
+2. Add resource in Settings > Dashboards > 3-dot-menu > Resources:
    ```
-   URL: /local/waterfall-history-card/waterfall-history-card.js
+   URL: /local/horizontal-waterfall-history-card/horizontal-waterfall-history-card.js
    Type: JavaScript Module
    ```
 
 ## Basic Configuration
 
 ```yaml
-type: custom:waterfall-history-card
+type: custom:horizontal-waterfall-history-card
 entity: sensor.living_room_temperature
 title: "House Temperature"
 ```
@@ -25,7 +25,7 @@ title: "House Temperature"
 ## Full Configuration Options
 
 ```yaml
-type: custom:waterfall-history-card
+type: custom:horizontal-waterfall-history-card
 entity: sensor.living_room_temperature
 title: "Temperature History" 
 hours: 24                   # Time range in hours (default: 24)
@@ -58,7 +58,7 @@ colors:
 
 ### Humidity Card
 ```yaml
-type: custom:waterfall-history-card
+type: custom:horizontal-waterfall-history-card
 entity: sensor.humidity
 title: "Humidity History"
 unit: "%"
@@ -75,7 +75,7 @@ colors:
 
 ### Power Usage Card
 ```yaml
-type: custom:waterfall-history-card
+type: custom:horizontal-waterfall-history-card
 entity: sensor.power_consumption
 title: "Power Usage"
 unit: "W"
@@ -94,7 +94,7 @@ colors:
 
 ### 7-Day View
 ```yaml
-type: custom:waterfall-history-card
+type: custom:horizontal-waterfall-history-card
 entity: sensor.outdoor_temperature
 title: "Weekly Temperature"
 hours: 168      # 7 days
@@ -105,7 +105,7 @@ height: 80
 ## Styling with Card-mod
 
 ```yaml
-type: custom:waterfall-history-card
+type: custom:horizontal-waterfall-history-card
 entity: sensor.temperature
 card_mod:
   style: |
@@ -124,5 +124,5 @@ card_mod:
 
 ## Disclaimers
 
-1. This was created using Claude.ai.
+1. AI was used to assist in the creation of this code.
 2. I am not a developer, but I thrash around a bit and occasionally come up with something useful.
