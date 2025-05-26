@@ -30,7 +30,7 @@ class WaterfallHistoryCard extends HTMLElement {
       show_current: config.show_current !== false,
       show_labels: config.show_labels !== false,
       show_min_max: config.show_min_max || false, // New option for min/max
-      unit: config.unit || '°F'
+      unit: config.unit || null
     };
   }
 
@@ -59,6 +59,11 @@ class WaterfallHistoryCard extends HTMLElement {
       console.error('Error fetching history:', error);
       this.renderError();
     }
+  }
+
+  get unit() {
+    const entity = this._hass?.states?.[this.config.entity];
+    return this.config.unit ?? entity?.attributes?.unit_of_measurement ?? '';
   }
 
   renderCard(historyData, currentEntity) {
@@ -164,7 +169,7 @@ class WaterfallHistoryCard extends HTMLElement {
       <div class="card-header">
         <span>${this.config.title}</span>
         ${this.config.show_current ?
-          `<span class="current-value">${current}${this.config.unit}</span>` : ''}
+          `<span class="current-value">${current}${this.unit}</span>` : ''}
       </div>
 
       <div class="waterfall-container">
@@ -172,7 +177,7 @@ class WaterfallHistoryCard extends HTMLElement {
           const color = this.getColorForValue(value);
           return `<div class="bar-segment"
                       style="background-color: ${color};"
-                      title="${value !== null ? value.toFixed(1) + this.config.unit : 'No data'} - ${this.getTimeLabel(index, intervals)}">
+                      title="${value !== null ? value.toFixed(1) + this.unit : 'No data'} - ${this.getTimeLabel(index, intervals)}">
                   </div>`;
         }).join('')}
         <div class="gradient-overlay"></div>
@@ -189,7 +194,7 @@ class WaterfallHistoryCard extends HTMLElement {
       ${this.config.show_min_max ? // Conditional rendering for min/max footer
         `
           <div class="min-max-label">
-            Min: ${actualMin.toFixed(1)}${this.config.unit} - Max: ${actualMax.toFixed(1)}${this.config.unit}
+            Min: ${actualMin.toFixed(1)}${this.unit} - Max: ${actualMax.toFixed(1)}${this.unit}
           </div>
         ` : ''}
     `;
