@@ -2,40 +2,68 @@ class WaterfallHistoryCard extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+
+    // Langues supportées et traductions
+    this.translations = {
+      en: {
+        history: 'History',
+        error_loading_data: 'Error loading historical data',
+        min_label: 'Min',
+        max_label: 'Max',
+        hours_ago: 'h ago',
+        minutes_ago: 'm ago',
+        now: 'Now',
+      },
+      fr: {
+        history: 'Historique',
+        error_loading_data: 'Erreur lors du chargement des données historiques',
+        min_label: 'Min',
+        max_label: 'Max',
+        hours_ago: 'h',
+        minutes_ago: 'min',
+        now: 'Maintenant',
+      }
+    };
+
+    this.language = 'en'; // Langue par défaut (sera remplacée selon Home Assistant)
+
+    // Méthode pour récupérer la traduction selon la langue courante
+    this.t = (key) => {
+      return (this.translations[this.language] && this.translations[this.language][key]) || this.translations.en[key] || key;
+    };
   }
 
   setConfig(config) {
     if (!config.entity) {
-      throw new Error('You need to define an entity');
+      throw new Error(this.t('error_loading_data'));
     }
     this.config = {
       entity: config.entity,
-      title: config.title || 'History',
+      title: config.title || this.t('history'),
       hours: config.hours || 24,
       intervals: config.intervals || 48,
       height: config.height || 60,
       min_value: config.min_value || null,
       max_value: config.max_value || null,
-      colors: config.colors || {
-        cold: '#4FC3F7',
-        cool: '#81C784',
-        warm: '#FFB74D',
-        hot: '#FF8A65'
-      },
-      thresholds: config.thresholds || {
-        cold: 60,
-        cool: 70,
-        warm: 80
-      },
+      thresholds: config.thresholds || [
+        { value: 60, color: '#4FC3F7' },  // cold
+        { value: 70, color: '#81C784' },  // cool
+        { value: 80, color: '#FFB74D' },  // warm
+        { value: 100, color: '#FF8A65' }  // hot
+      ],
+      gradient: config.gradient || false,
       show_current: config.show_current !== false,
       show_labels: config.show_labels !== false,
-      show_min_max: config.show_min_max || false, // New option for min/max
-      unit: config.unit || '°F'
+      show_min_max: config.show_min_max || false,
+      unit: config.unit || null
     };
   }
 
   set hass(hass) {
     this._hass = hass;
+    if (hass.language) {
+      this.language = hass.language.split('-')[0]; // Prend la partie principale, ex: 'fr' de 'fr-FR'
+    }
     this.updateCard();
   }
 
@@ -45,7 +73,6 @@ class WaterfallHistoryCard extends HTMLElement {
     const entity = this._hass.states[this.config.entity];
     if (!entity) return;
 
-    // Get historical data
     const endTime = new Date();
     const startTime = new Date(endTime - this.config.hours * 60 * 60 * 1000);
     try {
@@ -54,6 +81,8 @@ class WaterfallHistoryCard extends HTMLElement {
       );
       if (history && history[0]) {
         this.renderCard(history[0], entity);
+      } else {
+        this.renderCard([], entity); // gérer cas sans historique
       }
     } catch (error) {
       console.error('Error fetching history:', error);
@@ -66,16 +95,12 @@ class WaterfallHistoryCard extends HTMLElement {
     const intervals = this.config.intervals;
     const timeStep = (this.config.hours * 60 * 60 * 1000) / intervals;
 
-    // Process historical data into intervals
     const processedData = this.processHistoryData(historyData, intervals, timeStep);
-    // Add current value
     processedData.push(current);
 
-    // Calculate min/max for scaling (this remains the same for internal scaling)
     const minValForScale = this.config.min_value ?? Math.min(...processedData.filter(v => v !== null));
     const maxValForScale = this.config.max_value ?? Math.max(...processedData.filter(v => v !== null));
 
-    // Calculate actual min/max for display in footer
     const actualMin = Math.min(...processedData.filter(v => v !== null));
     const actualMax = Math.max(...processedData.filter(v => v !== null));
 
@@ -88,6 +113,7 @@ class WaterfallHistoryCard extends HTMLElement {
           box-shadow: var(--box-shadow, 0 2px 4px rgba(0,0,0,0.1));
           padding: 16px;
           font-family: var(--primary-font-family, sans-serif);
+          cursor: pointer;
         }
 
         .card-header {
@@ -143,11 +169,11 @@ class WaterfallHistoryCard extends HTMLElement {
           opacity: 0.7;
         }
 
-        .min-max-label { /* New style for min/max labels */
-            font-size: 11px;
-            color: var(--secondary-text-color, gray);
-            margin-top: 4px;
-            text-align: center;
+        .min-max-label {
+          font-size: 11px;
+          color: var(--secondary-text-color, gray);
+          margin-top: 4px;
+          text-align: center;
         }
 
         .gradient-overlay {
@@ -163,8 +189,7 @@ class WaterfallHistoryCard extends HTMLElement {
 
       <div class="card-header">
         <span>${this.config.title}</span>
-        ${this.config.show_current ?
-          `<span class="current-value">${current}${this.config.unit}</span>` : ''}
+        ${this.config.show_current ? `<span class="current-value">${current}${this.unit}</span>` : ''}
       </div>
 
       <div class="waterfall-container">
@@ -172,27 +197,28 @@ class WaterfallHistoryCard extends HTMLElement {
           const color = this.getColorForValue(value);
           return `<div class="bar-segment"
                       style="background-color: ${color};"
-                      title="${value !== null ? value.toFixed(1) + this.config.unit : 'No data'} - ${this.getTimeLabel(index, intervals)}">
+                      title="${value !== null ? value.toFixed(1) + this.unit : this.t('error_loading_data')} - ${this.getTimeLabel(index, intervals)}">
                   </div>`;
         }).join('')}
         <div class="gradient-overlay"></div>
       </div>
 
-      ${this.config.show_labels ?
-        `
-          <div class="labels">
-            <span class="time-label">${this.config.hours}h ago</span>
-            <span class="time-label">Now</span>
-          </div>
-        ` : ''}
+      ${this.config.show_labels ? `
+        <div class="labels">
+          <span class="time-label">${this.config.hours}${this.t('hours_ago')}</span>
+          <span class="time-label">${this.t('now')}</span>
+        </div>
+      ` : ''}
 
-      ${this.config.show_min_max ? // Conditional rendering for min/max footer
-        `
-          <div class="min-max-label">
-            Min: ${actualMin.toFixed(1)}${this.config.unit} - Max: ${actualMax.toFixed(1)}${this.config.unit}
-          </div>
-        ` : ''}
+      ${this.config.show_min_max ? `
+        <div class="min-max-label">
+          ${this.t('min_label')}: ${actualMin.toFixed(1)}${this.unit} - ${this.t('max_label')}: ${actualMax.toFixed(1)}${this.unit}
+        </div>
+      ` : ''}
     `;
+
+    this.shadowRoot.host.style.cursor = 'pointer';
+    this.shadowRoot.host.onclick = () => this.openMoreInfo();
   }
 
   processHistoryData(historyData, intervals, timeStep) {
@@ -200,7 +226,6 @@ class WaterfallHistoryCard extends HTMLElement {
     const now = Date.now();
     const startTime = now - (this.config.hours * 60 * 60 * 1000);
 
-    // Group history data into time buckets
     historyData.forEach(point => {
       const pointTime = new Date(point.last_changed || point.last_updated).getTime();
       const timeDiff = pointTime - startTime;
@@ -216,10 +241,9 @@ class WaterfallHistoryCard extends HTMLElement {
       }
     });
 
-    // Forward fill null values
     for (let i = 1; i < processed.length; i++) {
-      if (processed[i] === null && processed[i-1] !== null) {
-        processed[i] = processed[i-1];
+      if (processed[i] === null && processed[i - 1] !== null) {
+        processed[i] = processed[i - 1];
       }
     }
 
@@ -229,19 +253,71 @@ class WaterfallHistoryCard extends HTMLElement {
   getColorForValue(value) {
     if (value === null) return '#666666';
 
-    const { thresholds, colors } = this.config;
-    if (value <= thresholds.cold) return colors.cold;
-    if (value <= thresholds.cool) return colors.cool;
-    if (value <= thresholds.warm) return colors.warm;
-    return colors.hot;
+    const thresholds = this.config.thresholds;
+    if (!thresholds || thresholds.length === 0) return '#666666';
+
+    if (!this.config.gradient) {
+      for (let i = thresholds.length - 1; i >= 0; i--) {
+        if (value >= thresholds[i].value) {
+          return thresholds[i].color;
+        }
+      }
+      return thresholds[0].color;
+    }
+    for (let i = 0; i < thresholds.length - 1; i++) {
+      const current = thresholds[i];
+      const next = thresholds[i + 1];
+      if (value >= current.value && value <= next.value) {
+        const factor = (value - current.value) / (next.value - current.value);
+        return this.interpolateColor(current.color, next.color, factor);
+      }
+    }
+    if (value < thresholds[0].value) {
+      return thresholds[0].color;
+    }
+    return thresholds[thresholds.length - 1].color;
+  }
+
+  get unit() {
+    const entity = this._hass?.states?.[this.config.entity];
+    return this.config.unit ?? entity?.attributes?.unit_of_measurement ?? '';
+  }
+
+  interpolateColor(color1, color2, factor) {
+    const c1 = this.hexToRgb(color1);
+    const c2 = this.hexToRgb(color2);
+    const result = {
+      r: Math.round(c1.r + (c2.r - c1.r) * factor),
+      g: Math.round(c1.g + (c2.g - c1.g) * factor),
+      b: Math.round(c1.b + (c2.b - c1.b) * factor),
+    };
+    return `rgb(${result.r}, ${result.g}, ${result.b})`;
+  }
+
+  hexToRgb(hex) {
+    const res = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return res ? {
+      r: parseInt(res[1], 16),
+      g: parseInt(res[2], 16),
+      b: parseInt(res[3], 16)
+    } : { r: 0, g: 0, b: 0 };
   }
 
   getTimeLabel(index, totalIntervals) {
     const hoursAgo = (this.config.hours * (totalIntervals - index)) / totalIntervals;
     if (hoursAgo < 1) {
-      return `${Math.round(hoursAgo * 60)}m ago`;
+      return `${Math.round(hoursAgo * 60)}${this.t('minutes_ago')}`;
     }
-    return `${hoursAgo.toFixed(1)}h ago`;
+    return `${hoursAgo.toFixed(1)}${this.t('hours_ago')}`;
+  }
+
+  openMoreInfo() {
+    const event = new CustomEvent('hass-more-info', {
+      bubbles: true,
+      composed: true,
+      detail: { entityId: this.config.entity }
+    });
+    this.dispatchEvent(event);
   }
 
   renderError() {
@@ -253,13 +329,14 @@ class WaterfallHistoryCard extends HTMLElement {
           border-radius: var(--border-radius, 4px);
           box-shadow: var(--box-shadow, 0 2px 4px rgba(0,0,0,0.1));
           padding: 16px;
+          font-family: var(--primary-font-family, sans-serif);
         }
         .error {
           color: var(--error-color, red);
           text-align: center;
         }
       </style>
-      <div class="error">Error loading historical data</div>
+      <div class="error">${this.t('error_loading_data')}</div>
     `;
   }
 
@@ -277,21 +354,27 @@ class WaterfallHistoryCard extends HTMLElement {
       title: 'Temperature History',
       hours: 24,
       intervals: 48,
-      show_min_max: true // Added to stub config
+      show_min_max: true,
+      gradient: false,
+      thresholds: [
+        { value: 60, color: '#4FC3F7' },
+        { value: 70, color: '#81C784' },
+        { value: 80, color: '#FFB74D' },
+        { value: 100, color: '#FF8A65' }
+      ]
     };
   }
 }
 
-// Register the card
 customElements.define('waterfall-history-card', WaterfallHistoryCard);
 
-// Add to custom card registry
 window.customCards = window.customCards || [];
 window.customCards.push({
   type: 'waterfall-history-card',
   name: 'Waterfall History Card',
   description: 'A horizontal waterfall display for historical sensor data'
 });
+
 console.info(
   `%c WATERFALL-HISTORY-CARD %c v1.0.0 `,
   'color: orange; font-weight: bold; background: black',
