@@ -1,12 +1,18 @@
-class WaterfallHistoryCard extends HTMLElement {
+/**
+ * HorizontalWaterfallHistoryCard - A custom Home Assistant card for horizontal waterfall visualization of entity history.
+ * @author sxdjt
+ * @version 0.3
+ */
+
+class HorizontalWaterfallHistoryCard extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
 
-    // Langues supportées et traductions
+    /** @type {Record<string, Record<string, string>>} */
     this.translations = {
       en: {
-        history: 'History',
+        history: 'Horizontal Waterfall History',
         error_loading_data: 'Error loading historical data',
         min_label: 'Min',
         max_label: 'Max',
@@ -15,7 +21,7 @@ class WaterfallHistoryCard extends HTMLElement {
         now: 'Now',
       },
       fr: {
-        history: 'Historique',
+        history: 'Historique en cascade horizontal',
         error_loading_data: 'Erreur lors du chargement des données historiques',
         min_label: 'Min',
         max_label: 'Max',
@@ -25,12 +31,20 @@ class WaterfallHistoryCard extends HTMLElement {
       }
     };
 
-    this.language = 'en'; // Langue par défaut (sera remplacée selon Home Assistant)
+    this.language = 'en'; // Default language (can be overridden by Home Assistant)
+  }
 
-    // Méthode pour récupérer la traduction selon la langue courante
-    this.t = (key) => {
-      return (this.translations[this.language] && this.translations[this.language][key]) || this.translations.en[key] || key;
-    };
+  t(key) {
+    return (this.translations[this.language] && this.translations[this.language][key]) || this.translations.en[key] || key;
+  }
+
+  escapeHtml(unsafe) {
+    return String(unsafe)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
 
   setConfig(config) {
@@ -45,24 +59,30 @@ class WaterfallHistoryCard extends HTMLElement {
       height: config.height || 60,
       min_value: config.min_value || null,
       max_value: config.max_value || null,
-      thresholds: config.thresholds || [
-        { value: 60, color: '#4FC3F7' },  // cold
-        { value: 70, color: '#81C784' },  // cool
-        { value: 80, color: '#FFB74D' },  // warm
-        { value: 100, color: '#FF8A65' }  // hot
-      ],
-      gradient: config.gradient || false,
+      thresholds: Array.isArray(config.thresholds) && config.thresholds.length
+        ? config.thresholds
+        : [
+            { value: 60, color: '#4FC3F7' },
+            { value: 70, color: '#81C784' },
+            { value: 80, color: '#FFB74D' },
+            { value: 100, color: '#FF8A65' }
+          ],
+      gradient: !!config.gradient,
       show_current: config.show_current !== false,
       show_labels: config.show_labels !== false,
       show_min_max: config.show_min_max || false,
       unit: config.unit || null
     };
+    // Validate thresholds
+    if (!Array.isArray(this.config.thresholds) || !this.config.thresholds.every(t => typeof t.value === "number" && typeof t.color === "string")) {
+      throw new Error("Invalid thresholds configuration.");
+    }
   }
 
   set hass(hass) {
     this._hass = hass;
     if (hass.language) {
-      this.language = hass.language.split('-')[0]; // Prend la partie principale, ex: 'fr' de 'fr-FR'
+      this.language = hass.language.split('-')[0];
     }
     this.updateCard();
   }
@@ -75,14 +95,15 @@ class WaterfallHistoryCard extends HTMLElement {
 
     const endTime = new Date();
     const startTime = new Date(endTime - this.config.hours * 60 * 60 * 1000);
+
     try {
       const history = await this._hass.callApi('GET',
-        `history/period/${startTime.toISOString()}?filter_entity_id=${this.config.entity}&end_time=${endTime.toISOString()}`
+        `history/period/${startTime.toISOString()}?filter_entity_id=${encodeURIComponent(this.config.entity)}&end_time=${endTime.toISOString()}`
       );
       if (history && history[0]) {
         this.renderCard(history[0], entity);
       } else {
-        this.renderCard([], entity); // gérer cas sans historique
+        this.renderCard([], entity); // Handle no history
       }
     } catch (error) {
       console.error('Error fetching history:', error);
@@ -104,121 +125,156 @@ class WaterfallHistoryCard extends HTMLElement {
     const actualMin = Math.min(...processedData.filter(v => v !== null));
     const actualMax = Math.max(...processedData.filter(v => v !== null));
 
-    this.shadowRoot.innerHTML = `
-      <style>
-        :host {
-          display: block;
-          background: var(--card-background-color, white);
-          border-radius: var(--border-radius, 4px);
-          box-shadow: var(--box-shadow, 0 2px 4px rgba(0,0,0,0.1));
-          padding: 16px;
-          font-family: var(--primary-font-family, sans-serif);
-          cursor: pointer;
-        }
+    // Clear shadowRoot and build content safely
+    this.shadowRoot.innerHTML = '';
+    this.shadowRoot.appendChild(this.createStyles());
 
-        .card-header {
-          font-size: 16px;
-          font-weight: 500;
-          margin-bottom: 12px;
-          color: var(--primary-text-color, black);
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
+    const card = document.createElement('div');
+    card.className = "card-content";
+    card.appendChild(this.createHeader(current));
+    card.appendChild(this.createWaterfall(processedData, intervals));
+    if (this.config.show_labels) card.appendChild(this.createLabels());
+    if (this.config.show_min_max) card.appendChild(this.createMinMaxLabel(actualMin, actualMax));
+    this.shadowRoot.appendChild(card);
 
-        .current-value {
-          font-size: 18px;
-          font-weight: bold;
-          color: var(--primary-text-color, black);
-        }
-
-        .waterfall-container {
-          position: relative;
-          height: ${this.config.height}px;
-          border-radius: 4px;
-          overflow: hidden;
-          display: flex;
-          margin: 8px 0;
-        }
-
-        .bar-segment {
-          flex: 1;
-          height: 100%;
-          transition: all 0.3s ease;
-          border-right: 1px solid rgba(255,255,255,0.2);
-        }
-
-        .bar-segment:last-child {
-          border-right: none;
-        }
-
-        .bar-segment:hover {
-          opacity: 0.8;
-          transform: scaleY(1.05);
-        }
-
-        .labels {
-          display: flex;
-          justify-content: space-between;
-          font-size: 11px;
-          color: var(--secondary-text-color, gray);
-          margin-top: 4px;
-        }
-
-        .time-label {
-          opacity: 0.7;
-        }
-
-        .min-max-label {
-          font-size: 11px;
-          color: var(--secondary-text-color, gray);
-          margin-top: 4px;
-          text-align: center;
-        }
-
-        .gradient-overlay {
-          position: absolute;
-          top: 0;
-          right: 0;
-          width: 20px;
-          height: 100%;
-          background: linear-gradient(to right, transparent, rgba(255,255,255,0.3));
-          pointer-events: none;
-        }
-      </style>
-
-      <div class="card-header">
-        <span>${this.config.title}</span>
-        ${this.config.show_current ? `<span class="current-value">${current}${this.unit}</span>` : ''}
-      </div>
-
-      <div class="waterfall-container">
-        ${processedData.map((value, index) => {
-          const color = this.getColorForValue(value);
-          return `<div class="bar-segment"
-                      style="background-color: ${color};"
-                      title="${value !== null ? value.toFixed(1) + this.unit : this.t('error_loading_data')} - ${this.getTimeLabel(index, intervals)}">
-                  </div>`;
-        }).join('')}
-        <div class="gradient-overlay"></div>
-      </div>
-
-      ${this.config.show_labels ? `
-        <div class="labels">
-          <span class="time-label">${this.config.hours}${this.t('hours_ago')}</span>
-          <span class="time-label">${this.t('now')}</span>
-        </div>
-      ` : ''}
-
-      ${this.config.show_min_max ? `
-        <div class="min-max-label">
-          ${this.t('min_label')}: ${actualMin.toFixed(1)}${this.unit} - ${this.t('max_label')}: ${actualMax.toFixed(1)}${this.unit}
-        </div>
-      ` : ''}
-    `;
-
+    // Set pointer cursor and click event
     this.shadowRoot.host.style.cursor = 'pointer';
-    this.shadowRoot.host.onclick = () => this.openMoreInfo();
+    this.shadowRoot.host.addEventListener('click', () => this.openMoreInfo(), { once: true });
+  }
+
+  createHeader(current) {
+    const header = document.createElement('div');
+    header.className = 'card-header';
+    const title = document.createElement('span');
+    title.textContent = this.config.title;
+    header.appendChild(title);
+
+    if (this.config.show_current) {
+      const currentValue = document.createElement('span');
+      currentValue.className = 'current-value';
+      currentValue.textContent = `${current}${this.unit}`;
+      header.appendChild(currentValue);
+    }
+    return header;
+  }
+
+  createWaterfall(processedData, intervals) {
+    const container = document.createElement('div');
+    container.className = 'waterfall-container';
+    container.style.height = `${this.config.height}px`;
+
+    processedData.forEach((value, index) => {
+      const bar = document.createElement('div');
+      bar.className = 'bar-segment';
+      bar.style.backgroundColor = this.getColorForValue(value);
+      bar.title = value !== null
+        ? `${this.escapeHtml(value.toFixed(1))}${this.escapeHtml(this.unit)} - ${this.escapeHtml(this.getTimeLabel(index, intervals))}`
+        : this.t('error_loading_data');
+      container.appendChild(bar);
+    });
+
+    const gradientOverlay = document.createElement('div');
+    gradientOverlay.className = 'gradient-overlay';
+    container.appendChild(gradientOverlay);
+
+    return container;
+  }
+
+  createLabels() {
+    const labels = document.createElement('div');
+    labels.className = 'labels';
+    const left = document.createElement('span');
+    left.className = 'time-label';
+    left.textContent = `${this.config.hours}${this.t('hours_ago')}`;
+    const right = document.createElement('span');
+    right.className = 'time-label';
+    right.textContent = this.t('now');
+    labels.appendChild(left);
+    labels.appendChild(right);
+    return labels;
+  }
+
+  createMinMaxLabel(actualMin, actualMax) {
+    const label = document.createElement('div');
+    label.className = 'min-max-label';
+    label.textContent = `${this.t('min_label')}: ${actualMin.toFixed(1)}${this.unit} - ${this.t('max_label')}: ${actualMax.toFixed(1)}${this.unit}`;
+    return label;
+  }
+
+  createStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+      :host {
+        display: block;
+        background: var(--card-background-color, white);
+        border-radius: var(--border-radius, 4px);
+        box-shadow: var(--box-shadow, 0 2px 4px rgba(0,0,0,0.1));
+        padding: 16px;
+        font-family: var(--primary-font-family, sans-serif);
+        cursor: pointer;
+      }
+      .card-header {
+        font-size: 16px;
+        font-weight: 500;
+        margin-bottom: 12px;
+        color: var(--primary-text-color, black);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .current-value {
+        font-size: 18px;
+        font-weight: bold;
+        color: var(--primary-text-color, black);
+      }
+      .waterfall-container {
+        position: relative;
+        height: ${this.config.height}px;
+        border-radius: 4px;
+        overflow: hidden;
+        display: flex;
+        margin: 8px 0;
+      }
+      .bar-segment {
+        flex: 1;
+        height: 100%;
+        transition: all 0.3s ease;
+        border-right: 1px solid rgba(255,255,255,0.2);
+      }
+      .bar-segment:last-child {
+        border-right: none;
+      }
+      .bar-segment:hover {
+        opacity: 0.8;
+        transform: scaleY(1.05);
+      }
+      .labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        color: var(--secondary-text-color, gray);
+        margin-top: 4px;
+      }
+      .time-label {
+        opacity: 0.7;
+      }
+      .min-max-label {
+        font-size: 11px;
+        color: var(--secondary-text-color, gray);
+        margin-top: 4px;
+        text-align: center;
+      }
+      .gradient-overlay {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 20px;
+        height: 100%;
+        background: linear-gradient(to right, transparent, rgba(255,255,255,0.3));
+        pointer-events: none;
+      }
+    `;
+    return style;
   }
 
   processHistoryData(historyData, intervals, timeStep) {
@@ -264,6 +320,7 @@ class WaterfallHistoryCard extends HTMLElement {
       }
       return thresholds[0].color;
     }
+
     for (let i = 0; i < thresholds.length - 1; i++) {
       const current = thresholds[i];
       const next = thresholds[i + 1];
@@ -321,23 +378,27 @@ class WaterfallHistoryCard extends HTMLElement {
   }
 
   renderError() {
-    this.shadowRoot.innerHTML = `
-      <style>
-        :host {
-          display: block;
-          background: var(--card-background-color, white);
-          border-radius: var(--border-radius, 4px);
-          box-shadow: var(--box-shadow, 0 2px 4px rgba(0,0,0,0.1));
-          padding: 16px;
-          font-family: var(--primary-font-family, sans-serif);
-        }
-        .error {
-          color: var(--error-color, red);
-          text-align: center;
-        }
-      </style>
-      <div class="error">${this.t('error_loading_data')}</div>
+    this.shadowRoot.innerHTML = '';
+    const style = document.createElement('style');
+    style.textContent = `
+      :host {
+        display: block;
+        background: var(--card-background-color, white);
+        border-radius: var(--border-radius, 4px);
+        box-shadow: var(--box-shadow, 0 2px 4px rgba(0,0,0,0.1));
+        padding: 16px;
+        font-family: var(--primary-font-family, sans-serif);
+      }
+      .error {
+        color: var(--error-color, red);
+        text-align: center;
+      }
     `;
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error';
+    errorDiv.textContent = this.t('error_loading_data');
+    this.shadowRoot.appendChild(style);
+    this.shadowRoot.appendChild(errorDiv);
   }
 
   getCardSize() {
@@ -351,7 +412,7 @@ class WaterfallHistoryCard extends HTMLElement {
   static getStubConfig() {
     return {
       entity: 'sensor.temperature',
-      title: 'Temperature History',
+      title: 'Horizontal Waterfall History',
       hours: 24,
       intervals: 48,
       show_min_max: true,
@@ -366,17 +427,17 @@ class WaterfallHistoryCard extends HTMLElement {
   }
 }
 
-customElements.define('waterfall-history-card', WaterfallHistoryCard);
+customElements.define('waterfall-history-card', HorizontalWaterfallHistoryCard);
 
 window.customCards = window.customCards || [];
 window.customCards.push({
   type: 'waterfall-history-card',
-  name: 'Waterfall History Card',
+  name: 'Horizontal Waterfall History Card',
   description: 'A horizontal waterfall display for historical sensor data'
 });
 
 console.info(
-  `%c WATERFALL-HISTORY-CARD %c v1.0.0 `,
+  `%c HORIZONTAL-WATERFALL-HISTORY-CARD %c v0.3 `,
   'color: orange; font-weight: bold; background: black',
   'color: white; font-weight: bold; background: dimgray'
 );
