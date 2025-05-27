@@ -252,6 +252,7 @@ class WaterfallHistoryCard extends HTMLElement {
 
   getColorForValue(value) {
     if (value === null) return '#666666';
+    if (isNaN(value)) return '#666666';
 
     const thresholds = this.config.thresholds;
     if (!thresholds || thresholds.length === 0) return '#666666';
