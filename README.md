@@ -2,7 +2,7 @@
 
 This card shows a sensors historical data with "now" on the right side of the graph and the historical data trailing off to the left.
 
-<img width="504" alt="Screenshot 2025-05-26 at 21 41 21" src="https://github.com/user-attachments/assets/4e253d41-f208-4a29-b5ea-8b4b2513ef80" />
+<img width="1063" alt="Screenshot 2025-05-27 at 15 57 43" src="https://github.com/user-attachments/assets/2384a7bf-8d94-4620-abf3-b19b513d3862" />
 
 ## Installation
 
@@ -15,24 +15,29 @@ This card shows a sensors historical data with "now" on the right side of the gr
    URL: /local/horizontal-waterfall-history-card/horizontal-waterfall-history-card.js
    Type: JavaScript Module
    ```
-## Basic Configuration
-
+#### Basic Configuration
 ```yaml
 type: custom:horizontal-waterfall-history-card
 entity: sensor.living_room_temperature
 ```
 
-## Full Configuration Options
-
+#### Full Configuration Example
 ```yaml
 type: custom:horizontal-waterfall-history-card
 entity: sensor.living_room_temperature
 title: "Temperature History"
 hours: 24
 intervals: 48
+columns: 12
+compact: false
+gradient: false
 height: 60
-min_value: 60
 max_value: 85
+min_value: 60
+show_current: true
+show_labels: true
+show_min_max: false
+unit: "°F"
 thresholds:
   - value: 60
     color: "#4FC3F7"
@@ -42,15 +47,11 @@ thresholds:
     color: "#FFB74D"
   - value: 100
     color: "#FF8A65"
-gradient: false
-show_current: true
-show_labels: true
-show_min_max: false
-unit: "°F"
+
 ```
 
-## Styling with Card-mod
-
+#### Styling with Card-mod
+You can use [card-mod](https://github.com/thomasloven/lovelace-card-mod) for additional styling:
 ```yaml
 type: custom:horizontal-waterfall-history-card
 entity: sensor.temperature
@@ -62,14 +63,29 @@ card_mod:
     }
 ```
 
-## Troubleshooting
+### Default Values
+| Key            | Value                          |
+|----------------|--------------------------------|
+| `title`        | "History" (or translated equivalent) |
+| `hours`        | 24                             |
+| `intervals`    | 48                             |
+| `columns`      | 12                             |
+| `compact`      | false                          |
+| `gradient`     | false                          |
+| `height`       | 60                             |
+| `min_value`    | none (auto-calculated if not set) |
+| `max_value`    | none (auto-calculated if not set) |
+| `show_current` | true                           |
+| `show_labels`  | true                           |
+| `show_min_max` | false                          |
+| `unit`         | none (auto-detect if not set)  |
 
-- **No data showing**: Check that the entity exists and has historical data
-- **Card not loading**: Verify the resource is added correctly and Home Assistant restarted
-- **Colors not working**: Ensure threshold values are appropriate for your sensor range
-- **Performance issues**: Reduce `intervals` for longer time periods 
+### Thresholds
 
-## Disclaimers
+| Threshold | Color     |
+|-----------|-----------|
+| 60        | `#4FC3F7` |
+| 70        | `#81C784` |
+| 80        | `#FFB74D` |
+| 100       | `#FF8A65` |
 
-1. AI was used to assist in the creation of this code.
-2. I am not a developer, but I thrash around a bit and occasionally come up with something useful.
