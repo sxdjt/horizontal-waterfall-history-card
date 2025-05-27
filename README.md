@@ -2,8 +2,7 @@
 
 This card shows a sensors historical data with "now" on the right side of the graph and the historical data trailing off to the left.
 
-<img width="495" alt="Screenshot 2025-05-23 at 21 16 25" src="https://github.com/user-attachments/assets/174db2a0-1cac-49b8-8ec3-f0ceaf4e804c" />
-
+<img width="504" alt="Screenshot 2025-05-26 at 21 41 21" src="https://github.com/user-attachments/assets/4e253d41-f208-4a29-b5ea-8b4b2513ef80" />
 
 ## Installation
 
@@ -13,7 +12,6 @@ This card shows a sensors historical data with "now" on the right side of the gr
    URL: /local/horizontal-waterfall-history-card/horizontal-waterfall-history-card.js
    Type: JavaScript Module
    ```
-
 ## Basic Configuration
 
 ```yaml
@@ -31,6 +29,7 @@ title: "Temperature History"
 hours: 24                   # Time range in hours (default: 24)
 intervals: 48               # Number of segments to show (default: 48)
 height: 60                  # Card height in pixels (default: 60)
+gradient: true              # Use colour gradients (default: true)
 min_value: 60               # Force minimum value (optional)
 max_value: 85               # Force maximum value (optional)
 unit: "°F"                  # Unit display (default: °F)
