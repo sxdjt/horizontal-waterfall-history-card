@@ -55,7 +55,8 @@ class WaterfallHistoryCard extends HTMLElement {
       show_current: config.show_current !== false,
       show_labels: config.show_labels !== false,
       show_min_max: config.show_min_max || false,
-      unit: config.unit || null
+      unit: config.unit || null,
+      columns: config.columns || 12
     };
   }
 
@@ -342,6 +343,12 @@ class WaterfallHistoryCard extends HTMLElement {
 
   getCardSize() {
     return 2;
+  }
+
+  getGridOptions() {
+    return {
+      columns: this.config.columns
+    };
   }
 
   static getConfigElement() {
