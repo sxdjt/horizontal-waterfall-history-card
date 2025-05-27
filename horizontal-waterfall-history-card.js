@@ -77,7 +77,7 @@ class WaterfallHistoryCard extends HTMLElement {
     const startTime = new Date(endTime - this.config.hours * 60 * 60 * 1000);
     try {
       const history = await this._hass.callApi('GET',
-        `history/period/${startTime.toISOString()}?filter_entity_id=${this.config.entity}&end_time=${endTime.toISOString()}`
+        `history/period/${startTime.toISOString()}?filter_entity_id=${this.config.entity}&end_time=${endTime.toISOString()}&significant_changes_only=1&minimal_response&no_attributes&skip_initial_state`
       );
       if (history && history[0]) {
         this.renderCard(history[0], entity);
