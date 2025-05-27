@@ -75,11 +75,27 @@ class WaterfallHistoryCard extends HTMLElement {
 
     const endTime = new Date();
     const startTime = new Date(endTime - this.config.hours * 60 * 60 * 1000);
+
+    const cacheKey = `waterfall-history-${this.config.entity}`;
+    const cached = sessionStorage.getItem(cacheKey);
+    const lastFetch = sessionStorage.getItem(`${cacheKey}-time`);
+
+    if (cached && lastFetch && endTime.getTime() - lastFetch < this._historyRefreshInterval) {
+      const history = JSON.parse(cached);
+      if (history && history[0]) {
+        this.renderCard(history[0], entity);
+        return;
+      }
+    }
+    
     try {
       const history = await this._hass.callApi('GET',
         `history/period/${startTime.toISOString()}?filter_entity_id=${this.config.entity}&end_time=${endTime.toISOString()}`
       );
+
       if (history && history[0]) {
+        sessionStorage.setItem(cacheKey, JSON.stringify(history));
+        sessionStorage.setItem(`${cacheKey}-time`, endTime.getTime());
         this.renderCard(history[0], entity);
       } else {
         this.renderCard([], entity); // gérer cas sans historique
