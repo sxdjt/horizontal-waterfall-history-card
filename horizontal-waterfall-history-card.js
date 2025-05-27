@@ -247,6 +247,12 @@ class WaterfallHistoryCard extends HTMLElement {
       }
     }
 
+    for (let i = processed.length - 2; i >= 0; i--) {
+      if (processed[i] === null && processed[i + 1] !== null) {
+        processed[i] = processed[i + 1];
+      }
+    }
+
     return processed;
   }
 
