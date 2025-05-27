@@ -20,7 +20,6 @@ This card shows a sensors historical data with "now" on the right side of the gr
 ```yaml
 type: custom:horizontal-waterfall-history-card
 entity: sensor.living_room_temperature
-title: "House Temperature"
 ```
 
 ## Full Configuration Options
@@ -28,80 +27,26 @@ title: "House Temperature"
 ```yaml
 type: custom:horizontal-waterfall-history-card
 entity: sensor.living_room_temperature
-title: "Temperature History" 
-hours: 24                   # Time range in hours (default: 24)
-intervals: 48               # Number of segments to show (default: 48)
-height: 60                  # Card height in pixels (default: 60)
-gradient: true              # Use colour gradients (default: true)
-min_value: 60               # Force minimum value (optional)
-max_value: 85               # Force maximum value (optional)
-unit: "°F"                  # Unit display (default: °F)
-show_current: true          # Show current value (default: true)
-show_labels: true           # Show time labels (default: true)
-show_min_max: true          # Show the MIN and MAX values (default: true)
-
-
-# Color thresholds
+title: "Temperature History"
+hours: 24
+intervals: 48
+height: 60
+min_value: 60
+max_value: 85
 thresholds:
-  cold: 65                  # Below this = cold color
-  cool: 72                  # Below this = cool color  
-  warm: 78                  # Below this = warm color
-                            # Above warm = hot color
-
-# Custom colors (hex or CSS color names)
-colors:
-  cold: "#4FC3F7"          # Light blue
-  cool: "#81C784"          # Light green
-  warm: "#FFB74D"          # Orange
-  hot: "#FF8A65"           # Red-orange
-```
-
-## Example Configurations
-
-### Humidity Card
-```yaml
-type: custom:horizontal-waterfall-history-card
-entity: sensor.humidity
-title: "Humidity History"
-unit: "%"
-thresholds:
-  cold: 30    # Dry
-  cool: 45    # Normal
-  warm: 60    # Humid
-colors:
-  cold: "#FFB74D"    # Orange (dry)
-  cool: "#81C784"    # Green (good)
-  warm: "#4FC3F7"    # Blue (humid)
-  hot: "#FF5722"     # Red (too humid)
-```
-
-### Power Usage Card
-```yaml
-type: custom:horizontal-waterfall-history-card
-entity: sensor.power_consumption
-title: "Power Usage"
-unit: "W"
-hours: 12
-intervals: 72
-thresholds:
-  cold: 100
-  cool: 500
-  warm: 1000
-colors:
-  cold: "#4CAF50"    # Green (low)
-  cool: "#FFC107"    # Yellow (medium)
-  warm: "#FF9800"    # Orange (high)
-  hot: "#F44336"     # Red (very high)
-```
-
-### 7-Day View
-```yaml
-type: custom:horizontal-waterfall-history-card
-entity: sensor.outdoor_temperature
-title: "Weekly Temperature"
-hours: 168      # 7 days
-intervals: 168  # One segment per hour
-height: 80
+  - value: 60
+    color: "#4FC3F7"
+  - value: 70
+    color: "#81C784"
+  - value: 80
+    color: "#FFB74D"
+  - value: 100
+    color: "#FF8A65"
+gradient: false
+show_current: true
+show_labels: true
+show_min_max: false
+unit: "°F"
 ```
 
 ## Styling with Card-mod
