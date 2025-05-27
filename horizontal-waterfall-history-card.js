@@ -345,7 +345,7 @@ class WaterfallHistoryCard extends HTMLElement {
   }
 
   static getConfigElement() {
-    return document.createElement('waterfall-history-card-editor');
+    return document.createElement('horizontal-waterfall-history-card-editor');
   }
 
   static getStubConfig() {
