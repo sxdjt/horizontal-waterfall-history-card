@@ -3,6 +3,9 @@ class WaterfallHistoryCard extends HTMLElement {
     super();
     this.attachShadow({ mode: 'open' });
 
+    this._lastHistoryFetch = 0;  // Timestamp of last fetch
+    this._historyRefreshInterval = 15 * 60 * 1000; // 15min by defaut
+
     // Langues supportées et traductions
     this.translations = {
       en: {
@@ -56,16 +59,48 @@ class WaterfallHistoryCard extends HTMLElement {
       show_labels: config.show_labels !== false,
       show_min_max: config.show_min_max || false,
       unit: config.unit || null,
-      columns: config.columns || 12
+      columns: config.columns || 12,
+      compact: config.compact || false
     };
+
+     this._historyRefreshInterval = ((this.config.hours / this.config.intervals) * 60 * 60 * 1000) / 2; // take lenght of interval divided by 2 for refresh all history 
   }
 
   set hass(hass) {
     this._hass = hass;
     if (hass.language) {
-      this.language = hass.language.split('-')[0]; // Prend la partie principale, ex: 'fr' de 'fr-FR'
+      this.language = hass.language.split('-')[0]; 
     }
-    this.updateCard();
+    const entity = hass.states[this.config.entity];
+    if (!entity) return;
+    this._current = parseFloat(entity.state);
+  
+    const now = Date.now();
+    if (now - this._lastHistoryFetch > this._historyRefreshInterval) {
+      this._lastHistoryFetch = now;
+      this.updateCard();  // Reload history
+    } else {
+      this.updateCurrentValue();  // Only update current value
+    }
+  }
+
+  updateCurrentValue() {
+    const current = this._current;
+    if (!this.shadowRoot || !this.config.show_current) return;
+  
+    const valueElem = this.shadowRoot.querySelector('.current-value');
+    if (valueElem) {
+      valueElem.textContent = `${current}${this.unit}`;
+    }
+  
+    const bars = this.shadowRoot.querySelectorAll('.bar-segment');
+    if (bars.length > 0) {
+      const lastBar = bars[bars.length - 1];
+      if (lastBar && current != null) {
+        lastBar.style.backgroundColor = this.getColorForValue(current);
+        lastBar.setAttribute('title', `${current.toFixed(1)}${this.unit} - ${this.t('now')}`);
+      }
+    }
   }
 
   async updateCard() {
@@ -76,11 +111,29 @@ class WaterfallHistoryCard extends HTMLElement {
 
     const endTime = new Date();
     const startTime = new Date(endTime - this.config.hours * 60 * 60 * 1000);
+
+    const cacheKey = `waterfall-history-${this.config.entity}`;
+    const cached = JSON.parse(sessionStorage.getItem(cacheKey));
+
+    if (cached && cached.data && endTime.getTime() - cached.datetime < this._historyRefreshInterval) {
+        this.renderCard(cached.data, entity);
+        return;
+    }
+    
     try {
       const history = await this._hass.callApi('GET',
-        `history/period/${startTime.toISOString()}?filter_entity_id=${this.config.entity}&end_time=${endTime.toISOString()}`
+        `history/period/${startTime.toISOString()}?filter_entity_id=${this.config.entity}&end_time=${endTime.toISOString()}&significant_changes_only=1&minimal_response&no_attributes&skip_initial_state`
       );
+      const intervals = this.config.intervals;
+      const timeStep = (this.config.hours * 60 * 60 * 1000) / intervals;
+      const processedData = this.processHistoryData(history[0], intervals, timeStep);
       if (history && history[0]) {
+         try {
+          sessionStorage.setItem(cacheKey, JSON.stringify({data : processedData, datetime:endTime.getTime()}));
+        } catch (error) {
+          console.error('Error save history cache :', error);
+        }
+        this.renderCard(processedData, entity);
         this.renderCard(history[0], entity);
       } else {
         this.renderCard([], entity); // gérer cas sans historique
@@ -91,14 +144,12 @@ class WaterfallHistoryCard extends HTMLElement {
     }
   }
 
-  renderCard(historyData, currentEntity) {
+  renderCard(processedData, currentEntity) {
     const current = parseFloat(currentEntity.state);
     const intervals = this.config.intervals;
-    const timeStep = (this.config.hours * 60 * 60 * 1000) / intervals;
-
-    const processedData = this.processHistoryData(historyData, intervals, timeStep);
+    
     processedData.push(current);
-
+    
     const minValForScale = this.config.min_value ?? Math.min(...processedData.filter(v => v !== null));
     const maxValForScale = this.config.max_value ?? Math.max(...processedData.filter(v => v !== null));
 
@@ -118,7 +169,7 @@ class WaterfallHistoryCard extends HTMLElement {
         }
 
         .card-header {
-          font-size: 16px;
+          font-size: ${this.config.compact ? "14px" : "16px"};
           font-weight: 500;
           margin-bottom: 12px;
           color: var(--primary-text-color, black);
@@ -128,7 +179,7 @@ class WaterfallHistoryCard extends HTMLElement {
         }
 
         .current-value {
-          font-size: 18px;
+          font-size: ${this.config.compact ? "14px" : "18px"};
           font-weight: bold;
           color: var(--primary-text-color, black);
         }
@@ -139,7 +190,7 @@ class WaterfallHistoryCard extends HTMLElement {
           border-radius: 4px;
           overflow: hidden;
           display: flex;
-          margin: 8px 0;
+          margin: ${this.config.compact ? "-10px" : "8px"} 8px 0 0;
         }
 
         .bar-segment {
@@ -163,7 +214,7 @@ class WaterfallHistoryCard extends HTMLElement {
           justify-content: space-between;
           font-size: 11px;
           color: var(--secondary-text-color, gray);
-          margin-top: 4px;
+          margin-top: ${this.config.compact ? "0px" : "4px"};
         }
 
         .time-label {
@@ -173,7 +224,7 @@ class WaterfallHistoryCard extends HTMLElement {
         .min-max-label {
           font-size: 11px;
           color: var(--secondary-text-color, gray);
-          margin-top: 4px;
+          margin-top: ${this.config.compact ? "-18px" : "4px"};
           text-align: center;
         }
 
@@ -198,7 +249,7 @@ class WaterfallHistoryCard extends HTMLElement {
           const color = this.getColorForValue(value);
           return `<div class="bar-segment"
                       style="background-color: ${color};"
-                      title="${value !== null ? value.toFixed(1) + this.unit : this.t('error_loading_data')} - ${this.getTimeLabel(index, intervals)}">
+                      title="${this.getTimeLabel(index, intervals)} : ${value !== null ? value.toFixed(1) + this.unit : this.t('error_loading_data')}">
                   </div>`;
         }).join('')}
         <div class="gradient-overlay"></div>
@@ -248,11 +299,18 @@ class WaterfallHistoryCard extends HTMLElement {
       }
     }
 
+    for (let i = processed.length - 2; i >= 0; i--) {
+      if (processed[i] === null && processed[i + 1] !== null) {
+        processed[i] = processed[i + 1];
+      }
+    }
+
     return processed;
   }
 
   getColorForValue(value) {
     if (value === null) return '#666666';
+    if (isNaN(value)) return '#666666';
 
     const thresholds = this.config.thresholds;
     if (!thresholds || thresholds.length === 0) return '#666666';
@@ -306,6 +364,10 @@ class WaterfallHistoryCard extends HTMLElement {
 
   getTimeLabel(index, totalIntervals) {
     const hoursAgo = (this.config.hours * (totalIntervals - index)) / totalIntervals;
+    if(this.config.hours <= 24){
+      const hour = (new Date(new Date() - hoursAgo * 60 * 60 * 1000)).getHours();
+      return `${hour}:00 - ${hour + 1}:00`;
+    }
     if (hoursAgo < 1) {
       return `${Math.round(hoursAgo * 60)}${this.t('minutes_ago')}`;
     }
