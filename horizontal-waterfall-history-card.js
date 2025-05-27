@@ -110,11 +110,29 @@ class WaterfallHistoryCard extends HTMLElement {
 
     const endTime = new Date();
     const startTime = new Date(endTime - this.config.hours * 60 * 60 * 1000);
+
+    const cacheKey = `waterfall-history-${this.config.entity}`;
+    const cached = JSON.parse(sessionStorage.getItem(cacheKey));
+
+    if (cached && cached.data && endTime.getTime() - cached.datetime < this._historyRefreshInterval) {
+        this.renderCard(cached.data, entity);
+        return;
+    }
+    
     try {
       const history = await this._hass.callApi('GET',
         `history/period/${startTime.toISOString()}?filter_entity_id=${this.config.entity}&end_time=${endTime.toISOString()}&significant_changes_only=1&minimal_response&no_attributes&skip_initial_state`
       );
+      const intervals = this.config.intervals;
+      const timeStep = (this.config.hours * 60 * 60 * 1000) / intervals;
+      const processedData = this.processHistoryData(history[0], intervals, timeStep);
       if (history && history[0]) {
+         try {
+          sessionStorage.setItem(cacheKey, JSON.stringify({data : processedData, datetime:endTime.getTime()}));
+        } catch (error) {
+          console.error('Error save history cache :', error);
+        }
+        this.renderCard(processedData, entity);
         this.renderCard(history[0], entity);
       } else {
         this.renderCard([], entity); // gérer cas sans historique
@@ -125,14 +143,12 @@ class WaterfallHistoryCard extends HTMLElement {
     }
   }
 
-  renderCard(historyData, currentEntity) {
+  renderCard(processedData, currentEntity) {
     const current = parseFloat(currentEntity.state);
     const intervals = this.config.intervals;
-    const timeStep = (this.config.hours * 60 * 60 * 1000) / intervals;
-
-    const processedData = this.processHistoryData(historyData, intervals, timeStep);
+    
     processedData.push(current);
-
+    
     const minValForScale = this.config.min_value ?? Math.min(...processedData.filter(v => v !== null));
     const maxValForScale = this.config.max_value ?? Math.max(...processedData.filter(v => v !== null));
 
