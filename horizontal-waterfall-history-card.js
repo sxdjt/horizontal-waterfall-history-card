@@ -3,6 +3,9 @@ class WaterfallHistoryCard extends HTMLElement {
     super();
     this.attachShadow({ mode: 'open' });
 
+    this._lastHistoryFetch = 0;  // Timestamp of last fetch
+    this._historyRefreshInterval = 15 * 60 * 1000; // 15min by defaut
+
     // Langues supportées et traductions
     this.translations = {
       en: {
@@ -55,16 +58,48 @@ class WaterfallHistoryCard extends HTMLElement {
       show_current: config.show_current !== false,
       show_labels: config.show_labels !== false,
       show_min_max: config.show_min_max || false,
-      unit: config.unit || null
+      unit: config.unit || null,
+      compact: config.compact || false
     };
+
+     this._historyRefreshInterval = ((this.config.hours / this.config.intervals) * 60 * 60 * 1000) / 2; // take lenght of interval divided by 2 for refresh all history 
   }
 
   set hass(hass) {
     this._hass = hass;
     if (hass.language) {
-      this.language = hass.language.split('-')[0]; // Prend la partie principale, ex: 'fr' de 'fr-FR'
+      this.language = hass.language.split('-')[0]; 
     }
-    this.updateCard();
+    const entity = hass.states[this.config.entity];
+    if (!entity) return;
+    this._current = parseFloat(entity.state);
+  
+    const now = Date.now();
+    if (now - this._lastHistoryFetch > this._historyRefreshInterval) {
+      this._lastHistoryFetch = now;
+      this.updateCard();  // Reload history
+    } else {
+      this.updateCurrentValue();  // Only update current value
+    }
+  }
+
+  updateCurrentValue() {
+    const current = this._current;
+    if (!this.shadowRoot || !this.config.show_current) return;
+  
+    const valueElem = this.shadowRoot.querySelector('.current-value');
+    if (valueElem) {
+      valueElem.textContent = `${current}${this.unit}`;
+    }
+  
+    const bars = this.shadowRoot.querySelectorAll('.bar-segment');
+    if (bars.length > 0) {
+      const lastBar = bars[bars.length - 1];
+      if (lastBar && current != null) {
+        lastBar.style.backgroundColor = this.getColorForValue(current);
+        lastBar.setAttribute('title', `${current.toFixed(1)}${this.unit} - ${this.t('now')}`);
+      }
+    }
   }
 
   async updateCard() {
@@ -117,7 +152,7 @@ class WaterfallHistoryCard extends HTMLElement {
         }
 
         .card-header {
-          font-size: 16px;
+          font-size: ${this.config.compact ? "14px" : "16px"};
           font-weight: 500;
           margin-bottom: 12px;
           color: var(--primary-text-color, black);
@@ -127,7 +162,7 @@ class WaterfallHistoryCard extends HTMLElement {
         }
 
         .current-value {
-          font-size: 18px;
+          font-size: ${this.config.compact ? "14px" : "18px"};
           font-weight: bold;
           color: var(--primary-text-color, black);
         }
@@ -138,7 +173,7 @@ class WaterfallHistoryCard extends HTMLElement {
           border-radius: 4px;
           overflow: hidden;
           display: flex;
-          margin: 8px 0;
+          margin: ${this.config.compact ? "-10px" : "8px"} 8px 0 0;
         }
 
         .bar-segment {
@@ -162,7 +197,7 @@ class WaterfallHistoryCard extends HTMLElement {
           justify-content: space-between;
           font-size: 11px;
           color: var(--secondary-text-color, gray);
-          margin-top: 4px;
+          margin-top: ${this.config.compact ? "0px" : "4px"};
         }
 
         .time-label {
@@ -172,7 +207,7 @@ class WaterfallHistoryCard extends HTMLElement {
         .min-max-label {
           font-size: 11px;
           color: var(--secondary-text-color, gray);
-          margin-top: 4px;
+          margin-top: ${this.config.compact ? "-18px" : "4px"};
           text-align: center;
         }
 
