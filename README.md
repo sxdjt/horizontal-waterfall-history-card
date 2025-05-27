@@ -7,7 +7,10 @@ This card shows a sensors historical data with "now" on the right side of the gr
 ## Installation
 
 1. Copy `horizontal-waterfall-history-card.js` to `/config/www/horizontal-waterfall-history-card/`
-2. Add resource in Settings > Dashboards > 3-dot-menu > Resources:
+
+   e.g. ```git clone https://github.com/sxdjt/horizontal-waterfall-history-card/ /config/www```
+
+3. Add resource in Settings > Dashboards > 3-dot-menu > Resources:
    ```
    URL: /local/horizontal-waterfall-history-card/horizontal-waterfall-history-card.js
    Type: JavaScript Module
