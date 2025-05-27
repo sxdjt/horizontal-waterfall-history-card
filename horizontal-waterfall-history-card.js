@@ -248,7 +248,7 @@ class WaterfallHistoryCard extends HTMLElement {
           const color = this.getColorForValue(value);
           return `<div class="bar-segment"
                       style="background-color: ${color};"
-                      title="${value !== null ? value.toFixed(1) + this.unit : this.t('error_loading_data')} - ${this.getTimeLabel(index, intervals)}">
+                      title="${this.getTimeLabel(index, intervals)} : ${value !== null ? value.toFixed(1) + this.unit : this.t('error_loading_data')}">
                   </div>`;
         }).join('')}
         <div class="gradient-overlay"></div>
@@ -363,6 +363,10 @@ class WaterfallHistoryCard extends HTMLElement {
 
   getTimeLabel(index, totalIntervals) {
     const hoursAgo = (this.config.hours * (totalIntervals - index)) / totalIntervals;
+    if(this.config.hours <= 24){
+      const hour = (new Date(new Date() - hoursAgo * 60 * 60 * 1000)).getHours();
+      return `${hour}:00 - ${hour + 1}:00`;
+    }
     if (hoursAgo < 1) {
       return `${Math.round(hoursAgo * 60)}${this.t('minutes_ago')}`;
     }
