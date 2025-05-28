@@ -151,8 +151,8 @@ class WaterfallHistoryCard extends HTMLElement {
     const minValForScale = this.config.min_value ?? Math.min(...processedData.filter(v => v !== null));
     const maxValForScale = this.config.max_value ?? Math.max(...processedData.filter(v => v !== null));
 
-    const actualMin = Math.min(...processedData.filter(v => v !== null));
-    const actualMax = Math.max(...processedData.filter(v => v !== null));
+    const actualMin = Math.min(...processedData.filter(v => v !== null && !isNaN(v)));
+    const actualMax = Math.max(...processedData.filter(v => v !== null && !isNaN(v)));
 
     this.shadowRoot.innerHTML = `
       <style>
