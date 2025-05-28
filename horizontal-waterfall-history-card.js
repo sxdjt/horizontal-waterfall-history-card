@@ -113,7 +113,7 @@ class WaterfallHistoryCard extends HTMLElement {
     const startTime = new Date(endTime - this.config.hours * 60 * 60 * 1000);
 
     const cacheKey = `waterfall-history-${this.config.entity}`;
-    const cached = JSON.parse(sessionStorage.getItem(cacheKey));
+    const cached = JSON.parse(localStorage.getItem(cacheKey));
 
     if (cached && cached.data && endTime.getTime() - cached.datetime < this._historyRefreshInterval) {
         this.renderCard(cached.data, entity);
@@ -129,7 +129,7 @@ class WaterfallHistoryCard extends HTMLElement {
       const processedData = this.processHistoryData(history[0], intervals, timeStep);
       if (history && history[0]) {
          try {
-          sessionStorage.setItem(cacheKey, JSON.stringify({data : processedData, datetime:endTime.getTime()}));
+          localStorage.setItem(cacheKey, JSON.stringify({data : processedData, datetime:endTime.getTime()}));
         } catch (error) {
           console.error('Error save history cache :', error);
         }
