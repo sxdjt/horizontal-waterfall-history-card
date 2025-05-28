@@ -6,6 +6,10 @@ This card shows a sensors historical data with "now" on the right side of the gr
 
 ## Installation
 
+HACS integration has been [requested](https://github.com/hacs/default/pull/3453).
+
+**Manual Installation**
+
 1. Copy `horizontal-waterfall-history-card.js` to `/config/www/horizontal-waterfall-history-card/`
 
    e.g. ```git clone https://github.com/sxdjt/horizontal-waterfall-history-card/ /config/www```
@@ -15,13 +19,15 @@ This card shows a sensors historical data with "now" on the right side of the gr
    URL: /local/horizontal-waterfall-history-card/horizontal-waterfall-history-card.js
    Type: JavaScript Module
    ```
-#### Basic Configuration
+## Configuration
+
+### Basic 
 ```yaml
 type: custom:horizontal-waterfall-history-card
 entity: sensor.living_room_temperature
 ```
 
-#### Full Configuration Example
+### Full Configuration Example
 ```yaml
 type: custom:horizontal-waterfall-history-card
 entity: sensor.living_room_temperature
