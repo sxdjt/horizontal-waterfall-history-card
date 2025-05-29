@@ -25,20 +25,19 @@ This project embraces the spirit of the Home Assistant community: **making home 
 
 Please submit anything that you feel comfortable with:
 
-- 🐛 **Bug fixes** - Help us squash those pesky issues
-- ✨ **New features** - Add functionality that benefits the community
-- 📚 **Documentation** - Improve guides, README, or code comments
-- 🧪 **Testing** - Add or improve test coverage
-- 🎨 **UI/UX improvements** - Make the experience better for users
-- 🌍 **Translations** - Help make this accessible globally
+- **Bug fixes** - Help us squash those pesky issues
+- **New features** - Add functionality that benefits the community
+- **Documentation** - Improve guides, README, or code comments
+- **Testing** - Add or improve test coverage
+- **UI/UX improvements** - Make the experience better for users
+- **Translations** - Help make this accessible globally
 
 ### Pull Request Guidelines
 
-- **Keep it focused** - One feature or fix per PR
+- 🔴 **Keep it focused - One feature or fix per PR** 🔴
 - **Write clear commit messages** - Explain what and why, not just how
 - **Include tests** when adding new functionality
 - **Update documentation** if your changes affect user-facing features
-- **Be patient** - We'll review as quickly as we can and provide constructive feedback
 
 ### Code Standards
 
