@@ -8,7 +8,7 @@ This card shows a sensors historical data with "now" on the right side of the gr
 
 ### HACS 
 
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=sxjdt&repository=https%3A%2F%2Fgithub.com%2Fsxdjt%2Fhorizontal-waterfall-history-card)
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=sxdjt&repository=horizontal-waterfall-history-card)
 
 **Manual Installation**
 
