@@ -2,7 +2,7 @@
 
 This card shows a sensors historical data with "now" on the right side of the graph and the historical data trailing off to the left.
 
-<img width="1063" alt="Screenshot 2025-05-27 at 15 57 43" src="https://github.com/user-attachments/assets/2384a7bf-8d94-4620-abf3-b19b513d3862" />
+<img width="600" alt="A simple example of card usage" src="https://github.com/user-attachments/assets/2384a7bf-8d94-4620-abf3-b19b513d3862" />
 
 ## Installation
 
