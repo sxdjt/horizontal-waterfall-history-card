@@ -4,6 +4,11 @@ This card shows a sensors historical data with "now" on the right side of the gr
 
 <img width="600" alt="A simple example of card usage" src="https://github.com/user-attachments/assets/2384a7bf-8d94-4620-abf3-b19b513d3862" />
 
+It works very well on mobile devices for a compact view of your current state and history.
+
+![Screenshot 2025-06-02 at 09 11 12](https://github.com/user-attachments/assets/42bb7783-a192-493f-8e4b-fd480c8164a2)
+
+
 ## Installation
 
 ### HACS 
