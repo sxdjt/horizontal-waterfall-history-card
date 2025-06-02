@@ -6,8 +6,7 @@ This card shows a sensors historical data with "now" on the right side of the gr
 
 It works very well on mobile devices for a compact view of your current state and history.
 
-![Screenshot 2025-06-02 at 09 11 12](https://github.com/user-attachments/assets/42bb7783-a192-493f-8e4b-fd480c8164a2)
-
+<img width="500" alt="Screenshot of card usage on a mobile device" src="https://github.com/user-attachments/assets/42bb7783-a192-493f-8e4b-fd480c8164a2" />
 
 ## Installation
 
