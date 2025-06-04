@@ -4,9 +4,14 @@ This card shows a sensors historical data with "now" on the right side of the gr
 
 <img width="600" alt="A simple example of card usage" src="https://github.com/user-attachments/assets/2384a7bf-8d94-4620-abf3-b19b513d3862" />
 
+It makes a very nice, compact info card:
+
+![451294731-7d77fbf2-1f22-41f0-982e-91644621c40e](https://github.com/user-attachments/assets/d72927a6-7fcc-4699-8818-dd315cf76439)
+
+
 It works very well on mobile devices for a compact view of your current state and history.
 
-<img width="500" alt="Screenshot of card usage on a mobile device" src="https://github.com/user-attachments/assets/42bb7783-a192-493f-8e4b-fd480c8164a2" />
+<img height="500" alt="Screenshot of card usage on a mobile device" src="https://github.com/user-attachments/assets/42bb7783-a192-493f-8e4b-fd480c8164a2" />
 
 ## Installation
 
