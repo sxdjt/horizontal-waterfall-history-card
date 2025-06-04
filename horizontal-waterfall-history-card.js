@@ -158,13 +158,19 @@ class WaterfallHistoryCard extends HTMLElement {
     this.shadowRoot.innerHTML = `
       <style>
         :host {
-          display: block;
-          background: var(--card-background-color, white);
-          border-radius: var(--border-radius, 4px);
-          box-shadow: var(--box-shadow, 0 2px 4px rgba(0,0,0,0.1));
           padding: 16px;
-          font-family: var(--primary-font-family, sans-serif);
           cursor: pointer;
+          background: var(--ha-card-background, var(--card-background-color, #fff));
+          backdrop-filter: var(--ha-card-backdrop-filter, none);
+          box-shadow: var(--ha-card-box-shadow, none);
+          box-sizing: border-box;
+          border-radius: var(--ha-card-border-radius, 12px);
+          border-width: var(--ha-card-border-width, 1px);
+          border-style: solid;
+          border-color: var(--ha-card-border-color, var(--divider-color, #e0e0e0));
+          color: var(--primary-text-color);
+          display: block;
+          position: relative;
         }
 
         .card-header {
