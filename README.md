@@ -36,13 +36,13 @@ It works very well on mobile devices for a compact view of your current state an
 
 ### Basic 
 ```yaml
-type: custom:horizontal-waterfall-history-card
+type: custom:waterfall-history-card
 entity: sensor.living_room_temperature
 ```
 
 ### Full Configuration Example
 ```yaml
-type: custom:horizontal-waterfall-history-card
+type: custom:waterfall-history-card
 entity: sensor.living_room_temperature
 title: "Temperature History"
 hours: 24
