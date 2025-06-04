@@ -170,7 +170,6 @@ class WaterfallHistoryCard extends HTMLElement {
           border-color: var(--ha-card-border-color, var(--divider-color, #e0e0e0));
           color: var(--primary-text-color);
           display: block;
-          transition: 0.3s ease-out;
           position: relative;
         }
 
