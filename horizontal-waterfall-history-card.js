@@ -60,21 +60,22 @@ class WaterfallHistoryCard extends HTMLElement {
       show_min_max: config.show_min_max || false,
       unit: config.unit || null,
       compact: config.compact || false,
-      columns: config.columns || 12
+      columns: config.columns || 12,
+      digits: typeof config.digits === 'number' ? config.digits : 1 // New: number of digits after decimal point
     };
 
-     this._historyRefreshInterval = ((this.config.hours / this.config.intervals) * 60 * 60 * 1000) / 2; // take lenght of interval divided by 2 for refresh all history 
+    this._historyRefreshInterval = ((this.config.hours / this.config.intervals) * 60 * 60 * 1000) / 2; // take lenght of interval divided by 2 for refresh all history
   }
 
   set hass(hass) {
     this._hass = hass;
     if (hass.language) {
-      this.language = hass.language.split('-')[0]; 
+      this.language = hass.language.split('-')[0];
     }
     const entity = hass.states[this.config.entity];
     if (!entity) return;
     this._current = parseFloat(entity.state);
-  
+
     const now = Date.now();
     if (now - this._lastHistoryFetch > this._historyRefreshInterval) {
       this._lastHistoryFetch = now;
@@ -87,18 +88,20 @@ class WaterfallHistoryCard extends HTMLElement {
   updateCurrentValue() {
     const current = this._current;
     if (!this.shadowRoot || !this.config.show_current) return;
-  
+
     const valueElem = this.shadowRoot.querySelector('.current-value');
     if (valueElem) {
-      valueElem.textContent = `${current.toFixed(1)}${this.unit}`;
+      // Use this.config.digits for toFixed()
+      valueElem.textContent = `${current.toFixed(this.config.digits)}${this.unit}`;
     }
-  
+
     const bars = this.shadowRoot.querySelectorAll('.bar-segment');
     if (bars.length > 0) {
       const lastBar = bars[bars.length - 1];
       if (lastBar && current != null) {
         lastBar.style.backgroundColor = this.getColorForValue(current);
-        lastBar.setAttribute('title', `${current.toFixed(1)}${this.unit} - ${this.t('now')}`);
+        // Use this.config.digits for toFixed()
+        lastBar.setAttribute('title', `${current.toFixed(this.config.digits)}${this.unit} - ${this.t('now')}`);
       }
     }
   }
@@ -247,16 +250,16 @@ class WaterfallHistoryCard extends HTMLElement {
 
       <div class="card-header">
         <span>${this.config.title}</span>
-        ${this.config.show_current ? `<span class="current-value">${current.toFixed(1)}${this.unit}</span>` : ''}
+        ${this.config.show_current ? `<span class="current-value">${current.toFixed(this.config.digits)}${this.unit}</span>` : ''}
       </div>
 
       <div class="waterfall-container">
-      
+
         ${processedData.map((value, index) => {
           const color = this.getColorForValue(value);
           return `<div class="bar-segment"
                       style="background-color: ${color};"
-                      title="${this.getTimeLabel(index, intervals)} : ${value !== null ? value.toFixed(1) + this.unit : this.t('error_loading_data')}">
+                      title="${this.getTimeLabel(index, intervals)} : ${value !== null ? value.toFixed(this.config.digits) + this.unit : this.t('error_loading_data')}">
                   </div>`;
         }).join('')}
         <div class="gradient-overlay"></div>
@@ -271,7 +274,7 @@ class WaterfallHistoryCard extends HTMLElement {
 
       ${this.config.show_min_max ? `
         <div class="min-max-label">
-          ${this.config.compact ? '' : this.t('min_label') + ':'} ${actualMin.toFixed(1)}${this.unit} - ${this.config.compact ? '' : this.t('max_label') + ':'} ${actualMax.toFixed(1)}${this.unit}
+          ${this.config.compact ? '' : this.t('min_label') + ':'} ${actualMin.toFixed(this.config.digits)}${this.unit} - ${this.config.compact ? '' : this.t('max_label') + ':'} ${actualMax.toFixed(this.config.digits)}${this.unit}
         </div>
       ` : ''}
     `;
@@ -431,6 +434,7 @@ class WaterfallHistoryCard extends HTMLElement {
       intervals: 48,
       show_min_max: true,
       gradient: false,
+      digits: 1, // Added digits to stub config
       thresholds: [
         { value: 60, color: '#4FC3F7' },
         { value: 70, color: '#81C784' },
