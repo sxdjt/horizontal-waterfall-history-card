@@ -177,9 +177,9 @@ class WaterfallHistoryCard extends HTMLElement {
         }
 
         .card-header {
-          font-size: ${this.config.compact ? "14px" : "16px"};
+          font-size: ${this.config.compact ? "12px" : "16px"};
           font-weight: 500;
-          margin-bottom: 12px;
+          margin-bottom: 8px;
           color: var(--primary-text-color, black);
           display: flex;
           justify-content: space-between;
@@ -187,7 +187,7 @@ class WaterfallHistoryCard extends HTMLElement {
         }
 
         .current-value {
-          font-size: ${this.config.compact ? "14px" : "18px"};
+          font-size: ${this.config.compact ? "12px" : "18px"};
           font-weight: bold;
           color: var(--primary-text-color, black);
         }
@@ -195,10 +195,13 @@ class WaterfallHistoryCard extends HTMLElement {
         .waterfall-container {
           position: relative;
           height: ${this.config.height}px;
-          border-radius: 4px;
+          border-radius: 2px;
           overflow: hidden;
           display: flex;
-          margin: ${this.config.compact ? "-10px" : "8px"} 8px 0 0;
+          /* Adjusted margin-right to align with card header.
+             The host has 16px padding. By setting margin-right to 0px
+             when compact, the bars will extend fully within that padding. */
+          margin: ${this.config.compact ? "-10px" : "8px"} ${this.config.compact ? "0px" : "8px"} 0 0;
         }
 
         .bar-segment {
@@ -223,10 +226,6 @@ class WaterfallHistoryCard extends HTMLElement {
           font-size: 11px;
           color: var(--secondary-text-color, gray);
           margin-top: ${this.config.compact ? "0px" : "4px"};
-        }
-
-        .time-label {
-          opacity: 0.7;
         }
 
         .min-max-label {
@@ -434,7 +433,7 @@ class WaterfallHistoryCard extends HTMLElement {
       intervals: 48,
       show_min_max: true,
       gradient: false,
-      digits: 1, // Added digits to stub config
+      digits: 1,
       thresholds: [
         { value: 60, color: '#4FC3F7' },
         { value: 70, color: '#81C784' },
