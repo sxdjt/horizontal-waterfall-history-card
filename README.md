@@ -57,16 +57,16 @@ show_current: true
 show_labels: true
 show_min_max: false
 unit: "°F"
+digits: 1 
 thresholds:
   - value: 60
-    color: "#4FC3F7"
+    color: "#4FC3F7" # cold
   - value: 70
-    color: "#81C784"
+    color: "#81C784" # cool
   - value: 80
-    color: "#FFB74D"
+    color: "#FFB74D" # warm
   - value: 100
-    color: "#FF8A65"
-
+    color: "#FF8A65" # hot
 ```
 
 #### Styling with Card-mod
@@ -82,22 +82,26 @@ card_mod:
     }
 ```
 
-### Default Values
-| Key            | Value                          |
-|----------------|--------------------------------|
-| `title`        | "History" (or translated equivalent) |
-| `hours`        | 24                             |
-| `intervals`    | 48                             |
-| `columns`      | 12                             |
-| `compact`      | false                          |
-| `gradient`     | false                          |
-| `height`       | 60                             |
-| `min_value`    | none (auto-calculated if not set) |
-| `max_value`    | none (auto-calculated if not set) |
-| `show_current` | true                           |
-| `show_labels`  | true                           |
-| `show_min_max` | false                          |
-| `unit`         | none (auto-detect if not set)  |
+## Configuration Options
+
+| Option | Type | Description | Default Value | Required |
+| ----- | ----- | ----- | ----- | ----- |
+| `entity` | `string` | The Home Assistant entity | (None) | **Yes** |
+| `columns` | `number` | A hint for Home Assistant's Lovelace grid layout, indicating the preferred width in columns. | `12` | No |
+| `compact` | `boolean` | If `true`, the card will use a more compact visual style with smaller fonts and reduced margins. | `false` | No |
+| `digits` | `number` | The number of decimal places to display for sensor values (current, min, max, and bar tooltips). | `1` | No |
+| `gradient` | `boolean` | If `true`, colors will smoothly interpolate between defined `thresholds`. If `false`, colors will snap to the defined threshold color. | `false` | No |
+| `height` | `number` | The height of the waterfall display area in pixels. | `60` | No |
+| `hours` | `number` | The number of hours of historical data to display. | `24` | No |
+| `intervals` | `number` | The number of vertical bars (segments) to divide the historical period into. More intervals mean more granular display. | `48` | No |
+| `max_value` | `number` | The maximum value for the color scale. If `null`, the maximum value from the data will be used. | `null` | No |
+| `min_value` | `number` | The minimum value for the color scale. If `null`, the minimum value from the data will be used. | `null` | No |
+| `show_current` | `boolean` | If `true`, the current sensor value will be displayed in the header. | `true` | No |
+| `show_labels` | `boolean` | If `true`, time labels ("Xh ago" and "Now") will be displayed below the waterfall. | `true` | No |
+| `show_min_max` | `boolean` | If `true`, the minimum and maximum values observed in the displayed history will be shown. | `false` | No |
+| `thresholds` | `array` | An array of objects, each with a `value` and `color` property. These define the points at which the bar colors change. | See detailed section | No |
+| `title` | `string` | The title displayed at the top of the card. | `History` | No |
+| `unit` | `string` or `null` | Overrides the unit of measurement retrieved from the entity's attributes. | `null` | No |
 
 ### Thresholds
 
