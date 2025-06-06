@@ -189,6 +189,8 @@ class WaterfallHistoryCard extends HTMLElement {
 
         .card-header ha-icon {
           --mdc-icon-size : ${this.config.compact ? "12px" : "16px"};
+          position:relative;
+          top: -1px;
         }
         
         .current-value {
