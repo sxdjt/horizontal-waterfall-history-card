@@ -62,6 +62,7 @@ class WaterfallHistoryCard extends HTMLElement {
       icon: config.icon || null,
       compact: config.compact || false,
       columns: config.columns || 12,
+      default_value : config.default_value ?? null,
       digits: typeof config.digits === 'number' ? config.digits : 1 // New: number of digits after decimal point
     };
 
@@ -291,7 +292,7 @@ class WaterfallHistoryCard extends HTMLElement {
   }
 
   processHistoryData(historyData, intervals, timeStep) {
-    const processed = new Array(intervals).fill(null);
+    const processed = new Array(intervals).fill(this.config.default_value);
     const now = Date.now();
     const startTime = now - (this.config.hours * 60 * 60 * 1000);
     let previousValue = null;
