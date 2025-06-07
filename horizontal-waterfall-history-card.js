@@ -255,7 +255,9 @@ class WaterfallHistoryCard extends HTMLElement {
       </style>
 
       <div class="card-header">
-        <span><ha-icon icon="${this.icon}"></ha-icon> ${this.config.title}</span>
+        <span>
+          ${this.icon ? `<ha-icon icon="${this.icon}"></ha-icon> ` : ''}${this.config.title}
+        </span>
         ${this.config.show_current ? `<span class="current-value">${current.toFixed(1)}${this.unit}</span>` : ''}
       </div>
 
