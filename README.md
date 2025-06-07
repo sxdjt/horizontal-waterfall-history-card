@@ -45,20 +45,21 @@ entity: sensor.living_room_temperature
 type: custom:waterfall-history-card
 entity: sensor.living_room_temperature
 title: "Temperature History"
-hours: 24
-intervals: 48
 columns: 12
 compact: false
+default_value: null
+digits: 1
 gradient: false
 height: 60
+hours: 24
+icon: "mdi:thermometer"
+intervals: 48
 max_value: 85
 min_value: 60
 show_current: true
 show_labels: true
 show_min_max: false
 unit: "°F"
-digits: 1
-icon: "mdi:thermometer"
 thresholds:
   - value: 60
     color: "#4FC3F7" # cold
