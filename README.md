@@ -57,7 +57,8 @@ show_current: true
 show_labels: true
 show_min_max: false
 unit: "°F"
-digits: 1 
+digits: 1
+icon: "mdi:thermometer"
 thresholds:
   - value: 60
     color: "#4FC3F7" # cold
@@ -93,6 +94,7 @@ card_mod:
 | `gradient` | `boolean` | If `true`, colors will smoothly interpolate between defined `thresholds`. If `false`, colors will snap to the defined threshold color. | `false` | No |
 | `height` | `number` | The height of the waterfall display area in pixels. | `60` | No |
 | `hours` | `number` | The number of hours of historical data to display. | `24` | No |
+| `icon` | `string` | Icon to display in the card header | Entity default | No |
 | `intervals` | `number` | The number of vertical bars (segments) to divide the historical period into. More intervals mean more granular display. | `48` | No |
 | `max_value` | `number` | The maximum value for the color scale. If `null`, the maximum value from the data will be used. | `null` | No |
 | `min_value` | `number` | The minimum value for the color scale. If `null`, the minimum value from the data will be used. | `null` | No |
