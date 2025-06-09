@@ -63,8 +63,21 @@ class WaterfallHistoryCard extends HTMLElement {
       compact: config.compact || false,
       columns: config.columns || 12,
       default_value : config.default_value ?? null,
-      digits: typeof config.digits === 'number' ? config.digits : 1 // New: number of digits after decimal point
+      digits: typeof config.digits === 'number' ? config.digits : 1, // New: number of digits after decimal point
+
+      card_mod: config.card_mod || {},
     };
+
+    customElements.whenDefined("card-mod").then((cardMod) => {
+      cardMod.applyToElement(
+        this,
+        "card",
+        this.config.card_mod,
+        {},
+        true,
+        'waterfall-history-card'
+      )
+    });
 
     this._historyRefreshInterval = ((this.config.hours / this.config.intervals) * 60 * 60 * 1000) / 2; // take lenght of interval divided by 2 for refresh all history
   }
@@ -193,7 +206,7 @@ class WaterfallHistoryCard extends HTMLElement {
           position:relative;
           top: -1px;
         }
-        
+
         .current-value {
           font-size: ${this.config.compact ? "12px" : "18px"};
           font-weight: bold;
