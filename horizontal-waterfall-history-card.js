@@ -504,12 +504,7 @@ class WaterfallHistoryCard extends HTMLElement {
       show_min_max: true,
       gradient: false,
       digits: 1,
-      thresholds: [
-        { value: 60, color: '#4FC3F7' },
-        { value: 70, color: '#81C784' },
-        { value: 80, color: '#FFB74D' },
-        { value: 100, color: '#FF8A65' }
-      ]
+      thresholds: threshold_default_number,
     };
   }
 }
