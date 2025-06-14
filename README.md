@@ -15,7 +15,7 @@ It works very well on mobile devices for a compact view of your current state an
 
 ## Installation
 
-### HACS 
+### HACS
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=sxdjt&repository=horizontal-waterfall-history-card)
 
@@ -34,7 +34,7 @@ It works very well on mobile devices for a compact view of your current state an
    ```
 ## Configuration
 
-### Basic 
+### Basic
 ```yaml
 type: custom:waterfall-history-card
 entity: sensor.living_room_temperature
@@ -118,6 +118,7 @@ thresholds:
     color: "#FFB74D"
   - value: 100
     color: "#FF8A65"
+```
 
 ### Thresholds
 
@@ -128,3 +129,14 @@ thresholds:
 | 80        | `#FFB74D` |
 | 100       | `#FF8A65` |
 
+### Thresholds for binary entities
+
+When using a binary entity (on/off entity), the following default thresholds apply:
+
+```yaml
+thresholds:
+  - value: 0  # off
+    color: "#4FC3F7"
+  - value: 1  # on
+    color: "#81C784"
+```
