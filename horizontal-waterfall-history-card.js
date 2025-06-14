@@ -1,3 +1,15 @@
+
+const threshold_default_number = [
+  { value: 60, color: '#4FC3F7' },  // cold
+  { value: 70, color: '#81C784' },  // cool
+  { value: 80, color: '#FFB74D' },  // warm
+  { value: 100, color: '#FF8A65' }  // hot
+];
+const threshold_default_boolean = [
+  { value: 0, color: '#4FC3F7' },  // cold
+  { value: 1, color: '#FF8A65' },  // cool
+];
+
 class WaterfallHistoryCard extends HTMLElement {
   constructor() {
     super();
@@ -48,12 +60,7 @@ class WaterfallHistoryCard extends HTMLElement {
       height: config.height || 60,
       min_value: config.min_value || null,
       max_value: config.max_value || null,
-      thresholds: config.thresholds || [
-        { value: 60, color: '#4FC3F7' },  // cold
-        { value: 70, color: '#81C784' },  // cool
-        { value: 80, color: '#FFB74D' },  // warm
-        { value: 100, color: '#FF8A65' }  // hot
-      ],
+      thresholds: config.thresholds || null,
       gradient: config.gradient || false,
       show_current: config.show_current !== false,
       show_labels: config.show_labels !== false,
@@ -363,11 +370,15 @@ class WaterfallHistoryCard extends HTMLElement {
     if (value === null) return '#666666';
     if (isNaN(value)) return '#666666';
 
+    let thresholds = this.config.thresholds;
+    if (!thresholds) {
+      if (typeof value === 'boolean') thresholds = threshold_default_boolean;
+      else thresholds = threshold_default_boolean;
+    }
+    if (thresholds.length === 0) return '#666666';
+
     if (value === false) value = 0;
     if (value === true) value = 1;
-
-    const thresholds = this.config.thresholds;
-    if (!thresholds || thresholds.length === 0) return '#666666';
 
     if (!this.config.gradient) {
       for (let i = thresholds.length - 1; i >= 0; i--) {
