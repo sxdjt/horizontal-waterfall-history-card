@@ -89,7 +89,7 @@ class WaterfallHistoryCard extends HTMLElement {
     }
     const entity = hass.states[this.config.entity];
     if (!entity) return;
-    this._current = parseFloat(entity.state);
+    this._current = this.parseState(entity.state);
 
     const now = Date.now();
     if (now - this._lastHistoryFetch > this._historyRefreshInterval) {
@@ -106,8 +106,7 @@ class WaterfallHistoryCard extends HTMLElement {
 
     const valueElem = this.shadowRoot.querySelector('.current-value');
     if (valueElem) {
-      // Use this.config.digits for toFixed()
-      valueElem.textContent = `${current.toFixed(this.config.digits)}${this.unit}`;
+      valueElem.textContent = this.displayState(current);
     }
 
     const bars = this.shadowRoot.querySelectorAll('.bar-segment');
@@ -116,7 +115,7 @@ class WaterfallHistoryCard extends HTMLElement {
       if (lastBar && current != null) {
         lastBar.style.backgroundColor = this.getColorForValue(current);
         // Use this.config.digits for toFixed()
-        lastBar.setAttribute('title', `${current.toFixed(this.config.digits)}${this.unit} - ${this.t('now')}`);
+        lastBar.setAttribute('title', `${this.displayState(current)} - ${this.t('now')}`);
       }
     }
   }
@@ -163,7 +162,7 @@ class WaterfallHistoryCard extends HTMLElement {
   }
 
   renderCard(processedData, currentEntity) {
-    const current = parseFloat(currentEntity.state);
+    const current = this.parseState(currentEntity.state);
     const intervals = this.config.intervals;
     processedData.push(current);
 
@@ -272,7 +271,7 @@ class WaterfallHistoryCard extends HTMLElement {
         <span>
           ${this.icon ? `<ha-icon icon="${this.icon}"></ha-icon> ` : ''}${this.config.title}
         </span>
-        ${this.config.show_current ? `<span class="current-value">${current.toFixed(1)}${this.unit}</span>` : ''}
+        ${this.config.show_current ? `<span class="current-value">${this.displayState(current)}</span>` : ''}
       </div>
 
       <div class="waterfall-container">
@@ -281,7 +280,7 @@ class WaterfallHistoryCard extends HTMLElement {
           const color = this.getColorForValue(value);
           return `<div class="bar-segment"
                       style="background-color: ${color};"
-                      title="${this.getTimeLabel(index, intervals)} : ${value !== null ? value.toFixed(this.config.digits) + this.unit : this.t('error_loading_data')}">
+                      title="${this.getTimeLabel(index, intervals)} : ${value !== null ? this.displayState(value) : this.t('error_loading_data')}">
                   </div>`;
         }).join('')}
         <div class="gradient-overlay"></div>
@@ -308,7 +307,6 @@ class WaterfallHistoryCard extends HTMLElement {
     const processed = new Array(intervals).fill(this.config.default_value);
     const now = Date.now();
     const startTime = now - (this.config.hours * 60 * 60 * 1000);
-    let previousValue = null;
 
     historyData.forEach(point => {
       const pointTime = new Date(point.last_changed || point.last_updated).getTime();
@@ -316,10 +314,7 @@ class WaterfallHistoryCard extends HTMLElement {
       if (timeDiff >= 0) {
         const bucketIndex = Math.floor(timeDiff / timeStep);
         if (bucketIndex >= 0 && bucketIndex < intervals) {
-          const value = parseFloat(point.state);
-          if (!isNaN(value)) {
-            processed[bucketIndex] = value;
-          }
+          processed[bucketIndex] = this.parseState(point.state);
         }
       }
     });
@@ -339,9 +334,37 @@ class WaterfallHistoryCard extends HTMLElement {
     return processed;
   }
 
+  parseState(state) {
+    if (typeof state === 'number') {
+      return state;
+    }
+
+    if (typeof state === 'string') {
+      if (state === 'off') return false;
+      if (state === 'on') return true;
+    }
+
+    console.error("Unknown state type " + typeof state + " - " + state);
+    return null;
+  }
+
+  displayState(state) {
+    if (state === true) return 'on';
+    if (state === false) return 'off';
+
+    if (typeof state === 'number') {
+      return state.toFixed(this.config.digits) + this.unit;
+    }
+
+    return state + this.unit;
+  }
+
   getColorForValue(value) {
     if (value === null) return '#666666';
     if (isNaN(value)) return '#666666';
+
+    if (value === false) value = 0;
+    if (value === true) value = 1;
 
     const thresholds = this.config.thresholds;
     if (!thresholds || thresholds.length === 0) return '#666666';
