@@ -7,7 +7,7 @@ const threshold_default_number = [
 ];
 const threshold_default_boolean = [
   { value: 0, color: '#4FC3F7' },  // cold
-  { value: 1, color: '#FF8A65' },  // cool
+  { value: 1, color: '#FF8A65' },  // hot
 ];
 
 class WaterfallHistoryCard extends HTMLElement {
@@ -388,7 +388,7 @@ class WaterfallHistoryCard extends HTMLElement {
     let thresholds = this.config.thresholds;
     if (!thresholds) {
       if (typeof value === 'boolean') thresholds = threshold_default_boolean;
-      else thresholds = threshold_default_boolean;
+      else thresholds = threshold_default_number;
     }
     if (thresholds.length === 0) return '#666666';
 
