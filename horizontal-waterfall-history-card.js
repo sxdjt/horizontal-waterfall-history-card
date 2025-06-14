@@ -176,8 +176,7 @@ class WaterfallHistoryCard extends HTMLElement {
     const minValForScale = this.config.min_value ?? Math.min(...processedData.filter(v => v !== null));
     const maxValForScale = this.config.max_value ?? Math.max(...processedData.filter(v => v !== null));
 
-    const actualMin = Math.min(...processedData.filter(v => v !== null && !isNaN(v)));
-    const actualMax = Math.max(...processedData.filter(v => v !== null && !isNaN(v)));
+    const [actualMin, actualMax] = this.getMinMax(processedData);
 
     this.shadowRoot.innerHTML = `
       <style>
@@ -302,7 +301,7 @@ class WaterfallHistoryCard extends HTMLElement {
 
       ${this.config.show_min_max ? `
         <div class="min-max-label">
-          ${this.config.compact ? '' : this.t('min_label') + ':'} ${actualMin.toFixed(this.config.digits)}${this.unit} - ${this.config.compact ? '' : this.t('max_label') + ':'} ${actualMax.toFixed(this.config.digits)}${this.unit}
+          ${this.config.compact ? '' : this.t('min_label') + ':'} ${this.displayState(actualMin)} - ${this.config.compact ? '' : this.t('max_label') + ':'} ${this.displayState(actualMax)}
         </div>
       ` : ''}
     `;
@@ -339,6 +338,17 @@ class WaterfallHistoryCard extends HTMLElement {
     }
 
     return processed;
+  }
+
+  getMinMax(data) {
+    let min = Infinity;
+    let max = -Infinity;
+    for (const d of data) {
+      if (d === null) continue;
+      if (d > max) max = d;
+      if (d < min) min = d;
+    }
+    return [min, max];
   }
 
   parseState(state) {
