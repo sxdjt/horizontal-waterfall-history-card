@@ -359,6 +359,11 @@ class WaterfallHistoryCard extends HTMLElement {
     if (typeof state === 'string') {
       if (state === 'off') return false;
       if (state === 'on') return true;
+
+      const casted = parseFloat(state);
+      if (!Number.isNaN(casted)) {
+        return casted;
+      }
     }
 
     console.error("Unknown state type " + typeof state + " - " + state);
