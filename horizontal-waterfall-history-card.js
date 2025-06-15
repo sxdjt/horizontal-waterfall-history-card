@@ -366,8 +366,8 @@ class WaterfallHistoryCard extends HTMLElement {
       }
     }
 
-    console.error("Unknown state type " + typeof state + " - " + state);
-    return null;
+    // No idea what to do, fall back to default.
+    return this.config.default_value;
   }
 
   displayState(state) {
