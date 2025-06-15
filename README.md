@@ -42,33 +42,34 @@ entity: sensor.living_room_temperature
 
 ### Full Configuration Example
 ```yaml
-type: custom:waterfall-history-card
-entity: sensor.living_room_temperature
+type: 'custom:waterfall-history-card'
+entity: sensor.temperature  
 title: "Temperature History"
-columns: 12
-compact: false
-default_value: null
-digits: 1
-gradient: false
-height: 60
-hours: 24
-icon: "mdi:thermometer"
+columns: 12  
+compact: false    
+default_value: 0  
+digits: 1  
+gradient: true    
+height: 60   
+hours: 24    
+icon: mdi:thermometer  
 intervals: 48
-max_value: 85
-min_value: 60
+max_value: 40
+min_value: 10
 show_current: true
-show_labels: true
-show_min_max: false
-unit: "°F"
-thresholds:
-  - value: 60
-    color: "#4FC3F7" # cold
-  - value: 70
-    color: "#81C784" # cool
-  - value: 80
-    color: "#FFB74D" # warm
-  - value: 100
-    color: "#FF8A65" # hot
+show_labels: true 
+show_min_max: true
+unit: "°C"   
+thresholds:  
+  - value: 10
+    color: '#4FC3F7'
+  - value: 20
+    color: '#81C784'
+  - value: 30
+    color: '#FFB74D'
+  - value: 40
+    color: '#FF8A65'  
+
 ```
 
 #### Styling with Card-mod
