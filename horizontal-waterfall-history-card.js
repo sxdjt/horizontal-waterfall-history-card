@@ -75,17 +75,6 @@ class WaterfallHistoryCard extends HTMLElement {
       card_mod: config.card_mod || {},
     };
 
-    customElements.whenDefined("card-mod").then((cardMod) => {
-      cardMod.applyToElement(
-        this,
-        "card",
-        this.config.card_mod,
-        {},
-        true,
-        'waterfall-history-card'
-      )
-    });
-
     this._historyRefreshInterval = ((this.config.hours / this.config.intervals) * 60 * 60 * 1000) / 2; // take lenght of interval divided by 2 for refresh all history
   }
 
@@ -307,6 +296,17 @@ class WaterfallHistoryCard extends HTMLElement {
     `;
     this.shadowRoot.host.style.cursor = 'pointer';
     this.shadowRoot.host.onclick = () => this.openMoreInfo();
+
+    customElements.whenDefined("card-mod").then((cardMod) => {
+      cardMod.applyToElement(
+        this,
+        "card",
+        this.config.card_mod,
+        {},
+        true,
+        'waterfall-history-card'
+      )
+    });
   }
 
   processHistoryData(historyData, intervals, timeStep) {
