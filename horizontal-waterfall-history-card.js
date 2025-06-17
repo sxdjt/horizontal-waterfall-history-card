@@ -71,11 +71,17 @@ class WaterfallHistoryCard extends HTMLElement {
       columns: config.columns || 12,
       default_value : config.default_value ?? null,
       digits: typeof config.digits === 'number' ? config.digits : 1, // New: number of digits after decimal point
-
       card_mod: config.card_mod || {},
     };
-
     this._historyRefreshInterval = ((this.config.hours / this.config.intervals) * 60 * 60 * 1000) / 2; // take lenght of interval divided by 2 for refresh all history
+    if (this._config && !this._isSameConfig(this._config, config)) {
+      localStorage.removeItem(`waterfall-history-${this.config.entity}`);
+    }
+    this._config = config
+  }
+
+  _isSameConfig(config1, config2) {
+    return JSON.stringify(config1) === JSON.stringify(config2);
   }
 
   set hass(hass) {
