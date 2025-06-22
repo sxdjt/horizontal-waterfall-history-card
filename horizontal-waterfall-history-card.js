@@ -155,7 +155,7 @@ class WaterfallHistoryCard extends HTMLElement {
 
     cached[this.config._hash] = {
       data: processedData,
-      expiration: endTime.getTime() + this._historyRefreshInterval,
+      expiresAt: endTime.getTime() + this._historyRefreshInterval,
     };
     try {
       localStorage.setItem(cacheKey, JSON.stringify(cached));
@@ -184,7 +184,7 @@ class WaterfallHistoryCard extends HTMLElement {
     // Check for any stale data. Prevents cache from getting uncontrollably big.
     const now = new Date();
     for (const [hash, val] of Object.entries(cached)) {
-      if (now.getTime() > val.expiration) {
+      if (now.getTime() > val.expiresAt) {
         // Stale, remove data
         delete cached[hash];
       }
