@@ -174,6 +174,13 @@ class WaterfallHistoryCard extends HTMLElement {
       return {};
     }
 
+    if (cached.datetime) {
+      // Cache is from version 0.7.1 or below
+      // Remove this check in a future version
+      localStorage.removeItem(cacheKey);
+      return {};
+    }
+
     // Check for any stale data. Prevents cache from getting uncontrollably big.
     const now = new Date();
     for (const [hash, val] of Object.entries(cached)) {
