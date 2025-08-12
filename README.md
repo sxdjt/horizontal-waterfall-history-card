@@ -1,17 +1,36 @@
 # Waterfall History Card for Home Assistant
 
+**‼️ BREAKING CHANGE ‼️**
+
+**v2.0 is a breaking change.**  It introduces multi-entity support to the card.  Previously configured cards will no longer work as expected.  You must update your old cards to use this new version.
+
+## What does this card do?
+
 This card shows a sensors historical data with "now" on the right side of the graph and the historical data trailing off to the left.
 
-<img width="600" alt="A simple example of card usage" src="https://github.com/user-attachments/assets/2384a7bf-8d94-4620-abf3-b19b513d3862" />
+<img width="476" height="380" alt="Sample card data" src="https://github.com/user-attachments/assets/8bcc7253-d042-43e2-8d68-30bf7b667b91" />
 
-It makes a very nice, compact info card:
+Using ```compact``` mode, it works very well on mobile devices.
 
-![451294731-7d77fbf2-1f22-41f0-982e-91644621c40e](https://github.com/user-attachments/assets/d72927a6-7fcc-4699-8818-dd315cf76439)
+## ‼️ Breaking change example
 
+**Old Configuration (v1.x):**
+```yaml
+type: custom:waterfall-history-card
+entity: sensor.outdoor_temperature
+title: Outside
+```
 
-It works very well on mobile devices for a compact view of your current state and history.
-
-<img height="500" alt="Screenshot of card usage on a mobile device" src="https://github.com/user-attachments/assets/42bb7783-a192-493f-8e4b-fd480c8164a2" />
+**New Configuration (v2.0):**
+```yaml
+type: custom:waterfall-history-card
+title: Temperatures
+entities:
+  - entity: sensor.outdoor_temperature
+    name: Outside
+  - entity: sensor.indoor_temperature
+    name: Inside
+```
 
 ## Installation
 
@@ -19,93 +38,68 @@ It works very well on mobile devices for a compact view of your current state an
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=sxdjt&repository=horizontal-waterfall-history-card)
 
-**Manual Installation**
+### Manual Installation
 
 [GitHub repo](https://github.com/sxdjt/horizontal-waterfall-history-card)
 
-1. Copy `horizontal-waterfall-history-card.js` to `/config/www/horizontal-waterfall-history-card/`
-
-   e.g. ```git clone https://github.com/sxdjt/horizontal-waterfall-history-card/ /config/www```
-
-2. Add resource in Settings > Dashboards > 3-dot-menu > Resources:
-   ```
-   URL: /local/horizontal-waterfall-history-card/horizontal-waterfall-history-card.js
-   Type: JavaScript Module
-   ```
 ## Configuration
 
-### Basic
+### Example
 ```yaml
 type: custom:waterfall-history-card
-entity: sensor.living_room_temperature
+title: Environmental Overview
+hours: 24             # Global default: show 24 hours of history
+show_min_max: true    # Global default: show min/max values
+
+entities:
+  # This entity uses the global 24-hour setting
+  - entity: sensor.office_temperature
+    name: Office Temp (24h)
+
+  # This entity overrides the time span to 12 hours and hides the min/max labels
+  - entity: sensor.living_room_humidity
+    name: Living Room Humidity (12h)
+    hours: 12
+    show_min_max: false
+
+  # This entity shows 3 days of history
+  - entity: sensor.co2_sensor
+    name: CO2 Levels (Last 3 Days)
+    hours: 72
+
+  # This entity is a simple binary sensor
+  - entity: binary_sensor.front_door
+    name: Front Door
 ```
 
-### Full Configuration Example
-```yaml
-type: 'custom:waterfall-history-card'
-entity: sensor.temperature  
-title: "Temperature History"
-columns: 12  
-compact: false    
-default_value: 0  
-digits: 1  
-gradient: true    
-height: 60   
-hours: 24    
-icon: mdi:thermometer  
-intervals: 48
-max_value: 40
-min_value: 10
-show_current: true
-show_labels: true 
-show_min_max: true
-unit: "°C"   
-thresholds:  
-  - value: 10
-    color: '#4FC3F7'
-  - value: 20
-    color: '#81C784'
-  - value: 30
-    color: '#FFB74D'
-  - value: 40
-    color: '#FF8A65'  
+### Options
 
-```
+| Option                   | Type             | Default                        | Scope         | Description                                                                                                                                                                 |
+| ------------------------ | ---------------- | ------------------------------ | ------------- | -------------------- |
+| `title`                  | string           | `"History"` (localized)        | Global        | Card title text.                                            
+| `entities`               | array            | **Required**                   | Global        | List of entities or entity config objects to display.|
+| `entity`                 | string           | —                              | Entity        | Entity ID (required in entity configs).|
+| `compact`                | boolean          | `false`                        | Global        | Compact style — smaller fonts/margins.|
+| `default_value`          | number or null   | `null`                         | Global/Entity | Fallback value for missing data points.|
+| `digits`                 | number           | `1`                            | Global/Entity | Decimal places to show for numeric values.|
+| `gradient`               | boolean          | `false`                        | Global/Entity | Whether to interpolate colors smoothly between thresholds.|
+| `height`                 | number           | `60`                           | Global        | Height of the waterfall chart in pixels.|
+| `hours`                  | number           | `24`                           | Global/Entity | Number of hours of history to display.|
+| `icon`                   | string or null   | `null`                         | Global        | Override icon in the card header.|
+| `intervals`              | number           | `48`                           | Global/Entity | Number of history segments (bars).|
+| `max_value`              | number or null   | `null`                         | Global        | Maximum value for color scaling. If null, calculated from data.|
+| `min_value`              | number or null   | `null`                         | Global        | Minimum value for color scaling. If null, calculated from data.|
+| `name`                   | string           | Entity friendly name           | Entity        | Display name for the entity.|
+| `show_current`           | boolean          | `true`                         | Global/Entity | Show the current entity value next to its name.|
+| `show_labels`            | boolean          | `true`                         | Global/Entity | Show time labels (“x h ago”, “Now”) under the chart.|
+| `show_min_max`           | boolean          | `false`                        | Global/Entity | Show min/max values below the chart.|
+| `thresholds`             | array of objects | `null` (defaults to built-ins) | Global/Entity | Value/color pairs for bar coloring. Falls back to `threshold_default_number` or `threshold_default_boolean`.|
+| `unit`                   | string or null   | `null`                         | Global/Entity | Override unit of measurement (otherwise from entity attributes).|
+| *(per-entity overrides)* | —                | —                              | Entity        | Any of the following can override global: `hours`, `intervals`, `thresholds`, `gradient`, `show_current`, `show_labels`, `show_min_max`, `unit`, `default_value`, `digits`. |
 
-#### Styling with Card-mod
-You can use [card-mod](https://github.com/thomasloven/lovelace-card-mod) for additional styling:
-```yaml
-type: custom:horizontal-waterfall-history-card
-entity: sensor.temperature
-card_mod:
-  style: |
-    :host {
-      --card-background-color: rgba(0,0,0,0.1);
-      border: 2px solid var(--primary-color);
-    }
-```
-## Configuration Options
+### Styling with Card-mod
 
-| Option         | Type            | Default Value | Description                                                                             | Required |
-| -------------- | --------------- | ------------- | --------------------------------------------------------------------------------------- | -------- |
-| entity         | string          | —             | The Home Assistant entity                                                               | **Yes**  |
-| title          | string          | 'History'     | The title displayed at the top of the card                                              | No       |
-| columns        | number          | 12            | Preferred width in columns (for Lovelace grid layout)                                   | No       |
-| compact        | boolean         | false         | If true, uses a more compact visual style                                               | No       |
-| default_value  | number or null  | null          | Value to use if no data is available for a segment                                      | No       |
-| digits         | number          | 1             | Decimal places to display for sensor values                                             | No       |
-| gradient       | boolean         | false         | If true, colors interpolate smoothly between thresholds                                 | No       |
-| height         | number          | 60            | Height of the waterfall display area in pixels                                          | No       |
-| hours          | number          | 24            | Number of hours of historical data to display                                           | No       |
-| icon           | string or null  | null          | Icon to display in the card header (entity attribute used if null)                      | No       |
-| intervals      | number          | 48            | Number of vertical bars (segments) for history                                          | No       |
-| max_value      | number or null  | null          | Maximum value for color scale (auto if null)                                            | No       |
-| min_value      | number or null  | null          | Minimum value for color scale (auto if null)                                            | No       |
-| show_current   | boolean         | true          | If true, displays the current sensor value in the header                                | No       |
-| show_labels    | boolean         | true          | If true, displays time labels below the waterfall                                       | No       |
-| show_min_max   | boolean         | false         | If true, shows the minimum and maximum observed values                                  | No       |
-| thresholds     | array           | See below     | Value/color pairs for color thresholds                                                  | No       |
-| unit           | string or null  | null          | Overrides the unit of measurement (entity attribute used if null)                       | No       |
+You can use [card-mod](https://github.com/thomasloven/lovelace-card-mod) for additional styling.
 
 ### Default thresholds
 
@@ -121,7 +115,9 @@ thresholds:
     color: "#FF8A65"
 ```
 
-### Thresholds
+### Default Thresholds
+
+Temperatures in F.
 
 | Threshold | Color     |
 |-----------|-----------|
@@ -130,14 +126,3 @@ thresholds:
 | 80        | `#FFB74D` |
 | 100       | `#FF8A65` |
 
-### Thresholds for binary entities
-
-When using a binary entity (on/off entity), the following default thresholds apply:
-
-```yaml
-thresholds:
-  - value: 0  # off
-    color: "#4FC3F7"
-  - value: 1  # on
-    color: "#81C784"
-```
