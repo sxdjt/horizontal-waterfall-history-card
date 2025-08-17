@@ -6,7 +6,13 @@
 
 ## What does this card do?
 
-This card shows a sensors historical data with "now" on the right side of the graph and the historical data trailing off to the left.
+- **Horizontal waterfall charts** — visualize entity history as a sequence of colored bar segments.
+- **Customizable time window** — choose how many hours to show and how many intervals to split into.
+- **Threshold-based colors** — colors automatically adapt to value thresholds (configurable).
+- **Entity icons** — show icons next to entity names; toggle globally or per-entity.
+- **Compact mode** — shrink fonts and spacing for tighter dashboards.
+- **Per-entity overrides** — customize hours, intervals, labels, icons, and display options per entity.
+
 
 <img width="476" height="380" alt="Sample card data" src="https://github.com/user-attachments/assets/8bcc7253-d042-43e2-8d68-30bf7b667b91" />
 
@@ -44,58 +50,54 @@ entities:
 
 ## Configuration
 
+### Card-level options
+
+| Option        | Type      | Default | Description                                                                 |
+|---------------|-----------|---------|-----------------------------------------------------------------------------|
+| `title`       | `string`  | `"History"` | Card title shown at the top.                                            |
+| `entities`    | `array`   | **required** | List of entity objects to display (see per-entity options below).      |
+| `hours`       | `number`  | `24`    | Time range in hours to show history.                                        |
+| `intervals`   | `number`  | `48`    | Number of intervals (bars) to divide the history into.                      |
+| `height`      | `number`  | `60`    | Height in pixels of each entity’s waterfall chart.                          |
+| `show_labels` | `boolean` | `true`  | Show the “X hours ago” / “now” labels under the bar.                        |
+| `show_min_max`| `boolean` | `true`  | Show min/max values under the chart.                                        |
+| `show_current`| `boolean` | `true`  | Show the current value next to the entity name.                             |
+| `show_icons`  | `boolean` | `true`  | Show entity icons globally. Can be overridden per entity.                   |
+| `compact`     | `boolean` | `false` | Use smaller font sizes and spacing.                                         |
+
+---
+
+### Per-entity options
+
+Each item in `entities:` can be either a bare entity ID string, or an object with these fields:
+
+| Option         | Type      | Default             | Description                                                         |
+|----------------|-----------|---------------------|---------------------------------------------------------------------|
+| `entity`       | `string`  | **required**        | The entity ID (e.g., `sensor.living_room_temp`).                    |
+| `name`         | `string`  | Friendly name / ID  | Override the display name.                                          |
+| `hours`        | `number`  | Inherits from card  | Override the number of hours shown for this entity.                 |
+| `intervals`    | `number`  | Inherits from card  | Override the number of intervals (bars) for this entity.            |
+| `show_labels`  | `boolean` | Inherits from card  | Show/hide labels just for this entity.                              |
+| `show_min_max` | `boolean` | Inherits from card  | Show/hide min/max just for this entity.                             |
+| `show_current` | `boolean` | Inherits from card  | Show/hide current value just for this entity.                       |
+| `show_icons`   | `boolean` | Inherits from card  | Show/hide the icon for just this entity (overrides global setting). |
+
+---
 ### Example
+
 ```yaml
-type: custom:waterfall-history-card
-title: Environmental Overview
-hours: 24             # Global default: show 24 hours of history
-show_min_max: true    # Global default: show min/max values
-
+type: custom:horizontal-waterfall-history-card
+title: Room Temperatures
+hours: 12
+intervals: 24
 entities:
-  # This entity uses the global 24-hour setting
-  - entity: sensor.office_temperature
-    name: Office Temp (24h)
-
-  # This entity overrides the time span to 12 hours and hides the min/max labels
-  - entity: sensor.living_room_humidity
-    name: Living Room Humidity (12h)
-    hours: 12
-    show_min_max: false
-
-  # This entity shows 3 days of history
-  - entity: sensor.co2_sensor
-    name: CO2 Levels (Last 3 Days)
-    hours: 72
-
-  # This entity is a simple binary sensor
-  - entity: binary_sensor.front_door
-    name: Front Door
+  - entity: sensor.living_room_temp
+    name: Living Room
+    show_icons: false   # hide icon for this entity only
+  - entity: sensor.kitchen_temp
+    hours: 6            # custom history window
 ```
 
-### Options
-
-| Option                   | Type             | Default                        | Scope         | Description                                                                                                                                                                 |
-| ------------------------ | ---------------- | ------------------------------ | ------------- | -------------------- |
-| `title`                  | string           | `"History"` (localized)        | Global        | Card title text.                                            
-| `entities`               | array            | **Required**                   | Global        | List of entities or entity config objects to display.|
-| `entity`                 | string           | —                              | Entity        | Entity ID (required in entity configs).|
-| `compact`                | boolean          | `false`                        | Global        | Compact style — smaller fonts/margins.|
-| `default_value`          | number or null   | `null`                         | Global/Entity | Fallback value for missing data points.|
-| `digits`                 | number           | `1`                            | Global/Entity | Decimal places to show for numeric values.|
-| `gradient`               | boolean          | `false`                        | Global/Entity | Whether to interpolate colors smoothly between thresholds.|
-| `height`                 | number           | `60`                           | Global        | Height of the waterfall chart in pixels.|
-| `hours`                  | number           | `24`                           | Global/Entity | Number of hours of history to display.|
-| `icon`                   | string or null   | `null`                         | Global        | Override icon in the card header.|
-| `intervals`              | number           | `48`                           | Global/Entity | Number of history segments (bars).|
-| `max_value`              | number or null   | `null`                         | Global        | Maximum value for color scaling. If null, calculated from data.|
-| `min_value`              | number or null   | `null`                         | Global        | Minimum value for color scaling. If null, calculated from data.|
-| `name`                   | string           | Entity friendly name           | Entity        | Display name for the entity.|
-| `show_current`           | boolean          | `true`                         | Global/Entity | Show the current entity value next to its name.|
-| `show_labels`            | boolean          | `true`                         | Global/Entity | Show time labels (“x h ago”, “Now”) under the chart.|
-| `show_min_max`           | boolean          | `false`                        | Global/Entity | Show min/max values below the chart.|
-| `thresholds`             | array of objects | `null` (defaults to built-ins) | Global/Entity | Value/color pairs for bar coloring. Falls back to `threshold_default_number` or `threshold_default_boolean`.|
-| `unit`                   | string or null   | `null`                         | Global/Entity | Override unit of measurement (otherwise from entity attributes).|
-| *(per-entity overrides)* | —                | —                              | Entity        | Any of the following can override global: `hours`, `intervals`, `thresholds`, `gradient`, `show_current`, `show_labels`, `show_min_max`, `unit`, `default_value`, `digits`. |
 
 ### Styling with Card-mod
 
