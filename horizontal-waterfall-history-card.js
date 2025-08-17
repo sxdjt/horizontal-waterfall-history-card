@@ -263,7 +263,7 @@ class waterfallHistoryCard extends HTMLElement {
         const intervals = entityConfig.intervals ?? this.config.intervals;
         
         return `
-          <div class="entity-container" data-entity-id="${entityId}" @click="${() => this.openMoreInfo(entityId)}">
+          <div class="entity-container" data-entity-id="${entityId}" >
             <div class="entity-header">
               <span class="entity-name">${name}</span>
               ${showCurrent ? `<span class="current-value" data-entity="${entityId}">${this.displayState(current, entityConfig)}</span>` : ''}
@@ -298,7 +298,33 @@ class waterfallHistoryCard extends HTMLElement {
     customElements.whenDefined("card-mod").then((cardMod) => {
       cardMod.applyToElement(this, "card", this.config.card_mod);
     });
-  }
+  
+    // FIX: Added real click handlers here because @click in template (Lit syntax) does not work with innerHTML
+    // Attach real click handlers for More Info (HA)
+    const containers = this.shadowRoot.querySelectorAll('.entity-container');
+    containers.forEach((el) => {
+      // FIX: Make container visibly clickable
+      el.style.cursor = 'pointer';
+      el.addEventListener('click', (ev) => {
+        // Try to resolve the entity id from composedPath()
+        // FIX: Use composedPath to detect clicks on child elements (like bars)
+        const path = ev.composedPath ? ev.composedPath() : [];
+        let id = el.dataset.entityId;
+        for (const node of path) {
+          if (node && node.dataset) {
+            if (node.dataset.entityId) { id = node.dataset.entityId; break; }
+            if (node.dataset.entity) { id = node.dataset.entity; break; }
+          }
+        }
+        if (id) {
+          // FIX: Stop propagation so HA can catch hass-more-info event through shadow DOM
+          ev.stopPropagation();
+          // FIX: Actually trigger HA's more-info popup with entity id
+          this.openMoreInfo(id);
+        }
+      });
+    });
+}
 
   processHistoryData(historyData, intervals, timeStep, entityConfig) {
     const defaultValue = entityConfig.default_value ?? this.config.default_value;
@@ -478,7 +504,7 @@ window.customCards.push({
 });
 
 console.info(
-  `%c WATERFALL-HISTORY-CARD %c v2.0 `,
+  `%c WATERFALL-HISTORY-CARD %c v2.1 `,
   'color: orange; font-weight: bold; background: black',
   'color: white; font-weight: bold; background: dimgray'
 );
