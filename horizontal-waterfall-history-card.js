@@ -5,11 +5,25 @@ const threshold_default_number = [
   { value: 100, color: '#FF8A65' }  // hot
 ];
 const threshold_default_boolean = [
-  { value: 0, color: '#4FC3F7' },  // cold
-  { value: 1, color: '#FF8A65' },  // hot
+  { value: 0, color: '#636363' },  // off
+  { value: 1, color: '#EEEEEE' },  // on
 ];
 
 class waterfallHistoryCard extends HTMLElement {
+  // FIX: Hardcoded default domain icons
+  DEFAULT_DOMAIN_ICONS = {
+    sensor: "mdi:gauge",
+    binary_sensor: "mdi:eye",
+    switch: "mdi:toggle-switch",
+    light: "mdi:lightbulb",
+    climate: "mdi:thermostat",
+    lock: "mdi:lock",
+    cover: "mdi:window-shutter",
+    media_player: "mdi:play-circle",
+    person: "mdi:account",
+    device_tracker: "mdi:map-marker",
+  };
+
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
@@ -260,7 +274,14 @@ if (!config.entities || !Array.isArray(config.entities) || config.entities.lengt
 
         const name = entityConfig.name || entity.attributes.friendly_name || entityId;
                 // FIX: derive icon per-entity if provided on the state
-        const icon = (entity.attributes && entity.attributes.icon) ? entity.attributes.icon : null;
+        // FIX: resolve icon per entity with domain fallback
+        let icon = null;
+        if (entity.attributes && entity.attributes.icon) {
+          icon = entity.attributes.icon;
+        } else {
+          const domain = entityId.split('.')[0];
+          icon = this.DEFAULT_DOMAIN_ICONS[domain] || 'mdi:bookmark';
+        }
         // FIX: resolve show_icons safely even if this.config is not yet defined
         const globalShowIcons = (this && this.config && this.config.show_icons !== undefined) ? this.config.show_icons : true;
         const perEntityShowIcons = (entityConfig.show_icons !== undefined) ? entityConfig.show_icons : globalShowIcons;
@@ -515,7 +536,7 @@ window.customCards.push({
 });
 
 console.info(
-  `%c waterFALL-HISTORY-CARD %c v2.2 `,
+  `%c waterFALL-HISTORY-CARD %c v2.0 `,
   'color: orange; font-weight: bold; background: black',
   'color: white; font-weight: bold; background: dimgray'
 );
