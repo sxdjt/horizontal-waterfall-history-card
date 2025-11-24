@@ -280,6 +280,41 @@ These can be overridden globally or per-entity using `color_on`/`color_off` or `
 
 ---
 
+## US National Weather Service Termperature Color Scale
+
+```yaml
+type: custom:waterfall-history-card
+title: NWS Color Temp Sensors
+thresholds:
+  - value: 0
+    color: "#9370DB"
+  - value: 10
+    color: "#4169E1"
+  - value: 20
+    color: "#00BFFF"
+  - value: 30
+    color: "#00FFFF"
+  - value: 40
+    color: "#32CD32"
+  - value: 50
+    color: "#ADFF2F"
+  - value: 60
+    color: "#FFD700"
+  - value: 70
+    color: "#FFA500"
+  - value: 80
+    color: "#FF4500"
+  - value: 90
+    color: "#FF0000"
+  - value: 100
+    color: "#8B0000"
+  - value: 110
+    color: "#800000"
+entities:
+  - entity: sensor.outside_temp
+```
+
+
 ## Troubleshooting
 
 ### Binary colors not applying?
