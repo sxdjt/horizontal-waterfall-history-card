@@ -9,7 +9,7 @@
 - **Horizontal waterfall charts** — visualize entity history as a sequence of colored bar segments.
 - **Customizable time window** — choose how many hours to show and how many intervals to split into.
 - **Threshold-based colors** — colors automatically adapt to value thresholds (configurable).
-- **Binary sensor color customization** — customize on/off colors for binary sensors, switches, and other binary entities.
+-  🚀 **Binary sensor color customization** — customize on/off colors for binary sensors, switches, and other binary entities.
 - **Entity icons** — show icons next to entity names; toggle globally or per-entity.
 - **Compact mode** — shrink fonts and spacing for tighter dashboards.
 - **Per-entity overrides** — customize hours, intervals, labels, icons, colors, and display options per entity.
