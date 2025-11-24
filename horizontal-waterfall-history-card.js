@@ -82,6 +82,10 @@ if (!config.entities || !Array.isArray(config.entities) || config.entities.lengt
         default_value: config.default_value ?? null,
         digits: typeof config.digits === 'number' ? config.digits : 1,
         card_mod: config.card_mod || {},
+        // NEW: Binary sensor color configuration
+        binary_colors: config.binary_colors || null,
+        color_on: config.color_on || null,
+        color_off: config.color_off || null,
     };
 
     this.config = {
@@ -423,12 +427,59 @@ const history = [...(processedHistories[entityId] || [])];
       return (state ?? 'N/A') + this.getUnit(entityConfig);
   }
 
+  // NEW: Helper to check if value is binary (0 or 1)
+  isBinaryValue(value) {
+    return value === 0 || value === 1 || value === true || value === false;
+  }
+
+  // NEW: Get binary colors with precedence: entity > global > defaults
+  getBinaryColors(entityConfig) {
+    // Per-entity binary_colors object
+    if (entityConfig.binary_colors) {
+      return [
+        { value: 0, color: entityConfig.binary_colors.off || entityConfig.binary_colors[0] || '#636363' },
+        { value: 1, color: entityConfig.binary_colors.on || entityConfig.binary_colors[1] || '#EEEEEE' }
+      ];
+    }
+    
+    // Per-entity color_on/color_off
+    if (entityConfig.color_on || entityConfig.color_off) {
+      return [
+        { value: 0, color: entityConfig.color_off || '#636363' },
+        { value: 1, color: entityConfig.color_on || '#EEEEEE' }
+      ];
+    }
+    
+    // Global binary_colors object
+    if (this.config.binary_colors) {
+      return [
+        { value: 0, color: this.config.binary_colors.off || this.config.binary_colors[0] || '#636363' },
+        { value: 1, color: this.config.binary_colors.on || this.config.binary_colors[1] || '#EEEEEE' }
+      ];
+    }
+    
+    // Global color_on/color_off
+    if (this.config.color_on || this.config.color_off) {
+      return [
+        { value: 0, color: this.config.color_off || '#636363' },
+        { value: 1, color: this.config.color_on || '#EEEEEE' }
+      ];
+    }
+    
+    // Default fallback
+    return threshold_default_boolean;
+  }
+
   getColorForValue(value, entityConfig) {
     if (value === null || isNaN(value)) return '#666666';
 
     let thresholds = entityConfig.thresholds ?? this.config.thresholds;
-    if (!thresholds) {
-        thresholds = (typeof value === 'boolean' || value === 0 || value === 1) ? threshold_default_boolean : threshold_default_number;
+    
+    // NEW: Check if this is a binary value and apply binary colors
+    if (!thresholds && this.isBinaryValue(value)) {
+      thresholds = this.getBinaryColors(entityConfig);
+    } else if (!thresholds) {
+      thresholds = threshold_default_number;
     }
     
     if (typeof value === 'boolean') value = value ? 1 : 0;
@@ -536,7 +587,7 @@ window.customCards.push({
 });
 
 console.info(
-  `%c waterFALL-HISTORY-CARD %c v2.0 `,
+  `%c waterFALL-HISTORY-CARD %c v2.1 `,
   'color: orange; font-weight: bold; background: black',
   'color: white; font-weight: bold; background: dimgray'
 );
