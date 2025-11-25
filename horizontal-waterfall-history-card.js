@@ -591,7 +591,7 @@ class WaterfallHistoryCard extends LitElement {
     }
 
     // Check if icon should be shown
-    const showIcons = entityConfig.show_icons ?? this.config.show_icons;
+    const showIcons = entityConfig.show_icons !== undefined ? entityConfig.show_icons : this.config.show_icons;
 
     // Fixed: Use immutable array spreading
     const history = [...(this.processedHistories[entityId] || []), this.parseState(entity.state)];
