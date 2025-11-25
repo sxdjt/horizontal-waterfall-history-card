@@ -1,3 +1,5 @@
+import { LitElement, html, css } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js';
+
 const threshold_default_number = [
   { value: 60, color: '#4FC3F7' },  // cold
   { value: 70, color: '#81C784' },  // cool
@@ -9,8 +11,13 @@ const threshold_default_boolean = [
   { value: 1, color: '#EEEEEE' },  // on
 ];
 
-class waterfallHistoryCard extends HTMLElement {
-  // FIX: Hardcoded default domain icons
+class WaterfallHistoryCard extends LitElement {
+  static properties = {
+    hass: { type: Object },
+    config: { type: Object },
+    processedHistories: { state: true }
+  };
+
   DEFAULT_DOMAIN_ICONS = {
     sensor: "mdi:gauge",
     binary_sensor: "mdi:eye",
@@ -24,11 +31,125 @@ class waterfallHistoryCard extends HTMLElement {
     device_tracker: "mdi:map-marker",
   };
 
+  static styles = css`
+    :host {
+      padding: 16px;
+      background: var(--ha-card-background, var(--card-background-color, #fff));
+      box-shadow: var(--ha-card-box-shadow, none);
+      box-sizing: border-box;
+      border-radius: var(--ha-card-border-radius, 12px);
+      border-width: var(--ha-card-border-width, 1px);
+      border-style: solid;
+      border-color: var(--ha-card-border-color, var(--divider-color, #e0e0e0));
+      color: var(--primary-text-color);
+      display: block;
+      position: relative;
+    }
+
+    .card-header {
+      font-size: var(--header-font-size, 16px);
+      font-weight: 500;
+      padding-bottom: 8px;
+      color: var(--primary-text-color, black);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .entity-container {
+      margin-bottom: 16px;
+      cursor: pointer;
+    }
+
+    .entity-container:last-child {
+      margin-bottom: 0;
+    }
+
+    .entity-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .entity-icon {
+      width: 20px;
+      height: 20px;
+    }
+
+    .entity-name {
+      font-size: var(--entity-name-font-size, 14px);
+      font-weight: 500;
+    }
+
+    .current-value {
+      margin-left: auto;
+      font-size: var(--current-value-font-size, 18px);
+      font-weight: bold;
+    }
+
+    .waterfall-container {
+      position: relative;
+      height: var(--waterfall-height, 60px);
+      border-radius: 2px;
+      overflow: hidden;
+      display: flex;
+    }
+
+    .bar-segment {
+      flex: 1;
+      height: 100%;
+      transition: all 0.3s ease;
+      border-right: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .bar-segment:last-child {
+      border-right: none;
+    }
+
+    .labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--secondary-text-color, gray);
+      margin-top: var(--labels-margin-top, 4px);
+    }
+
+    .min-max-label {
+      font-size: 11px;
+      color: var(--secondary-text-color, gray);
+      text-align: center;
+    }
+
+    .error {
+      color: var(--error-color, red);
+    }
+
+    /* Compact mode overrides */
+    :host(.compact) .card-header {
+      font-size: 12px;
+    }
+
+    :host(.compact) .entity-name {
+      font-size: 12px;
+    }
+
+    :host(.compact) .current-value {
+      font-size: 12px;
+    }
+
+    :host(.compact) .labels {
+      margin-top: 0px;
+    }
+  `;
+
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
-    this._lastHistoryFetch = {}; // Timestamp of last fetch per entity
+    this.config = {};
+    this.processedHistories = {};
+    this._lastHistoryFetch = {};
     this._historyRefreshInterval = 15 * 60 * 1000; // 15min by default
+    this._cardModApplied = false;
 
     this.translations = {
       en: {
@@ -52,315 +173,200 @@ class waterfallHistoryCard extends HTMLElement {
     };
 
     this.language = 'en';
-    this.t = (key) => (this.translations[this.language] && this.translations[this.language][key]) || this.translations.en[key] || key;
+    this.t = (key) => (this.translations[this.language]?.[key]) || this.translations.en[key] || key;
   }
 
   setConfig(config) {
-    // FIX: ensure config object exists before accessing properties
-    this.config = this.config || {};
-    // FIX: add show_icons option (default true)
-    this.config.show_icons = (config.show_icons !== false);
-if (!config.entities || !Array.isArray(config.entities) || config.entities.length === 0) {
+    if (!config.entities || !Array.isArray(config.entities) || config.entities.length === 0) {
       throw new Error('Please define a list of entities.');
     }
 
     const globalConfig = {
-        title: config.title || this.t('history'),
-        hours: config.hours || 24,
-        intervals: config.intervals || 48,
-        height: config.height || 60,
-        min_value: config.min_value || null,
-        max_value: config.max_value || null,
-        thresholds: config.thresholds || null,
-        gradient: config.gradient || false,
-        show_current: config.show_current !== false,
-        show_labels: config.show_labels !== false,
-        show_min_max: config.show_min_max || false,
-        unit: config.unit || null,
-        icon: config.icon || null,
-        compact: config.compact || false,
-        default_value: config.default_value ?? null,
-        digits: typeof config.digits === 'number' ? config.digits : 1,
-        card_mod: config.card_mod || {},
-        // NEW: Binary sensor color configuration
-        binary_colors: config.binary_colors || null,
-        color_on: config.color_on || null,
-        color_off: config.color_off || null,
+      title: config.title || this.t('history'),
+      hours: config.hours || 24,
+      intervals: config.intervals || 48,
+      height: config.height || 60,
+      min_value: config.min_value || null,
+      max_value: config.max_value || null,
+      thresholds: config.thresholds || null,
+      gradient: config.gradient || false,
+      show_current: config.show_current !== false,
+      show_labels: config.show_labels !== false,
+      show_min_max: config.show_min_max || false,
+      show_icons: config.show_icons !== false,
+      unit: config.unit || null,
+      icon: config.icon || null,
+      compact: config.compact || false,
+      default_value: config.default_value ?? null,
+      digits: typeof config.digits === 'number' ? config.digits : 1,
+      card_mod: config.card_mod || {},
+      binary_colors: config.binary_colors || null,
+      color_on: config.color_on || null,
+      color_off: config.color_off || null,
+      state_on: config.state_on || 'On',
+      state_off: config.state_off || 'Off',
     };
 
     this.config = {
-        ...globalConfig,
-        entities: config.entities.map(entityConfig => {
-            if (typeof entityConfig === 'string') {
-                return { entity: entityConfig };
-            }
-            return entityConfig;
-        }),
+      ...globalConfig,
+      entities: config.entities.map(entityConfig => {
+        if (typeof entityConfig === 'string') {
+          return { entity: entityConfig };
+        }
+        return entityConfig;
+      }),
     };
-  }
 
-  set hass(hass) {
-    this._hass = hass;
-    if (hass.language) {
-      this.language = hass.language.split('-')[0];
+    // Apply compact class to host
+    if (this.config.compact) {
+      this.classList.add('compact');
+    } else {
+      this.classList.remove('compact');
     }
-    this.updateCard();
-    this.updateCurrentValues();
+
+    // Set CSS custom properties for dynamic values
+    this.style.setProperty('--header-font-size', this.config.compact ? '12px' : '16px');
+    this.style.setProperty('--entity-name-font-size', this.config.compact ? '12px' : '14px');
+    this.style.setProperty('--current-value-font-size', this.config.compact ? '12px' : '18px');
+    this.style.setProperty('--waterfall-height', `${this.config.height}px`);
+    this.style.setProperty('--labels-margin-top', this.config.compact ? '0px' : '4px');
   }
 
-  updateCurrentValues() {
-    if (!this.shadowRoot) return;
+  shouldUpdate(changedProps) {
+    if (!this.config || !this.hass) {
+      return false;
+    }
 
-    this.config.entities.forEach(entityConfig => {
+    // Always update if config changed
+    if (changedProps.has('config')) {
+      return true;
+    }
+
+    // Check if any of our tracked entities changed
+    if (changedProps.has('hass')) {
+      const oldHass = changedProps.get('hass');
+      if (!oldHass) {
+        return true; // First render
+      }
+
+      // Check if any tracked entity state changed
+      return this._entitiesChanged(oldHass, this.hass);
+    }
+
+    // Update if processed histories changed
+    if (changedProps.has('processedHistories')) {
+      return true;
+    }
+
+    return true;
+  }
+
+  _entitiesChanged(oldHass, newHass) {
+    if (!oldHass || !newHass) return true;
+
+    return this.config.entities.some(entityConfig => {
       const entityId = entityConfig.entity;
-      const entity = this._hass.states[entityId];
-      if (!entity) return;
-      
-      const showCurrent = entityConfig.show_current ?? this.config.show_current;
-      if (!showCurrent) return;
-
-      const current = this.parseState(entity.state);
-      const valueElem = this.shadowRoot.querySelector(`.current-value[data-entity="${entityId}"]`);
-      if (valueElem) {
-        valueElem.textContent = this.displayState(current, entityConfig);
-      }
-
-      const lastBar = this.shadowRoot.querySelector(`.bar-segment[data-entity="${entityId}"].last-bar`);
-      if (lastBar && current != null) {
-        lastBar.style.backgroundColor = this.getColorForValue(current, entityConfig);
-        lastBar.setAttribute('title', `${this.displayState(current, entityConfig)} - ${this.t('now')}`);
-      }
+      return oldHass.states[entityId] !== newHass.states[entityId];
     });
+  }
+
+  updated(changedProps) {
+    if (changedProps.has('hass')) {
+      const oldHass = changedProps.get('hass');
+
+      // Update language if changed
+      if (this.hass?.language) {
+        this.language = this.hass.language.split('-')[0];
+      }
+
+      // Fetch history on first render or when entities need updates
+      if (!oldHass) {
+        this.updateCard();
+      } else if (this._entitiesChanged(oldHass, this.hass)) {
+        // Only update current values, not full history fetch
+        this.requestUpdate();
+      }
+
+      // Check if we need to refresh history data
+      this._checkHistoryRefresh();
+    }
+
+    // Apply card-mod once
+    if (!this._cardModApplied && this.config?.card_mod) {
+      customElements.whenDefined("card-mod").then((cardMod) => {
+        cardMod.applyToElement(this, "card", this.config.card_mod);
+        this._cardModApplied = true;
+      }).catch(() => {
+        // card-mod not available, ignore
+      });
+    }
+  }
+
+  _checkHistoryRefresh() {
+    if (!this.hass || !this.config) return;
+
+    const now = Date.now();
+    const entitiesToUpdate = this.config.entities.filter(entityConfig => {
+      const entityId = entityConfig.entity;
+      const hours = entityConfig.hours ?? this.config.hours;
+      const intervals = entityConfig.intervals ?? this.config.intervals;
+      const refreshInterval = ((hours / intervals) * 60 * 60 * 1000) / 2;
+      return !this._lastHistoryFetch[entityId] || (now - this._lastHistoryFetch[entityId] > refreshInterval);
+    });
+
+    if (entitiesToUpdate.length > 0) {
+      this.updateCard();
+    }
   }
 
   async updateCard() {
-    if (!this._hass || !this.config) return;
+    if (!this.hass || !this.config) return;
 
     const now = Date.now();
-    
+
     const entitiesToUpdate = this.config.entities.filter(entityConfig => {
-        const entityId = entityConfig.entity;
-        const hours = entityConfig.hours ?? this.config.hours;
-        const intervals = entityConfig.intervals ?? this.config.intervals;
-        const refreshInterval = ((hours / intervals) * 60 * 60 * 1000) / 2;
-        return !this._lastHistoryFetch[entityId] || (now - this._lastHistoryFetch[entityId] > refreshInterval);
+      const entityId = entityConfig.entity;
+      const hours = entityConfig.hours ?? this.config.hours;
+      const intervals = entityConfig.intervals ?? this.config.intervals;
+      const refreshInterval = ((hours / intervals) * 60 * 60 * 1000) / 2;
+      return !this._lastHistoryFetch[entityId] || (now - this._lastHistoryFetch[entityId] > refreshInterval);
     });
 
-    if (entitiesToUpdate.length === 0 && this.shadowRoot.innerHTML) {
-      // Nothing to update and card is already rendered
+    if (entitiesToUpdate.length === 0) {
       return;
     }
-    
-    const historyPromises = entitiesToUpdate.map(async (entityConfig) => {
-        const entityId = entityConfig.entity;
-        const hours = entityConfig.hours ?? this.config.hours;
-        const endTime = new Date();
-        const startTime = new Date(endTime.getTime() - hours * 60 * 60 * 1000);
 
-        try {
-            const history = await this._hass.callApi('GET',
-                `history/period/${startTime.toISOString()}?filter_entity_id=${entityId}&end_time=${endTime.toISOString()}&significant_changes_only=1&minimal_response&no_attributes&skip_initial_state`
-            );
-            this._lastHistoryFetch[entityId] = now;
-            return { entityId, history: history[0], entityConfig };
-        } catch (error) {
-            console.error(`Error fetching history for ${entityId}:`, error);
-            return { entityId, history: null, entityConfig }; // Return null on error to handle it gracefully
-        }
+    const historyPromises = entitiesToUpdate.map(async (entityConfig) => {
+      const entityId = entityConfig.entity;
+      const hours = entityConfig.hours ?? this.config.hours;
+      const endTime = new Date();
+      const startTime = new Date(endTime.getTime() - hours * 60 * 60 * 1000);
+
+      try {
+        const history = await this.hass.callApi('GET',
+          `history/period/${startTime.toISOString()}?filter_entity_id=${entityId}&end_time=${endTime.toISOString()}&significant_changes_only=1&minimal_response&no_attributes&skip_initial_state`
+        );
+        this._lastHistoryFetch[entityId] = now;
+        return { entityId, history: history[0], entityConfig };
+      } catch (error) {
+        console.error(`Error fetching history for ${entityId}:`, error);
+        return { entityId, history: null, entityConfig };
+      }
     });
 
     const results = await Promise.all(historyPromises);
 
-    const processedHistories = this.processedHistories || {};
+    const processedHistories = { ...this.processedHistories };
     results.forEach(({ entityId, history, entityConfig }) => {
-        if(history){
-            const intervals = entityConfig.intervals ?? this.config.intervals;
-            const hours = entityConfig.hours ?? this.config.hours;
-            const timeStep = (hours * 60 * 60 * 1000) / intervals;
-            processedHistories[entityId] = this.processHistoryData(history, intervals, timeStep, entityConfig);
-        }
+      if (history) {
+        const intervals = entityConfig.intervals ?? this.config.intervals;
+        const hours = entityConfig.hours ?? this.config.hours;
+        const timeStep = (hours * 60 * 60 * 1000) / intervals;
+        processedHistories[entityId] = this.processHistoryData(history, intervals, timeStep, entityConfig);
+      }
     });
     this.processedHistories = processedHistories;
-
-    this.renderCard(this.processedHistories);
   }
-
-  renderCard(processedHistories) {
-    this.shadowRoot.innerHTML = `
-      <style>
-        /* FIX: Keep icon+name on the left, value on the right */
-        .entity-header { display: flex; align-items: center; gap: 8px; }
-        .current-value { margin-left: auto; }
-        .entity-icon { width: 20px; height: 20px; }
-
-        :host {
-          padding: 16px;
-          background: var(--ha-card-background, var(--card-background-color, #fff));
-          box-shadow: var(--ha-card-box-shadow, none);
-          box-sizing: border-box;
-          border-radius: var(--ha-card-border-radius, 12px);
-          border-width: var(--ha-card-border-width, 1px);
-          border-style: solid;
-          border-color: var(--ha-card-border-color, var(--divider-color, #e0e0e0));
-          color: var(--primary-text-color);
-          display: block;
-          position: relative;
-        }
-        .card-header {
-          font-size: ${this.config.compact ? "12px" : "16px"};
-          font-weight: 500;
-          padding-bottom: 8px;
-          color: var(--primary-text-color, black);
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-        .entity-container {
-          margin-bottom: 16px;
-          cursor: pointer;
-        }
-        .entity-container:last-child {
-            margin-bottom: 0;
-        }
-        .entity-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 4px;
-        }
-        .entity-name {
-          font-size: ${this.config.compact ? "12px" : "14px"};
-          font-weight: 500;
-        }
-        .current-value {
-          font-size: ${this.config.compact ? "12px" : "18px"};
-          font-weight: bold;
-        }
-        .waterfall-container {
-          position: relative;
-          height: ${this.config.height}px;
-          border-radius: 2px;
-          overflow: hidden;
-          display: flex;
-        }
-        .bar-segment {
-          flex: 1;
-          height: 100%;
-          transition: all 0.3s ease;
-          border-right: 1px solid rgba(255,255,255,0.2);
-        }
-        .bar-segment:last-child {
-          border-right: none;
-        }
-        .labels {
-          display: flex;
-          justify-content: space-between;
-          font-size: 11px;
-          color: var(--secondary-text-color, gray);
-          margin-top: ${this.config.compact ? "0px" : "4px"};
-        }
-        .min-max-label {
-          font-size: 11px;
-          color: var(--secondary-text-color, gray);
-          text-align: center;
-        }
-        .error {
-          color: var(--error-color, red);
-        }
-      </style>
-      <div class="card-header">
-        <span>${this.config.title}</span>
-      </div>
-      ${this.config.entities.map(entityConfig => {
-        const entityId = entityConfig.entity;
-        const entity = this._hass.states[entityId];
-        if (!entity) return `<div class="error">Entity not found: ${entityId}</div>`;
-
-        const name = entityConfig.name || entity.attributes.friendly_name || entityId;
-                // FIX: derive icon per-entity if provided on the state
-        // FIX: resolve icon per entity with domain fallback
-        let icon = null;
-        if (entity.attributes && entity.attributes.icon) {
-          icon = entity.attributes.icon;
-        } else {
-          const domain = entityId.split('.')[0];
-          icon = this.DEFAULT_DOMAIN_ICONS[domain] || 'mdi:bookmark';
-        }
-        // FIX: resolve show_icons safely even if this.config is not yet defined
-        const globalShowIcons = (this && this.config && this.config.show_icons !== undefined) ? this.config.show_icons : true;
-        const perEntityShowIcons = (entityConfig.show_icons !== undefined) ? entityConfig.show_icons : globalShowIcons;
-        const iconHtml = (perEntityShowIcons && icon) ? `<ha-icon class="entity-icon" icon="${icon}"></ha-icon>` : '';
-const history = [...(processedHistories[entityId] || [])];
-        const current = this.parseState(entity.state);
-        history.push(current);
-        
-        const [actualMin, actualMax] = this.getMinMax(history);
-        
-        const showLabels = entityConfig.show_labels ?? this.config.show_labels;
-        const showMinMax = entityConfig.show_min_max ?? this.config.show_min_max;
-        const showCurrent = entityConfig.show_current ?? this.config.show_current;
-        const hours = entityConfig.hours ?? this.config.hours;
-        const intervals = entityConfig.intervals ?? this.config.intervals;
-        
-        return `
-          <div class="entity-container" data-entity-id="${entityId}" >
-            <div class="entity-header">
-              ${iconHtml}
-              <span class="entity-name">${name}</span>
-              ${showCurrent ? `<span class="current-value" data-entity="${entityId}">${this.displayState(current, entityConfig)}</span>` : ''}
-            </div>
-            <div class="waterfall-container">
-              ${history.map((value, index) => {
-                const isLast = index === history.length - 1;
-                const color = this.getColorForValue(value, entityConfig);
-                return `<div class="bar-segment ${isLast ? 'last-bar' : ''}"
-                             data-entity="${entityId}"
-                             style="background-color: ${color};"
-                             title="${this.getTimeLabel(index, intervals, hours)} : ${value !== null ? this.displayState(value, entityConfig) : this.t('error_loading_data')}">
-                        </div>`;
-              }).join('')}
-            </div>
-            ${showLabels ? `
-              <div class="labels">
-                <span>${hours}${this.t('hours_ago')}</span>
-                <span>${this.t('now')}</span>
-              </div>
-            ` : ''}
-            ${showMinMax ? `
-              <div class="min-max-label">
-                ${this.t('min_label')}: ${this.displayState(actualMin, entityConfig)} / ${this.t('max_label')}: ${this.displayState(actualMax, entityConfig)}
-              </div>
-            ` : ''}
-          </div>
-        `;
-      }).join('')}
-    `;
-
-    customElements.whenDefined("card-mod").then((cardMod) => {
-      cardMod.applyToElement(this, "card", this.config.card_mod);
-    });
-  
-    // Attach real click handlers for More Info (HA)
-    const containers = this.shadowRoot.querySelectorAll('.entity-container');
-    containers.forEach((el) => {
-      el.style.cursor = 'pointer';
-      el.addEventListener('click', (ev) => {
-        // Try to resolve the entity id from composedPath()
-        const path = ev.composedPath ? ev.composedPath() : [];
-        let id = el.dataset.entityId;
-        for (const node of path) {
-          if (node && node.dataset) {
-            if (node.dataset.entityId) { id = node.dataset.entityId; break; }
-            if (node.dataset.entity) { id = node.dataset.entity; break; }
-          }
-        }
-        if (id) {
-          ev.stopPropagation();
-          this.openMoreInfo(id);
-        }
-      });
-    });
-}
 
   processHistoryData(historyData, intervals, timeStep, entityConfig) {
     const defaultValue = entityConfig.default_value ?? this.config.default_value;
@@ -369,27 +375,27 @@ const history = [...(processedHistories[entityId] || [])];
     const startTime = Date.now() - (hours * 60 * 60 * 1000);
 
     if (historyData) {
-        historyData.forEach(point => {
-          const pointTime = new Date(point.last_changed || point.last_updated).getTime();
-          const timeDiff = pointTime - startTime;
-          if (timeDiff >= 0) {
-            const bucketIndex = Math.floor(timeDiff / timeStep);
-            if (bucketIndex >= 0 && bucketIndex < intervals) {
-              processed[bucketIndex] = this.parseState(point.state);
-            }
+      historyData.forEach(point => {
+        const pointTime = new Date(point.last_changed || point.last_updated).getTime();
+        const timeDiff = pointTime - startTime;
+        if (timeDiff >= 0) {
+          const bucketIndex = Math.floor(timeDiff / timeStep);
+          if (bucketIndex >= 0 && bucketIndex < intervals) {
+            processed[bucketIndex] = this.parseState(point.state);
           }
-        });
+        }
+      });
     }
 
     for (let i = 1; i < processed.length; i++) {
-        if (processed[i] === null && processed[i - 1] !== null) {
-            processed[i] = processed[i - 1];
-        }
+      if (processed[i] === null && processed[i - 1] !== null) {
+        processed[i] = processed[i - 1];
+      }
     }
     for (let i = processed.length - 2; i >= 0; i--) {
-        if (processed[i] === null && processed[i + 1] !== null) {
-            processed[i] = processed[i + 1];
-        }
+      if (processed[i] === null && processed[i + 1] !== null) {
+        processed[i] = processed[i + 1];
+      }
     }
 
     return processed;
@@ -399,9 +405,9 @@ const history = [...(processedHistories[entityId] || [])];
     let min = Infinity;
     let max = -Infinity;
     data.forEach(d => {
-        if (d === null) return;
-        if (d > max) max = d;
-        if (d < min) min = d;
+      if (d === null) return;
+      if (d > max) max = d;
+      if (d < min) min = d;
     });
     return [min, max];
   }
@@ -418,21 +424,27 @@ const history = [...(processedHistories[entityId] || [])];
   }
 
   displayState(state, entityConfig) {
-      if (state === true || state === 1 && (entityConfig.thresholds === threshold_default_boolean || this.config.thresholds === threshold_default_boolean)) return 'on';
-      if (state === false || state === 0 && (entityConfig.thresholds === threshold_default_boolean || this.config.thresholds === threshold_default_boolean)) return 'off';
-      if (typeof state === 'number') {
-          const digits = entityConfig.digits ?? this.config.digits;
-          return state.toFixed(digits) + this.getUnit(entityConfig);
-      }
-      return (state ?? 'N/A') + this.getUnit(entityConfig);
+    // Check if this is a binary value (0, 1, true, false)
+    if (this.isBinaryValue(state)) {
+      const stateOn = entityConfig.state_on ?? this.config.state_on;
+      const stateOff = entityConfig.state_off ?? this.config.state_off;
+      return (state === 1 || state === true) ? stateOn : stateOff;
+    }
+
+    // Numeric values
+    if (typeof state === 'number') {
+      const digits = entityConfig.digits ?? this.config.digits;
+      return state.toFixed(digits) + this.getUnit(entityConfig);
+    }
+
+    // Fallback
+    return (state ?? 'N/A') + this.getUnit(entityConfig);
   }
 
-  // NEW: Helper to check if value is binary (0 or 1)
   isBinaryValue(value) {
     return value === 0 || value === 1 || value === true || value === false;
   }
 
-  // NEW: Get binary colors with precedence: entity > global > defaults
   getBinaryColors(entityConfig) {
     // Per-entity binary_colors object
     if (entityConfig.binary_colors) {
@@ -441,7 +453,7 @@ const history = [...(processedHistories[entityId] || [])];
         { value: 1, color: entityConfig.binary_colors.on || entityConfig.binary_colors[1] || '#EEEEEE' }
       ];
     }
-    
+
     // Per-entity color_on/color_off
     if (entityConfig.color_on || entityConfig.color_off) {
       return [
@@ -449,7 +461,7 @@ const history = [...(processedHistories[entityId] || [])];
         { value: 1, color: entityConfig.color_on || '#EEEEEE' }
       ];
     }
-    
+
     // Global binary_colors object
     if (this.config.binary_colors) {
       return [
@@ -457,7 +469,7 @@ const history = [...(processedHistories[entityId] || [])];
         { value: 1, color: this.config.binary_colors.on || this.config.binary_colors[1] || '#EEEEEE' }
       ];
     }
-    
+
     // Global color_on/color_off
     if (this.config.color_on || this.config.color_off) {
       return [
@@ -465,7 +477,7 @@ const history = [...(processedHistories[entityId] || [])];
         { value: 1, color: this.config.color_on || '#EEEEEE' }
       ];
     }
-    
+
     // Default fallback
     return threshold_default_boolean;
   }
@@ -474,41 +486,41 @@ const history = [...(processedHistories[entityId] || [])];
     if (value === null || isNaN(value)) return '#666666';
 
     let thresholds = entityConfig.thresholds ?? this.config.thresholds;
-    
-    // NEW: Check if this is a binary value and apply binary colors
+
+    // Check if this is a binary value and apply binary colors
     if (!thresholds && this.isBinaryValue(value)) {
       thresholds = this.getBinaryColors(entityConfig);
     } else if (!thresholds) {
       thresholds = threshold_default_number;
     }
-    
+
     if (typeof value === 'boolean') value = value ? 1 : 0;
 
     const gradient = entityConfig.gradient ?? this.config.gradient;
     if (!gradient) {
-        let color = thresholds[0].color;
-        for (const t of thresholds) {
-            if (value >= t.value) {
-                color = t.color;
-            }
+      let color = thresholds[0].color;
+      for (const t of thresholds) {
+        if (value >= t.value) {
+          color = t.color;
         }
-        return color;
+      }
+      return color;
     }
 
     for (let i = 0; i < thresholds.length - 1; i++) {
-        const current = thresholds[i];
-        const next = thresholds[i + 1];
-        if (value >= current.value && value <= next.value) {
-            const factor = (next.value - current.value === 0) ? 0 : (value - current.value) / (next.value - current.value);
-            return this.interpolateColor(current.color, next.color, factor);
-        }
+      const current = thresholds[i];
+      const next = thresholds[i + 1];
+      if (value >= current.value && value <= next.value) {
+        const factor = (next.value - current.value === 0) ? 0 : (value - current.value) / (next.value - current.value);
+        return this.interpolateColor(current.color, next.color, factor);
+      }
     }
     return value < thresholds[0].value ? thresholds[0].color : thresholds[thresholds.length - 1].color;
   }
 
   getUnit(entityConfig) {
-      const entity = this._hass.states[entityConfig.entity];
-      return entityConfig.unit ?? this.config.unit ?? entity?.attributes?.unit_of_measurement ?? '';
+    const entity = this.hass.states[entityConfig.entity];
+    return entityConfig.unit ?? this.config.unit ?? entity?.attributes?.unit_of_measurement ?? '';
   }
 
   interpolateColor(color1, color2, factor) {
@@ -528,17 +540,18 @@ const history = [...(processedHistories[entityId] || [])];
   getTimeLabel(index, totalIntervals, hours) {
     const hoursAgo = (hours * (totalIntervals - index)) / totalIntervals;
     if (hours <= 24) {
-        const date = new Date(Date.now() - hoursAgo * 60 * 60 * 1000);
-        const nextDate = new Date(date.getTime() + (hours / totalIntervals) * 60 * 60 * 1000);
-        return `${date.getHours()}:00 - ${nextDate.getHours()}:00`;
+      const date = new Date(Date.now() - hoursAgo * 60 * 60 * 1000);
+      const nextDate = new Date(date.getTime() + (hours / totalIntervals) * 60 * 60 * 1000);
+      return `${date.getHours()}:00 - ${nextDate.getHours()}:00`;
     }
     if (hoursAgo < 1) {
-        return `${Math.round(hoursAgo * 60)}${this.t('minutes_ago')}`;
+      return `${Math.round(hoursAgo * 60)}${this.t('minutes_ago')}`;
     }
     return `${hoursAgo.toFixed(1)}${this.t('hours_ago')}`;
   }
 
-  openMoreInfo(entityId) {
+  _handleEntityClick(entityId, e) {
+    e.stopPropagation();
     const event = new CustomEvent('hass-more-info', {
       bubbles: true,
       composed: true,
@@ -547,8 +560,89 @@ const history = [...(processedHistories[entityId] || [])];
     this.dispatchEvent(event);
   }
 
+  render() {
+    if (!this.config || !this.hass) {
+      return html``;
+    }
+
+    return html`
+      <div class="card-header">
+        <span>${this.config.title}</span>
+      </div>
+      ${this.config.entities.map(entityConfig => this._renderEntity(entityConfig))}
+    `;
+  }
+
+  _renderEntity(entityConfig) {
+    const entityId = entityConfig.entity;
+    const entity = this.hass.states[entityId];
+
+    if (!entity) {
+      return html`<div class="error">Entity not found: ${entityId}</div>`;
+    }
+
+    const name = entityConfig.name || entity.attributes.friendly_name || entityId;
+
+    // Resolve icon
+    let icon = entity.attributes?.icon;
+    if (!icon) {
+      const domain = entityId.split('.')[0];
+      icon = this.DEFAULT_DOMAIN_ICONS[domain] || 'mdi:bookmark';
+    }
+
+    // Check if icon should be shown
+    const showIcons = entityConfig.show_icons ?? this.config.show_icons;
+
+    // Fixed: Use immutable array spreading
+    const history = [...(this.processedHistories[entityId] || []), this.parseState(entity.state)];
+
+    const [actualMin, actualMax] = this.getMinMax(history);
+
+    const showLabels = entityConfig.show_labels ?? this.config.show_labels;
+    const showMinMax = entityConfig.show_min_max ?? this.config.show_min_max;
+    const showCurrent = entityConfig.show_current ?? this.config.show_current;
+    const hours = entityConfig.hours ?? this.config.hours;
+    const intervals = entityConfig.intervals ?? this.config.intervals;
+    const current = this.parseState(entity.state);
+
+    return html`
+      <div class="entity-container" @click=${(e) => this._handleEntityClick(entityId, e)}>
+        <div class="entity-header">
+          ${showIcons ? html`<ha-icon class="entity-icon" .icon=${icon}></ha-icon>` : ''}
+          <span class="entity-name">${name}</span>
+          ${showCurrent ? html`<span class="current-value">${this.displayState(current, entityConfig)}</span>` : ''}
+        </div>
+        <div class="waterfall-container">
+          ${history.map((value, index) => {
+            const isLast = index === history.length - 1;
+            const color = this.getColorForValue(value, entityConfig);
+            const title = `${this.getTimeLabel(index, intervals, hours)} : ${value !== null ? this.displayState(value, entityConfig) : this.t('error_loading_data')}`;
+            return html`
+              <div
+                class="bar-segment ${isLast ? 'last-bar' : ''}"
+                style="background-color: ${color};"
+                title=${title}>
+              </div>
+            `;
+          })}
+        </div>
+        ${showLabels ? html`
+          <div class="labels">
+            <span>${hours}${this.t('hours_ago')}</span>
+            <span>${this.t('now')}</span>
+          </div>
+        ` : ''}
+        ${showMinMax ? html`
+          <div class="min-max-label">
+            ${this.t('min_label')}: ${this.displayState(actualMin, entityConfig)} / ${this.t('max_label')}: ${this.displayState(actualMax, entityConfig)}
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
   getCardSize() {
-    return this.config.entities.length * 2;
+    return this.config?.entities?.length * 2 || 2;
   }
 
   static getStubConfig() {
@@ -558,36 +652,36 @@ const history = [...(processedHistories[entityId] || [])];
       show_min_max: true,
       entities: [
         {
-            entity: 'sensor.outdoor_temperature',
-            name: 'Outside',
-            show_min_max: false, // Override global setting
+          entity: 'sensor.outdoor_temperature',
+          name: 'Outside',
+          show_min_max: false,
         },
         {
-            entity: 'sensor.indoor_temperature',
-            name: 'Inside (48h)',
-            hours: 48, // Override global setting
-            show_labels: false,
+          entity: 'sensor.indoor_temperature',
+          name: 'Inside (48h)',
+          hours: 48,
+          show_labels: false,
         },
         {
-            entity: 'sensor.attic_temperature',
-            name: 'Attic',
+          entity: 'sensor.attic_temperature',
+          name: 'Attic',
         },
       ],
     };
   }
 }
 
-customElements.define('waterfall-history-card', waterfallHistoryCard);
+customElements.define('waterfall-history-card', WaterfallHistoryCard);
 
 window.customCards = window.customCards || [];
 window.customCards.push({
   type: 'waterfall-history-card',
-  name: 'waterfall History Card',
+  name: 'Waterfall History Card',
   description: 'A horizontal waterfall display for historical sensor data'
 });
 
 console.info(
-  `%c waterFALL-HISTORY-CARD %c v2.1 `,
+  `%c WATERFALL-HISTORY-CARD %c v3.0 `,
   'color: orange; font-weight: bold; background: black',
-  'color: white; font-weight: bold; background: dimgray'
+  'color: white; font-weight; bold; background: dimgray'
 );
