@@ -1,8 +1,12 @@
 # Waterfall History Card for Home Assistant
 
-## v3.0 - Major Update
+## v3.1 - Inline Layout
 
-**Version 3.0** introduces significant performance improvements and new features while maintaining 100% backwards compatibility with v2.x configurations.
+**Version 3.1** adds inline layout mode for more compact card displays.
+
+### What's New in v3.1
+
+- **Inline Layout** - Display entity name, graph, and current value on a single line for a more compact view.
 
 ### What's New in v3.0
 
@@ -94,16 +98,16 @@ entities:
 | `show_current`   | `boolean` | `true`      | Show the current value next to the entity name.                             |
 | `show_icons`     | `boolean` | `true`      | Show entity icons globally. Can be overridden per entity.                   |
 | `compact`        | `boolean` | `false`     | Use smaller font sizes and spacing.                                         |
+| `inline_layout`  | `boolean` | `false`     | NEW v3.1: Display name, graph, and value on a single line.                  |
 | `color_on`       | `string`  | `#EEEEEE`   | Color for binary sensors in "on" state (global default).                    |
 | `color_off`      | `string`  | `#636363`   | Color for binary sensors in "off" state (global default).                   |
 | `binary_colors`  | `object`  | -           | Alternative way to set binary colors: `{on: '#color', off: '#color'}`.     |
-| `state_on`       | `string`  | `"On"`      | NEW v3.0: Label to display for binary "on" state (global default).          |
-| `state_off`      | `string`  | `"Off"`     | NEW v3.0: Label to display for binary "off" state (global default).         |
+| `state_on`       | `string`  | `"On"`      | Label to display for binary "on" state (global default).                    |
+| `state_off`      | `string`  | `"Off"`     | Label to display for binary "off" state (global default).                   |
 | `thresholds`     | `array`   | see below   | Color thresholds for numeric sensors.                                       |
 | `gradient`       | `boolean` | `false`     | Use gradient interpolation between thresholds.                              |
 | `digits`         | `number`  | `1`         | Number of decimal places for numeric values.                                |
 | `unit`           | `string`  | auto        | Override unit of measurement.                                               |
-| `compact`        | `boolean` | `false`     | Use compact styling (smaller fonts, tighter spacing).                       |
 | `card_mod`       | `object`  | -           | card-mod configuration for advanced styling.                                |
 
 ---
@@ -122,11 +126,12 @@ Each item in `entities:` can be either a bare entity ID string, or an object wit
 | `show_min_max`   | `boolean` | Inherits from card  | Show/hide min/max just for this entity.                             |
 | `show_current`   | `boolean` | Inherits from card  | Show/hide current value just for this entity.                       |
 | `show_icons`     | `boolean` | Inherits from card  | Show/hide the icon for just this entity (overrides global setting). |
+| `inline_layout`  | `boolean` | Inherits from card  | NEW v3.1: Use inline layout for this entity.                        |
 | `color_on`       | `string`  | Inherits from card  | Color for this binary entity's "on" state.                          |
 | `color_off`      | `string`  | Inherits from card  | Color for this binary entity's "off" state.                         |
 | `binary_colors`  | `object`  | Inherits from card  | Alternative: `{on: '#color', off: '#color'}` for this entity.       |
-| `state_on`       | `string`  | Inherits from card  | NEW v3.0: Label to display for this binary entity's "on" state.     |
-| `state_off`      | `string`  | Inherits from card  | NEW v3.0: Label to display for this binary entity's "off" state.    |
+| `state_on`       | `string`  | Inherits from card  | Label to display for this binary entity's "on" state.               |
+| `state_off`      | `string`  | Inherits from card  | Label to display for this binary entity's "off" state.              |
 | `thresholds`     | `array`   | Inherits from card  | Override color thresholds for this entity.                          |
 | `digits`         | `number`  | Inherits from card  | Override decimal places for this entity.                            |
 | `unit`           | `string`  | Inherits from card  | Override unit of measurement for this entity.                       |
@@ -148,6 +153,41 @@ entities:
     show_icons: false
   - entity: sensor.kitchen_temp
     hours: 6
+```
+
+### Inline Layout (NEW v3.1)
+
+Display entity name, graph, and value on a single line for a more compact view:
+
+```yaml
+type: custom:waterfall-history-card
+title: Temperature History
+inline_layout: true
+entities:
+  - entity: sensor.outdoor_temperature
+    name: Outside
+  - entity: sensor.indoor_temperature
+    name: Inside
+  - entity: sensor.basement_temperature
+    name: Basement
+```
+
+Mix inline and stacked layouts:
+
+```yaml
+type: custom:waterfall-history-card
+title: Temperature History
+entities:
+  # Inline layout for these
+  - entity: sensor.outdoor_temperature
+    name: Outside
+    inline_layout: true
+  - entity: sensor.indoor_temperature
+    name: Inside
+    inline_layout: true
+  # Default stacked layout
+  - entity: sensor.attic_temperature
+    name: Attic
 ```
 
 ### Binary Sensors with Custom State Labels (NEW v3.0)
@@ -512,7 +552,13 @@ entities:
 
 ## Version History
 
-### v3.0 (Latest)
+### v3.1 (Latest)
+- Added inline layout mode (`inline_layout`)
+- Display entity name, graph, and current value on a single line
+- Per-entity inline layout overrides
+- Improved compact mode support for inline layout
+
+### v3.0
 - Built on LitElement for performance and HA standards compliance
 - Added binary state label customization (`state_on`, `state_off`)
 - Intelligent rendering: only updates when tracked entities change

@@ -12,6 +12,7 @@ This is a **Home Assistant custom Lovelace card** that displays entity history a
 - Imports Lit from CDN (https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js)
 - Direct installation via HACS or manual copy to Home Assistant
 - No transpilation, bundling, or build steps required
+- Version 3.1 (current) - adds inline layout mode
 - Version 3.0 (released 2024) - major performance upgrade from v2.x
 
 ## Architecture
@@ -119,7 +120,7 @@ entities:
 4. Check browser console (F12) for errors
 
 **Debugging tips:**
-- Check `console.info()` version log on page load (should show v3.0)
+- Check `console.info()` version log on page load (should show v3.1)
 - Use browser DevTools to inspect Shadow DOM
 - Verify `hass` object in console: `document.querySelector('waterfall-history-card').hass`
 - Check reactive properties: `document.querySelector('waterfall-history-card').config`
@@ -226,7 +227,14 @@ type: module
 
 ## Version History & Breaking Changes
 
-### v3.0 (Current)
+### v3.1 (Current)
+- **NOT a breaking change** - 100% backwards compatible with v3.0
+- Added inline layout mode (`inline_layout`)
+- Display entity name, graph, and current value on a single line
+- Per-entity inline layout overrides
+- Compact mode support for inline layout
+
+### v3.0
 - **NOT a breaking change** - 100% backwards compatible with v2.x
 - Migrated from vanilla HTMLElement to LitElement
 - Added binary state label customization (`state_on`, `state_off`)
@@ -265,4 +273,4 @@ When making breaking changes, increment major version and document migration pat
 
 ## Version Identification
 
-Version logged to console in `console.info()` call at bottom of file. Update this when releasing new versions. Current: v3.0
+Version logged to console in `console.info()` call at bottom of file. Update this when releasing new versions. Current: v3.1

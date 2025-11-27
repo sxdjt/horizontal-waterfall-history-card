@@ -141,6 +141,77 @@ class WaterfallHistoryCard extends LitElement {
     :host(.compact) .labels {
       margin-top: 0px;
     }
+
+    /* Inline layout styles */
+    .entity-inline-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .entity-inline-container .entity-inline-name {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 120px;
+      flex-shrink: 0;
+    }
+
+    .entity-inline-container .entity-icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      display: block;
+    }
+
+    .entity-inline-container .entity-name {
+      font-size: var(--entity-name-font-size, 14px);
+      font-weight: 500;
+      white-space: nowrap;
+      line-height: var(--waterfall-height, 60px);
+    }
+
+    .entity-inline-container .entity-inline-graph {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .entity-inline-container .waterfall-container {
+      margin-bottom: 0;
+    }
+
+    .entity-inline-container .labels {
+      display: none;
+    }
+
+    .entity-inline-container .entity-inline-value {
+      min-width: 60px;
+      flex-shrink: 0;
+      text-align: right;
+      font-size: var(--current-value-font-size, 18px);
+      font-weight: bold;
+      white-space: nowrap;
+      line-height: var(--waterfall-height, 60px);
+    }
+
+    /* Compact mode for inline layout */
+    :host(.compact) .entity-inline-container {
+      margin-bottom: 8px;
+    }
+
+    :host(.compact) .entity-inline-container .entity-icon {
+      width: 16px;
+      height: 16px;
+    }
+
+    :host(.compact) .entity-inline-container .entity-name {
+      font-size: 12px;
+    }
+
+    :host(.compact) .entity-inline-container .entity-inline-value {
+      font-size: 12px;
+    }
   `;
 
   constructor() {
@@ -197,6 +268,7 @@ class WaterfallHistoryCard extends LitElement {
       unit: config.unit || null,
       icon: config.icon || null,
       compact: config.compact || false,
+      inline_layout: config.inline_layout || false,
       default_value: config.default_value ?? null,
       digits: typeof config.digits === 'number' ? config.digits : 1,
       card_mod: config.card_mod || {},
@@ -604,7 +676,54 @@ class WaterfallHistoryCard extends LitElement {
     const hours = entityConfig.hours ?? this.config.hours;
     const intervals = entityConfig.intervals ?? this.config.intervals;
     const current = this.parseState(entity.state);
+    const inlineLayout = entityConfig.inline_layout ?? this.config.inline_layout;
 
+    // Render waterfall bars
+    const waterfallBars = html`
+      ${history.map((value, index) => {
+        const isLast = index === history.length - 1;
+        const color = this.getColorForValue(value, entityConfig);
+        const title = `${this.getTimeLabel(index, intervals, hours)} : ${value !== null ? this.displayState(value, entityConfig) : this.t('error_loading_data')}`;
+        return html`
+          <div
+            class="bar-segment ${isLast ? 'last-bar' : ''}"
+            style="background-color: ${color};"
+            title=${title}>
+          </div>
+        `;
+      })}
+    `;
+
+    // Inline layout
+    if (inlineLayout) {
+      return html`
+        <div class="entity-inline-container" @click=${(e) => this._handleEntityClick(entityId, e)}>
+          <div class="entity-inline-name">
+            ${showIcons ? html`<ha-icon class="entity-icon" .icon=${icon}></ha-icon>` : ''}
+            <span class="entity-name">${name}</span>
+          </div>
+          <div class="entity-inline-graph">
+            <div class="waterfall-container">
+              ${waterfallBars}
+            </div>
+            ${showLabels ? html`
+              <div class="labels">
+                <span>${hours}${this.t('hours_ago')}</span>
+                <span>${this.t('now')}</span>
+              </div>
+            ` : ''}
+          </div>
+          ${showCurrent ? html`<div class="entity-inline-value">${this.displayState(current, entityConfig)}</div>` : ''}
+        </div>
+        ${showMinMax ? html`
+          <div class="min-max-label">
+            ${this.t('min_label')}: ${this.displayState(actualMin, entityConfig)} / ${this.t('max_label')}: ${this.displayState(actualMax, entityConfig)}
+          </div>
+        ` : ''}
+      `;
+    }
+
+    // Default layout
     return html`
       <div class="entity-container" @click=${(e) => this._handleEntityClick(entityId, e)}>
         <div class="entity-header">
@@ -613,18 +732,7 @@ class WaterfallHistoryCard extends LitElement {
           ${showCurrent ? html`<span class="current-value">${this.displayState(current, entityConfig)}</span>` : ''}
         </div>
         <div class="waterfall-container">
-          ${history.map((value, index) => {
-            const isLast = index === history.length - 1;
-            const color = this.getColorForValue(value, entityConfig);
-            const title = `${this.getTimeLabel(index, intervals, hours)} : ${value !== null ? this.displayState(value, entityConfig) : this.t('error_loading_data')}`;
-            return html`
-              <div
-                class="bar-segment ${isLast ? 'last-bar' : ''}"
-                style="background-color: ${color};"
-                title=${title}>
-              </div>
-            `;
-          })}
+          ${waterfallBars}
         </div>
         ${showLabels ? html`
           <div class="labels">
@@ -681,7 +789,7 @@ window.customCards.push({
 });
 
 console.info(
-  `%c WATERFALL-HISTORY-CARD %c v3.0 `,
+  `%c WATERFALL-HISTORY-CARD %c v3.1 `,
   'color: orange; font-weight: bold; background: black',
   'color: white; font-weight; bold; background: dimgray'
 );
