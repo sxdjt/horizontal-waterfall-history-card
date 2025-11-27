@@ -2,7 +2,7 @@
 
 ## v3.1 - Inline Layout
 
-**Version 3.1** Option to display entity name, graph, and current value on a single line for a more compact view.
+This update gives an option to display entity name, graph, and current value on a single line for a more compact view.
 
 <img width="520" height="156" alt="Screenshot 2025-11-27 at 00 15 34" src="https://github.com/user-attachments/assets/434b5431-e7b5-43a6-9f45-480d14026e82" />
 
