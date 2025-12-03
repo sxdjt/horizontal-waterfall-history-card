@@ -1,8 +1,20 @@
 # Waterfall History Card for Home Assistant
 
-## v3.1 - Inline Layout
+## v3.2 - Unknown & Unavailable State Handling
 
-This update gives an option to display entity name, graph, and current value on a single line for a more compact view.
+**Version 3.2** adds proper handling for entities in "unknown" or "unavailable" states with customizable colors and labels.
+
+### What's New in v3.2
+
+- **Unknown/Unavailable State Support** - Entities in "unknown" or "unavailable" states now display with distinct colors and labels instead of errors.
+- **Customizable Colors** - Configure colors for unknown (default: orange) and unavailable (default: gray) states.
+- **Customizable Labels** - Set custom labels like "Unknown", "INOP", "Offline", etc.
+- **Smart State Propagation** - Improved history fill logic prevents incorrect state propagation from unavailable/unknown periods.
+- **Fixes Issue #62** - Cards no longer break when entities become unavailable.
+
+### What's New in v3.1
+
+- **Inline Layout** - Display entity name, graph, and current value on a single line for a more compact view.
 
 <img width="520" height="156" alt="Screenshot 2025-11-27 at 00 15 34" src="https://github.com/user-attachments/assets/434b5431-e7b5-43a6-9f45-480d14026e82" />
 
@@ -20,8 +32,10 @@ This update gives an option to display entity name, graph, and current value on 
 - **Threshold-based colors** - colors automatically adapt to value thresholds (configurable).
 - **Binary sensor customization** - customize on/off colors and state labels for binary sensors, switches, and other binary entities.
 - **Binary state labels** - display "On"/"Off", "Open"/"Closed", "Unlocked"/"Locked" instead of numeric values.
+- **Unknown/unavailable state handling** - entities in unknown or unavailable states display with customizable colors and labels instead of errors.
 - **Entity icons** - show icons next to entity names; toggle globally or per-entity.
 - **Compact mode** - shrink fonts and spacing for tighter dashboards.
+- **Inline layout mode** - display entity name, graph, and current value on a single line.
 - **Per-entity overrides** - customize hours, intervals, labels, icons, colors, state labels, and display options per entity.
 
 <img width="476" height="380" alt="Sample card data" src="https://github.com/user-attachments/assets/8bcc7253-d042-43e2-8d68-30bf7b667b91" />
@@ -102,6 +116,10 @@ entities:
 | `binary_colors`  | `object`  | -           | Alternative way to set binary colors: `{on: '#color', off: '#color'}`.     |
 | `state_on`       | `string`  | `"On"`      | Label to display for binary "on" state (global default).                    |
 | `state_off`      | `string`  | `"Off"`     | Label to display for binary "off" state (global default).                   |
+| `color_unknown`  | `string`  | `#FF9800`   | NEW v3.2: Color for entities in "unknown" state (orange).                   |
+| `color_unavailable` | `string` | `#9E9E9E` | NEW v3.2: Color for entities in "unavailable" state (gray).                |
+| `state_unknown`  | `string`  | `"Unknown"` | NEW v3.2: Label to display for entities in "unknown" state.                 |
+| `state_unavailable` | `string` | `"INOP"`  | NEW v3.2: Label to display for entities in "unavailable" state.            |
 | `thresholds`     | `array`   | see below   | Color thresholds for numeric sensors.                                       |
 | `gradient`       | `boolean` | `false`     | Use gradient interpolation between thresholds.                              |
 | `digits`         | `number`  | `1`         | Number of decimal places for numeric values.                                |
@@ -130,6 +148,10 @@ Each item in `entities:` can be either a bare entity ID string, or an object wit
 | `binary_colors`  | `object`  | Inherits from card  | Alternative: `{on: '#color', off: '#color'}` for this entity.       |
 | `state_on`       | `string`  | Inherits from card  | Label to display for this binary entity's "on" state.               |
 | `state_off`      | `string`  | Inherits from card  | Label to display for this binary entity's "off" state.              |
+| `color_unknown`  | `string`  | Inherits from card  | NEW v3.2: Color for this entity when in "unknown" state.            |
+| `color_unavailable` | `string` | Inherits from card | NEW v3.2: Color for this entity when in "unavailable" state.       |
+| `state_unknown`  | `string`  | Inherits from card  | NEW v3.2: Label to display when this entity is "unknown".           |
+| `state_unavailable` | `string` | Inherits from card | NEW v3.2: Label to display when this entity is "unavailable".      |
 | `thresholds`     | `array`   | Inherits from card  | Override color thresholds for this entity.                          |
 | `digits`         | `number`  | Inherits from card  | Override decimal places for this entity.                            |
 | `unit`           | `string`  | Inherits from card  | Override unit of measurement for this entity.                       |
@@ -186,6 +208,51 @@ entities:
   # Default stacked layout
   - entity: sensor.attic_temperature
     name: Attic
+```
+
+### Unknown & Unavailable State Handling (NEW v3.2)
+
+Customize how entities display when they're in "unknown" or "unavailable" states:
+
+```yaml
+type: custom:waterfall-history-card
+title: Sensor Monitoring
+# Global defaults for all entities
+color_unknown: '#FFA726'       # Orange for unknown
+color_unavailable: '#78909C'   # Blue-gray for unavailable
+state_unknown: "No Data"
+state_unavailable: "Offline"
+entities:
+  - sensor.outdoor_temperature
+  - sensor.indoor_temperature
+
+  # Custom labels for critical sensor
+  - entity: sensor.water_heater_temp
+    name: Water Heater
+    state_unavailable: "SENSOR FAULT"
+    color_unavailable: '#FF1744'  # Red for fault
+```
+
+Per-entity overrides for different sensor types:
+
+```yaml
+type: custom:waterfall-history-card
+title: IoT Device Status
+entities:
+  # WiFi sensor - custom unavailable state
+  - entity: sensor.wifi_signal
+    name: WiFi Sensor
+    state_unavailable: "Disconnected"
+    color_unavailable: '#FF5722'
+
+  # Battery sensor - warn when unknown
+  - entity: sensor.battery_level
+    name: Battery Monitor
+    state_unknown: "Check Battery"
+    color_unknown: '#FFB300'
+
+  # Default handling for others
+  - sensor.room_temperature
 ```
 
 ### Binary Sensors with Custom State Labels (NEW v3.0)
@@ -366,6 +433,86 @@ State labels work with any entity that has binary states (0/1, on/off, true/fals
 
 ---
 
+## Unknown & Unavailable State Customization (NEW v3.2)
+
+### Overview
+
+Entities can enter "unknown" or "unavailable" states for various reasons:
+- Network connectivity issues
+- Sensor failures or battery depletion
+- Integration errors or API timeouts
+- Home Assistant restarts before entity initialization
+- Device reboots or firmware updates
+
+v3.2 provides dedicated handling for these states with customizable colors and labels.
+
+### Default Behavior
+
+| State | Color | Hex | Label | When It Happens |
+|-------|-------|-----|-------|-----------------|
+| Unknown | Orange | `#FF9800` | "Unknown" | Entity state cannot be determined |
+| Unavailable | Gray | `#9E9E9E` | "INOP" | Entity is offline or not responding |
+
+### Common Use Cases
+
+| Sensor Type | state_unavailable | color_unavailable |
+|-------------|-------------------|-------------------|
+| WiFi/Network Sensors | "Disconnected" | `#FF5722` (red) |
+| Battery Sensors | "Dead Battery" | `#F44336` (red) |
+| IoT Devices | "Offline" | `#757575` (gray) |
+| Critical Sensors | "FAULT" | `#D32F2F` (dark red) |
+| Temperature Sensors | "Sensor Error" | `#FF9800` (orange) |
+
+### Global State Labels
+
+Set default labels for all entities:
+
+```yaml
+type: custom:waterfall-history-card
+title: Device Monitoring
+color_unknown: '#FFB300'
+color_unavailable: '#B71C1C'
+state_unknown: "No Data"
+state_unavailable: "Device Offline"
+entities:
+  - sensor.outdoor_temperature
+  - sensor.indoor_temperature
+  - sensor.garage_temperature
+```
+
+### Per-Entity State Labels
+
+Override labels for specific entities:
+
+```yaml
+type: custom:waterfall-history-card
+title: Critical Monitoring
+entities:
+  - entity: sensor.water_leak_detector
+    state_unavailable: "SENSOR FAULT"
+    color_unavailable: '#FF0000'
+
+  - entity: sensor.smoke_detector
+    state_unknown: "CHECK SENSOR"
+    color_unknown: '#FF9800'
+
+  - entity: sensor.freezer_temp
+    state_unavailable: "POWER FAILURE"
+    color_unavailable: '#D32F2F'
+```
+
+### Smart State Propagation
+
+v3.2 includes improved history fill logic:
+
+- **Forward Fill**: Propagates all states (including unknown/unavailable) forward until the next state change
+- **Backward Fill**: Excludes unknown/unavailable states to prevent incorrect historical data filling
+- **Min/Max Calculations**: Automatically excludes unknown/unavailable values from min/max calculations
+
+This ensures your historical charts accurately represent sensor behavior without corruption from temporary outages.
+
+---
+
 ## Binary Sensor Color Customization
 
 ### Supported Binary Entities
@@ -454,6 +601,19 @@ These can be overridden globally or per-entity using `color_on`/`color_off` and 
 
 ---
 
+## Default Colors (Unknown & Unavailable States)
+
+For entities in unknown or unavailable states, v3.2 uses these default colors and labels:
+
+| State | Color     | Label | Description       |
+|-------|-----------|-------|-------------------|
+| Unknown | `#FF9800` | "Unknown" | Orange            |
+| Unavailable | `#9E9E9E` | "INOP" | Gray             |
+
+These can be overridden globally or per-entity using `color_unknown`/`color_unavailable` and `state_unknown`/`state_unavailable`.
+
+---
+
 ## US National Weather Service Temperature Color Scale
 
 ```yaml
@@ -517,6 +677,12 @@ entities:
 - Check browser console for errors
 - Try reducing `intervals` if displaying many entities
 
+### Unknown/unavailable states showing incorrectly?
+- Verify you're using v3.2 (check browser console for version log)
+- Check entity actually has "unknown" or "unavailable" state in Developer Tools
+- Ensure color format is valid CSS (hex, rgb, rgba, named)
+- Clear browser cache after updating (Ctrl+F5 / Cmd+Shift+R)
+
 ---
 
 ## Migration from v2.x to v3.0
@@ -550,11 +716,22 @@ entities:
 
 ## Version History
 
-### v3.1 (Latest)
+### v3.2 (Latest)
+- Added unknown and unavailable state handling with customizable colors and labels
+- Configurable colors: `color_unknown` (default: orange), `color_unavailable` (default: gray)
+- Configurable labels: `state_unknown` (default: "Unknown"), `state_unavailable` (default: "INOP")
+- Per-entity override support for all unknown/unavailable configuration options
+- Improved forward/backward fill logic for proper state propagation
+- Min/Max calculations now exclude unknown and unavailable states
+- Fixes issue #62: entities in unknown/unavailable states now render correctly
+- 100% backwards compatible with v3.1
+
+### v3.1
 - Added inline layout mode (`inline_layout`)
 - Display entity name, graph, and current value on a single line
 - Per-entity inline layout overrides
 - Improved compact mode support for inline layout
+- 100% backwards compatible with v3.0
 
 ### v3.0
 - Built on LitElement for performance and HA standards compliance

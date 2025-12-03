@@ -1,5 +1,34 @@
 # Changelog
 
+## [3.2.0] - 2025-12-03
+
+### Added
+- **Unknown and Unavailable State Handling**: Dedicated support for entities in "unknown" or "unavailable" states
+- Configurable colors for unknown states (`color_unknown`, default: orange)
+- Configurable colors for unavailable states (`color_unavailable`, default: gray)
+- Configurable labels for unknown states (`state_unknown`, default: "Unknown")
+- Configurable labels for unavailable states (`state_unavailable`, default: "INOP")
+- Per-entity override support for all unknown/unavailable configuration options
+
+### Fixed
+- Issue #62: Proper rendering of entities when they enter unknown or unavailable states
+- Min/Max calculations now exclude unknown and unavailable states
+- Improved forward/backward fill logic to prevent incorrect state propagation from unavailable/unknown states
+
+### Technical Details
+- Special sentinel values for internal state tracking (-999 for unknown, -998 for unavailable)
+- Forward fill propagates all states including unavailable/unknown until next actual state change
+- Backward fill excludes unavailable/unknown states to prevent improper historical data filling
+- Unknown/unavailable states display with distinct colors and labels for better visibility
+
+### Backwards Compatibility
+- 100% backwards compatible with v3.1
+- All new configuration options have sensible defaults
+- Existing cards are unaffected and will use default unknown/unavailable handling
+- No breaking changes
+
+---
+
 ## [3.1.0] - 2025-01-27
 
 ### Added

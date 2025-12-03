@@ -1,5 +1,7 @@
 import { LitElement, html, css } from 'https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js';
 
+const UNKNOWN_STATE = -999;
+const UNAVAILABLE_STATE = -998;
 const threshold_default_number = [
   { value: 60, color: '#4FC3F7' },  // cold
   { value: 70, color: '#81C784' },  // cool
@@ -277,6 +279,10 @@ class WaterfallHistoryCard extends LitElement {
       color_off: config.color_off || null,
       state_on: config.state_on || 'On',
       state_off: config.state_off || 'Off',
+      color_unknown: config.color_unknown || '#FF9800',
+      color_unavailable: config.color_unavailable || '#9E9E9E',
+      state_unknown: config.state_unknown || 'Unknown',
+      state_unavailable: config.state_unavailable || 'INOP',
     };
 
     this.config = {
@@ -459,13 +465,19 @@ class WaterfallHistoryCard extends LitElement {
       });
     }
 
+    // Forward fill - Propagate all states (including unavailable/unknown) until next actual state change
     for (let i = 1; i < processed.length; i++) {
       if (processed[i] === null && processed[i - 1] !== null) {
         processed[i] = processed[i - 1];
       }
     }
+    // Backward fill - Don't fill FROM unavailable/unknown states
+    // Also don't overwrite unavailable/unknown states with normal states
     for (let i = processed.length - 2; i >= 0; i--) {
-      if (processed[i] === null && processed[i + 1] !== null) {
+      if (processed[i] === null &&
+          processed[i + 1] !== null &&
+          processed[i + 1] !== UNKNOWN_STATE &&
+          processed[i + 1] !== UNAVAILABLE_STATE) {
         processed[i] = processed[i + 1];
       }
     }
@@ -477,7 +489,8 @@ class WaterfallHistoryCard extends LitElement {
     let min = Infinity;
     let max = -Infinity;
     data.forEach(d => {
-      if (d === null) return;
+      // Skip null and special sentinel values (unavailable/unknown)
+      if (d === null || d === UNKNOWN_STATE || d === UNAVAILABLE_STATE) return;
       if (d > max) max = d;
       if (d < min) min = d;
     });
@@ -487,8 +500,11 @@ class WaterfallHistoryCard extends LitElement {
   parseState(state) {
     if (typeof state === 'number') return state;
     if (typeof state === 'string') {
-      if (state.toLowerCase() === 'off') return 0;
-      if (state.toLowerCase() === 'on') return 1;
+      const lowerState = state.toLowerCase();
+      if (lowerState === 'unknown') return UNKNOWN_STATE;
+      if (lowerState === 'unavailable') return UNAVAILABLE_STATE;
+      if (lowerState === 'off') return 0;
+      if (lowerState === 'on') return 1;
       const casted = parseFloat(state);
       if (!Number.isNaN(casted)) return casted;
     }
@@ -496,6 +512,14 @@ class WaterfallHistoryCard extends LitElement {
   }
 
   displayState(state, entityConfig) {
+    // Handle special states first
+    if (state === UNKNOWN_STATE) {
+      return entityConfig.state_unknown ?? this.config.state_unknown;
+    }
+    if (state === UNAVAILABLE_STATE) {
+      return entityConfig.state_unavailable ?? this.config.state_unavailable;
+    }
+
     // Check if this is a binary value (0, 1, true, false)
     if (this.isBinaryValue(state)) {
       const stateOn = entityConfig.state_on ?? this.config.state_on;
@@ -556,6 +580,14 @@ class WaterfallHistoryCard extends LitElement {
 
   getColorForValue(value, entityConfig) {
     if (value === null || isNaN(value)) return '#666666';
+
+    // Handle special states first
+    if (value === UNKNOWN_STATE) {
+      return entityConfig.color_unknown ?? this.config.color_unknown;
+    }
+    if (value === UNAVAILABLE_STATE) {
+      return entityConfig.color_unavailable ?? this.config.color_unavailable;
+    }
 
     let thresholds = entityConfig.thresholds ?? this.config.thresholds;
 
@@ -789,7 +821,7 @@ window.customCards.push({
 });
 
 console.info(
-  `%c WATERFALL-HISTORY-CARD %c v3.1 `,
+  `%c WATERFALL-HISTORY-CARD %c v3.2 `,
   'color: orange; font-weight: bold; background: black',
   'color: white; font-weight; bold; background: dimgray'
 );

@@ -12,7 +12,8 @@ This is a **Home Assistant custom Lovelace card** that displays entity history a
 - Imports Lit from CDN (https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js)
 - Direct installation via HACS or manual copy to Home Assistant
 - No transpilation, bundling, or build steps required
-- Version 3.1 (current) - adds inline layout mode
+- Version 3.2 (current) - adds unknown and unavailable state handling
+- Version 3.1 (2025-01-27) - adds inline layout mode
 - Version 3.0 (released 2024) - major performance upgrade from v2.x
 
 ## Architecture
@@ -227,7 +228,16 @@ type: module
 
 ## Version History & Breaking Changes
 
-### v3.1 (Current)
+### v3.2 (Current)
+- **NOT a breaking change** - 100% backwards compatible with v3.1
+- Added unknown and unavailable state handling with dedicated colors and labels
+- Configurable colors for unknown states (`color_unknown`, default: orange)
+- Configurable colors for unavailable states (`color_unavailable`, default: gray)
+- Configurable labels for unknown and unavailable states
+- Improved forward/backward fill logic for proper state propagation
+- Fixes issue #62: entities in unknown/unavailable states now render correctly
+
+### v3.1
 - **NOT a breaking change** - 100% backwards compatible with v3.0
 - Added inline layout mode (`inline_layout`)
 - Display entity name, graph, and current value on a single line
@@ -273,4 +283,4 @@ When making breaking changes, increment major version and document migration pat
 
 ## Version Identification
 
-Version logged to console in `console.info()` call at bottom of file. Update this when releasing new versions. Current: v3.1
+Version logged to console in `console.info()` call at bottom of file. Update this when releasing new versions. Current: v3.2
