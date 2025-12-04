@@ -827,7 +827,7 @@ window.customCards.push({
 });
 
 console.info(
-  `%c WATERFALL-HISTORY-CARD %c v3.2 `,
+  `%c WATERFALL-HISTORY-CARD %c v3.3.0 `,
   'color: orange; font-weight: bold; background: black',
   'color: white; font-weight; bold; background: dimgray'
 );

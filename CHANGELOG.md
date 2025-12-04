@@ -1,6 +1,6 @@
 # Changelog
 
-## [3.2.0] - 2025-12-03
+## [3.3.0] - 2025-12-03
 
 ### Added
 - **Locale-Aware Time Formatting**: Time labels now automatically respect Home Assistant profile locale settings
@@ -9,6 +9,25 @@
   - Displays 24-hour format (e.g., "15:00 - 18:00") for European and other locales
   - Falls back to browser locale if Home Assistant locale not available
   - No configuration needed - fully automatic based on user profile
+
+### Fixed
+- Issue #63: Time labels now respect locale settings instead of always using 24-hour format (Thanks @uSpike)
+
+### Technical Details
+- Locale resolution chain: `hass.locale.language` → `hass.language` → browser default
+- Uses `Intl.DateTimeFormat` with options `{ hour: 'numeric', minute: '2-digit' }`
+- Only applies to time ranges ≤24 hours (longer ranges use relative time)
+
+### Backwards Compatibility
+- 100% backwards compatible with v3.2
+- Time formatting is fully automatic with no configuration required
+- No breaking changes
+
+---
+
+## [3.2.0] - 2025-12-03
+
+### Added
 - **Unknown and Unavailable State Handling**: Dedicated support for entities in "unknown" or "unavailable" states
 - Configurable colors for unknown states (`color_unknown`, default: orange)
 - Configurable colors for unavailable states (`color_unavailable`, default: gray)
@@ -18,7 +37,6 @@
 
 ### Fixed
 - Issue #62: Proper rendering of entities when they enter unknown or unavailable states
-- Issue #63: Time labels now respect locale settings instead of always using 24-hour format (Thanks @uSpike)
 - Min/Max calculations now exclude unknown and unavailable states
 - Improved forward/backward fill logic to prevent incorrect state propagation from unavailable/unknown states
 

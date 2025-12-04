@@ -1,12 +1,16 @@
 # Waterfall History Card for Home Assistant
 
-## v3.2 - Unknown & Unavailable State Handling + Locale-Aware Time Formatting
+## v3.3 - Locale-Aware Time Formatting
 
-**Version 3.2** adds proper handling for entities in "unknown" or "unavailable" states with customizable colors and labels, plus automatic locale-aware time formatting.
+**Version 3.3** adds automatic locale-aware time formatting that respects your Home Assistant profile settings.
+
+### What's New in v3.3
+
+- **Locale-Aware Time Formatting** - Time labels now automatically respect your Home Assistant profile locale settings (12-hour for US English, 24-hour for European locales, etc.)
+- **Fixes Issue #63** - Time labels now display in your preferred format without configuration (Thanks @uSpike)
 
 ### What's New in v3.2
 
-- **Locale-Aware Time Formatting** - Time labels now automatically respect your Home Assistant profile locale settings (12-hour for US English, 24-hour for European locales, etc.)
 - **Unknown/Unavailable State Support** - Entities in "unknown" or "unavailable" states now display with distinct colors and labels instead of errors.
 - **Customizable Colors** - Configure colors for unknown (default: orange) and unavailable (default: gray) states.
 - **Customizable Labels** - Set custom labels like "Unknown", "INOP", "Offline", etc.
@@ -744,9 +748,14 @@ entities:
 
 ## Version History
 
-### v3.2 (Latest)
+### v3.3 (Latest)
 - Added locale-aware time formatting that respects Home Assistant profile settings
 - Time labels automatically display in 12-hour (US English) or 24-hour format (European locales)
+- Uses browser's Intl.DateTimeFormat API with automatic locale detection
+- Fixes issue #63: time labels now respect locale settings (Thanks @uSpike)
+- 100% backwards compatible with v3.2
+
+### v3.2
 - Added unknown and unavailable state handling with customizable colors and labels
 - Configurable colors: `color_unknown` (default: orange), `color_unavailable` (default: gray)
 - Configurable labels: `state_unknown` (default: "Unknown"), `state_unavailable` (default: "INOP")
