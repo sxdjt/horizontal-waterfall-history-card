@@ -13,7 +13,7 @@ const threshold_default_boolean = [
   { value: 1, color: '#EEEEEE' },  // on
 ];
 
-class WaterfallHistoryCard extends LitElement {
+class WaterfallHistoryCardBeta extends LitElement {
   static properties = {
     hass: { type: Object },
     config: { type: Object },
@@ -817,17 +817,17 @@ class WaterfallHistoryCard extends LitElement {
   }
 }
 
-customElements.define('waterfall-history-card', WaterfallHistoryCard);
+customElements.define('waterfall-history-card-beta', WaterfallHistoryCardBeta);
 
 window.customCards = window.customCards || [];
 window.customCards.push({
-  type: 'waterfall-history-card',
-  name: 'Waterfall History Card',
-  description: 'A horizontal waterfall display for historical sensor data'
+  type: 'waterfall-history-card-beta',
+  name: 'Waterfall History Card (Beta)',
+  description: 'A horizontal waterfall display for historical sensor data - BETA VERSION'
 });
 
 console.info(
-  `%c WATERFALL-HISTORY-CARD %c v3.2 `,
+  `%c WATERFALL-HISTORY-CARD-BETA %c v3.2-beta `,
   'color: orange; font-weight: bold; background: black',
   'color: white; font-weight; bold; background: dimgray'
 );

@@ -1,11 +1,12 @@
 # Waterfall History Card for Home Assistant
 
-## v3.2 - Unknown & Unavailable State Handling
+## v3.2 - Unknown & Unavailable State Handling + Locale-Aware Time Formatting
 
-**Version 3.2** adds proper handling for entities in "unknown" or "unavailable" states with customizable colors and labels.
+**Version 3.2** adds proper handling for entities in "unknown" or "unavailable" states with customizable colors and labels, plus automatic locale-aware time formatting.
 
 ### What's New in v3.2
 
+- **Locale-Aware Time Formatting** - Time labels now automatically respect your Home Assistant profile locale settings (12-hour for US English, 24-hour for European locales, etc.)
 - **Unknown/Unavailable State Support** - Entities in "unknown" or "unavailable" states now display with distinct colors and labels instead of errors.
 - **Customizable Colors** - Configure colors for unknown (default: orange) and unavailable (default: gray) states.
 - **Customizable Labels** - Set custom labels like "Unknown", "INOP", "Offline", etc.
@@ -155,6 +156,33 @@ Each item in `entities:` can be either a bare entity ID string, or an object wit
 | `thresholds`     | `array`   | Inherits from card  | Override color thresholds for this entity.                          |
 | `digits`         | `number`  | Inherits from card  | Override decimal places for this entity.                            |
 | `unit`           | `string`  | Inherits from card  | Override unit of measurement for this entity.                       |
+
+---
+
+## Time Formatting (NEW v3.2)
+
+### Automatic Locale Support
+
+The card automatically formats time labels based on your Home Assistant profile locale settings using the browser's `Intl.DateTimeFormat` API.
+
+**How it works:**
+- Respects your Home Assistant user profile language/locale settings first
+- Falls back to browser locale if HA locale not available
+- Automatically displays times in your regional format
+
+**Examples by locale:**
+- **US English (en-US)**: "3:00 PM - 6:00 PM"
+- **UK English (en-GB)**: "15:00 - 18:00"
+- **French (fr-FR)**: "15:00 - 18:00"
+- **German (de-DE)**: "15:00 - 18:00"
+- **Spanish (es-ES)**: "15:00 - 18:00"
+- **Japanese (ja-JP)**: "15:00 - 18:00"
+
+**Configuration:**
+No configuration needed - time formatting is fully automatic based on your Home Assistant profile settings.
+
+**Fallback behavior:**
+For time ranges greater than 24 hours, the card displays relative time (e.g., "12.5h ago") instead of absolute times.
 
 ---
 
@@ -717,6 +745,8 @@ entities:
 ## Version History
 
 ### v3.2 (Latest)
+- Added locale-aware time formatting that respects Home Assistant profile settings
+- Time labels automatically display in 12-hour (US English) or 24-hour format (European locales)
 - Added unknown and unavailable state handling with customizable colors and labels
 - Configurable colors: `color_unknown` (default: orange), `color_unavailable` (default: gray)
 - Configurable labels: `state_unknown` (default: "Unknown"), `state_unavailable` (default: "INOP")
