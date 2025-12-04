@@ -88,13 +88,6 @@ Simply update the card file - no configuration changes needed.
 ### From v3.0 or earlier
 Update the card file. Binary entities will now show locale-appropriate time formats. If you prefer the old static "HH:00 - HH:00" format, there is no configuration option to revert (this is an enhancement, not a configurable feature).
 
-## Testing
-
-**Beta version available:**
-- Filename: `horizontal-waterfall-history-card-beta.js`
-- Card type: `custom:waterfall-history-card-beta`
-- Test the new features without affecting your production cards
-
 ## Known Issues
 
 None at this time.
