@@ -1,5 +1,41 @@
 # Changelog
 
+## [4.0.0] - 2025-12-04
+
+### Added
+- **Visual Configuration Editor**: Comprehensive UI editor for configuring card and per-entity settings through Home Assistant's interface
+  - Basic settings: title, time window, intervals, bar height, decimal places
+  - Display options: icons, labels, current values, min/max, compact mode, inline layout, gradient mode
+  - Binary state configuration: colors and labels for on/off states
+  - Unknown/unavailable state configuration: colors and labels for error states
+  - Global thresholds: define color thresholds for numeric sensors
+  - Per-entity configuration: override any global setting for individual entities
+  - Entity threshold configuration: define custom thresholds per entity
+
+### Changed
+- **TypeScript Build System**: Migrated from single-file JavaScript to TypeScript with Rollup
+  - Improved code organization with separate files for types, constants, editor, and main card
+  - Modern development tooling with TypeScript compiler and type checking
+  - Minified production builds for better performance
+  - Source maps for easier debugging
+
+### Fixed
+- Min/max label centering issue - labels now properly center below charts
+
+### Technical Details
+- Element name: `waterfall-history-card` (unchanged)
+- Editor element: `waterfall-history-card-editor`
+- Build process: TypeScript → Rollup → minified JavaScript
+- Source files in `src/` directory
+- Built files in `dist/` directory, copied to root for HACS compatibility
+
+### Backwards Compatibility
+- 100% backwards compatible with v3.3
+- All YAML configurations work without modification
+- Visual editor is optional - YAML configuration still fully supported
+
+---
+
 ## [3.3.0] - 2025-12-03
 
 ### Added

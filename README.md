@@ -4,6 +4,7 @@
 
 ### What's New in v4.0
 
+- **This is a NON-BREAKING update -** V3.x cards will continue to work with this update
 - **Visual Configuration Editor** - Configure your card through Home Assistant's UI editor
 - **Bug Fix:** - Fixed min/max label centering issue
 
