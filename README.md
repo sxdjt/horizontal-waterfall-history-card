@@ -1,34 +1,13 @@
 # Waterfall History Card for Home Assistant
 
-## v3.3 - Locale-Aware Time Formatting
+## v4.0 - Visual Editor & TypeScript
 
-**Version 3.3** adds automatic locale-aware time formatting that respects your Home Assistant profile settings.
+### What's New in v4.0
 
-### What's New in v3.3
-
-- **Locale-Aware Time Formatting** - Time labels now automatically respect your Home Assistant profile locale settings (12-hour for US English, 24-hour for European locales, etc.)
-- **Fixes Issue #63** - Time labels now display in your preferred format without configuration (Thanks @uSpike)
-
-### What's New in v3.2
-
-- **Unknown/Unavailable State Support** - Entities in "unknown" or "unavailable" states now display with distinct colors and labels instead of errors.
-- **Customizable Colors** - Configure colors for unknown (default: orange) and unavailable (default: gray) states.
-- **Customizable Labels** - Set custom labels like "Unknown", "INOP", "Offline", etc.
-- **Smart State Propagation** - Improved history fill logic prevents incorrect state propagation from unavailable/unknown periods.
-- **Fixes Issue #62** - Cards no longer break when entities become unavailable.
-
-### What's New in v3.1
-
-- **Inline Layout** - Display entity name, graph, and current value on a single line for a more compact view.
+- **Visual Configuration Editor** - Configure your card through Home Assistant's UI editor
+- **Bug Fix:** - Fixed min/max label centering issue
 
 <img width="520" height="156" alt="Screenshot 2025-11-27 at 00 15 34" src="https://github.com/user-attachments/assets/434b5431-e7b5-43a6-9f45-480d14026e82" />
-
-### What's New in v3.0
-
-- **Performance Optimizations** - Built on LitElement for efficient rendering. Only updates when tracked entities change, not on every Home Assistant state change. Drastically reduced CPU usage and DOM operations.
-- **Binary State Labels** - Display meaningful labels like "Open"/"Closed" or "Unlocked"/"Locked" instead of "0"/"1" for binary sensors, switches, lights, and locks.
-- **Modern Architecture** - Uses Home Assistant's standard LitElement framework with efficient virtual DOM rendering.
-- **100% Backwards Compatible** - All existing v2.x configurations work without modifications.
 
 ## What does this card do?
 
@@ -45,8 +24,6 @@
 
 <img width="476" height="380" alt="Sample card data" src="https://github.com/user-attachments/assets/8bcc7253-d042-43e2-8d68-30bf7b667b91" />
 
-Using `compact` mode, it works very well on mobile devices.
-
 ---
 
 ## Installation
@@ -60,11 +37,6 @@ Using `compact` mode, it works very well on mobile devices.
 1. Download `horizontal-waterfall-history-card.js` from the [GitHub repo](https://github.com/sxdjt/horizontal-waterfall-history-card)
 2. Copy to `config/www/` in your Home Assistant directory
 3. Add to Lovelace resources:
-
-```yaml
-url: /local/horizontal-waterfall-history-card.js
-type: module
-```
 
 ---
 
@@ -115,16 +87,16 @@ entities:
 | `show_current`   | `boolean` | `true`      | Show the current value next to the entity name.                             |
 | `show_icons`     | `boolean` | `true`      | Show entity icons globally. Can be overridden per entity.                   |
 | `compact`        | `boolean` | `false`     | Use smaller font sizes and spacing.                                         |
-| `inline_layout`  | `boolean` | `false`     | NEW v3.1: Display name, graph, and value on a single line.                  |
+| `inline_layout`  | `boolean` | `false`     | Display name, graph, and value on a single line.                            |
 | `color_on`       | `string`  | `#EEEEEE`   | Color for binary sensors in "on" state (global default).                    |
 | `color_off`      | `string`  | `#636363`   | Color for binary sensors in "off" state (global default).                   |
-| `binary_colors`  | `object`  | -           | Alternative way to set binary colors: `{on: '#color', off: '#color'}`.     |
+| `binary_colors`  | `object`  | -           | Alternative way to set binary colors: `{on: '#color', off: '#color'}`.      |
 | `state_on`       | `string`  | `"On"`      | Label to display for binary "on" state (global default).                    |
 | `state_off`      | `string`  | `"Off"`     | Label to display for binary "off" state (global default).                   |
-| `color_unknown`  | `string`  | `#FF9800`   | NEW v3.2: Color for entities in "unknown" state (orange).                   |
-| `color_unavailable` | `string` | `#9E9E9E` | NEW v3.2: Color for entities in "unavailable" state (gray).                |
-| `state_unknown`  | `string`  | `"Unknown"` | NEW v3.2: Label to display for entities in "unknown" state.                 |
-| `state_unavailable` | `string` | `"INOP"`  | NEW v3.2: Label to display for entities in "unavailable" state.            |
+| `color_unknown`  | `string`  | `#FF9800`   | Color for entities in "unknown" state (orange).                             |
+| `color_unavailable` | `string` | `#9E9E9E` | Color for entities in "unavailable" state (gray).                           |
+| `state_unknown`  | `string`  | `"Unknown"` | Label to display for entities in "unknown" state.                           |
+| `state_unavailable` | `string` | `"INOP"`  | Label to display for entities in "unavailable" state.                       |
 | `thresholds`     | `array`   | see below   | Color thresholds for numeric sensors.                                       |
 | `gradient`       | `boolean` | `false`     | Use gradient interpolation between thresholds.                              |
 | `digits`         | `number`  | `1`         | Number of decimal places for numeric values.                                |
@@ -147,23 +119,23 @@ Each item in `entities:` can be either a bare entity ID string, or an object wit
 | `show_min_max`   | `boolean` | Inherits from card  | Show/hide min/max just for this entity.                             |
 | `show_current`   | `boolean` | Inherits from card  | Show/hide current value just for this entity.                       |
 | `show_icons`     | `boolean` | Inherits from card  | Show/hide the icon for just this entity (overrides global setting). |
-| `inline_layout`  | `boolean` | Inherits from card  | NEW v3.1: Use inline layout for this entity.                        |
+| `inline_layout`  | `boolean` | Inherits from card  | Use inline layout for this entity.                        |
 | `color_on`       | `string`  | Inherits from card  | Color for this binary entity's "on" state.                          |
 | `color_off`      | `string`  | Inherits from card  | Color for this binary entity's "off" state.                         |
 | `binary_colors`  | `object`  | Inherits from card  | Alternative: `{on: '#color', off: '#color'}` for this entity.       |
 | `state_on`       | `string`  | Inherits from card  | Label to display for this binary entity's "on" state.               |
 | `state_off`      | `string`  | Inherits from card  | Label to display for this binary entity's "off" state.              |
-| `color_unknown`  | `string`  | Inherits from card  | NEW v3.2: Color for this entity when in "unknown" state.            |
-| `color_unavailable` | `string` | Inherits from card | NEW v3.2: Color for this entity when in "unavailable" state.       |
-| `state_unknown`  | `string`  | Inherits from card  | NEW v3.2: Label to display when this entity is "unknown".           |
-| `state_unavailable` | `string` | Inherits from card | NEW v3.2: Label to display when this entity is "unavailable".      |
+| `color_unknown`  | `string`  | Inherits from card  | Color for this entity when in "unknown" state.            |
+| `color_unavailable` | `string` | Inherits from card | Color for this entity when in "unavailable" state.       |
+| `state_unknown`  | `string`  | Inherits from card  | Label to display when this entity is "unknown".           |
+| `state_unavailable` | `string` | Inherits from card | Label to display when this entity is "unavailable".      |
 | `thresholds`     | `array`   | Inherits from card  | Override color thresholds for this entity.                          |
 | `digits`         | `number`  | Inherits from card  | Override decimal places for this entity.                            |
 | `unit`           | `string`  | Inherits from card  | Override unit of measurement for this entity.                       |
 
 ---
 
-## Time Formatting (NEW v3.2)
+## Time Formatting
 
 ### Automatic Locale Support
 
@@ -207,7 +179,7 @@ entities:
     hours: 6
 ```
 
-### Inline Layout (NEW v3.1)
+### Inline Layout
 
 Display entity name, graph, and value on a single line for a more compact view:
 
@@ -242,7 +214,7 @@ entities:
     name: Attic
 ```
 
-### Unknown & Unavailable State Handling (NEW v3.2)
+### Unknown & Unavailable State Handling
 
 Customize how entities display when they're in "unknown" or "unavailable" states:
 
@@ -287,7 +259,7 @@ entities:
   - sensor.room_temperature
 ```
 
-### Binary Sensors with Custom State Labels (NEW v3.0)
+### Binary Sensors with Custom State Labels
 
 ```yaml
 type: custom:waterfall-history-card
@@ -402,7 +374,7 @@ entities:
 
 ---
 
-## Binary State Label Customization (NEW v3.0)
+## Binary State Label Customization
 
 ### Overview
 
@@ -465,7 +437,7 @@ State labels work with any entity that has binary states (0/1, on/off, true/fals
 
 ---
 
-## Unknown & Unavailable State Customization (NEW v3.2)
+## Unknown & Unavailable State Customization
 
 ### Overview
 
@@ -475,8 +447,6 @@ Entities can enter "unknown" or "unavailable" states for various reasons:
 - Integration errors or API timeouts
 - Home Assistant restarts before entity initialization
 - Device reboots or firmware updates
-
-v3.2 provides dedicated handling for these states with customizable colors and labels.
 
 ### Default Behavior
 
@@ -535,13 +505,9 @@ entities:
 
 ### Smart State Propagation
 
-v3.2 includes improved history fill logic:
-
 - **Forward Fill**: Propagates all states (including unknown/unavailable) forward until the next state change
 - **Backward Fill**: Excludes unknown/unavailable states to prevent incorrect historical data filling
 - **Min/Max Calculations**: Automatically excludes unknown/unavailable values from min/max calculations
-
-This ensures your historical charts accurately represent sensor behavior without corruption from temporary outages.
 
 ---
 
@@ -556,23 +522,6 @@ Binary color customization works with any entity that has on/off or 0/1 states:
 - `lock.*`
 - `cover.*` (open/closed)
 - `input_boolean.*`
-
-### Configuration Methods
-
-**Method 1: Simple key-value (recommended)**
-```yaml
-color_on: '#00FF00'
-color_off: '#FF0000'
-```
-
-**Method 2: Object notation**
-```yaml
-binary_colors:
-  on: '#00FF00'
-  off: '#FF0000'
-```
-
-Both methods work at the global card level or per-entity level.
 
 ### Color Precedence
 
@@ -690,14 +639,8 @@ entities:
 - Clear browser cache after updating the card (Ctrl+F5 / Cmd+Shift+R)
 
 ### Binary state labels not showing?
-- Verify you're using v3.0 (check browser console for version log)
 - Ensure entity has binary states (0, 1, on, off)
 - Check configuration spelling of `state_on` and `state_off`
-
-### Entity not showing?
-- Verify the entity ID is correct
-- Check that the entity exists in Home Assistant
-- Look for errors in the browser console (F12)
 
 ### Colors look wrong?
 - Verify color format (must be valid CSS color)
@@ -705,94 +648,12 @@ entities:
 - For numeric sensors, use `thresholds` instead of `binary_colors`
 
 ### Performance issues?
-- v3.0 should be significantly faster than v2.x
-- Check browser console for errors
 - Try reducing `intervals` if displaying many entities
 
 ### Unknown/unavailable states showing incorrectly?
-- Verify you're using v3.2 (check browser console for version log)
 - Check entity actually has "unknown" or "unavailable" state in Developer Tools
 - Ensure color format is valid CSS (hex, rgb, rgba, named)
 - Clear browser cache after updating (Ctrl+F5 / Cmd+Shift+R)
-
----
-
-## Migration from v2.x to v3.0
-
-### Automatic Migration
-
-**All v2.x configurations work without changes in v3.0.** You don't need to modify your existing cards.
-
-### What Changed
-
-1. **Binary entities now show "On"/"Off" by default** instead of "0"/"1"
-   - To restore v2.x behavior: add `state_on: "1"` and `state_off: "0"`
-
-2. **Performance improvements** - you may notice:
-   - Faster initial load
-   - Smoother updates
-   - Lower CPU usage
-   - Fewer re-renders
-
-3. **Architecture** - card now uses LitElement
-   - Functionally identical to v2.x
-   - Better Home Assistant integration
-   - More efficient rendering
-
-### New Features You Can Use
-
-- **Binary state labels** - customize how binary entities display
-- **Improved performance** - automatic, no configuration needed
-
----
-
-## Version History
-
-### v3.3 (Latest)
-- Added locale-aware time formatting that respects Home Assistant profile settings
-- Time labels automatically display in 12-hour (US English) or 24-hour format (European locales)
-- Uses browser's Intl.DateTimeFormat API with automatic locale detection
-- Fixes issue #63: time labels now respect locale settings (Thanks @uSpike)
-- 100% backwards compatible with v3.2
-
-### v3.2
-- Added unknown and unavailable state handling with customizable colors and labels
-- Configurable colors: `color_unknown` (default: orange), `color_unavailable` (default: gray)
-- Configurable labels: `state_unknown` (default: "Unknown"), `state_unavailable` (default: "INOP")
-- Per-entity override support for all unknown/unavailable configuration options
-- Improved forward/backward fill logic for proper state propagation
-- Min/Max calculations now exclude unknown and unavailable states
-- Fixes issue #62: entities in unknown/unavailable states now render correctly
-- 100% backwards compatible with v3.1
-
-### v3.1
-- Added inline layout mode (`inline_layout`)
-- Display entity name, graph, and current value on a single line
-- Per-entity inline layout overrides
-- Improved compact mode support for inline layout
-- 100% backwards compatible with v3.0
-
-### v3.0
-- Built on LitElement for performance and HA standards compliance
-- Added binary state label customization (`state_on`, `state_off`)
-- Intelligent rendering: only updates when tracked entities change
-- Significant performance improvements (95%+ reduction in re-renders)
-- Fixed code quality issues (redundant checks, array mutation)
-- 100% backwards compatible with v2.x configurations
-
-### v2.2
-- Added binary sensor color customization (`color_on`, `color_off`, `binary_colors`)
-- Per-entity binary color overrides
-- Improved binary value detection
-
-### v2.0
-- Multi-entity support
-- Per-entity configuration overrides
-- BREAKING CHANGE from v1.x
-
-### v1.x (Deprecated)
-- Single entity per card
-- Basic waterfall visualization
 
 ---
 

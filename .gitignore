@@ -1,9 +1,19 @@
 # Claude Code project guidance files
 CLAUDE.md
 claude.md
+.claude/
 
 # Beta/testing versions
 horizontal-waterfall-history-card-beta.js
+
+# TypeScript project
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
 
 # macOS
 .DS_Store

@@ -1,0 +1,39 @@
+{
+  "name": "horizontal-waterfall-history-card",
+  "version": "4.0.0",
+  "description": "A Home Assistant Lovelace card displaying entity history as horizontal waterfall charts",
+  "type": "module",
+  "main": "dist/horizontal-waterfall-history-card.js",
+  "scripts": {
+    "build": "rollup -c",
+    "watch": "rollup -c --watch"
+  },
+  "keywords": [
+    "home-assistant",
+    "lovelace",
+    "custom-card",
+    "history",
+    "waterfall"
+  ],
+  "author": "Community",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sxdjt/horizontal-waterfall-history-card"
+  },
+  "dependencies": {
+    "custom-card-helpers": "^1.9.0",
+    "home-assistant-js-websocket": "^9.1.0",
+    "lit": "^3.1.2"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "rollup": "^4.9.6",
+    "tslib": "^2.6.2",
+    "typescript": "^5.3.3"
+  }
+}
