@@ -2,6 +2,8 @@
 
 Multi-State Interval Tracking - Testing for Issue #65
 
+<img width="518" height="205" alt="Screenshot 2025-12-05 at 19 30 57" src="https://github.com/user-attachments/assets/e0d794de-4f0b-4f14-8fa5-37e34df41fd7" />
+
 ## Quick Install
 
 ### Download Beta File
