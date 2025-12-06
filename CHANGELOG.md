@@ -1,5 +1,30 @@
 # Changelog
 
+## [4.1.0-beta] - 2025-12-05
+
+### Added
+- **Multi-State Interval Tracking**: Brief state changes are no longer lost
+  - Stores all state changes per interval with timestamps and durations
+  - Captures transient events like doors briefly opened or alarms momentarily triggered
+- **Split-Bar Visualization**: Intervals with multiple states display proportionally
+  - Each state gets its own color segment based on duration
+  - Even 1-second state changes are visible (min-width: 1px)
+- **Duration Tooltips**: Hover over segments shows state name and duration
+  - Human-readable format: "5s", "10m", "2h 15m"
+
+### Fixed
+- **Issue #65**: Brief state changes (like door opened for 1 minute) now visible
+- Data loss when multiple state changes occur within single interval
+- Algorithm now uses multi-state tracking instead of last-value-in-interval sampling
+
+### Technical Details
+- Beta version available as `waterfall-history-card-beta`
+- New TypeScript interfaces: `IntervalState`
+- Modified `ProcessedHistoryData` interface to include optional `states` array
+- New helper methods: `_findPriorState`, `_calculatePrimaryState`, `_formatDuration`
+- Backwards compatible: Single-state intervals render identically to v4.0
+- Build command: `npm run build:beta`
+
 ## [4.0.0] - 2025-12-04
 
 ### Added

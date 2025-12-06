@@ -14,6 +14,13 @@ export interface BinaryColorsConfig {
   1?: string;
 }
 
+// State segment within an interval (for multi-state tracking)
+export interface IntervalState {
+  state: number | null;
+  startTime: number;  // Unix timestamp in ms
+  duration: number;   // Duration in ms
+}
+
 // Per-entity configuration options
 export interface EntityConfig {
   // Required
@@ -109,7 +116,8 @@ export interface ProcessedHistoryData {
   [entityId: string]: {
     data: Array<{
       time: Date;
-      value: number | null;
+      value: number | null;              // Primary/dominant state (backwards compatible)
+      states?: IntervalState[];          // Multi-state data (optional, only when multiple states exist)
     }>;
     minValue: number;
     maxValue: number;

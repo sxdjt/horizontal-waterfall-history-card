@@ -6,6 +6,7 @@
   "main": "dist/horizontal-waterfall-history-card.js",
   "scripts": {
     "build": "rollup -c",
+    "build:beta": "rollup -c rollup.config-beta.js",
     "watch": "rollup -c --watch"
   },
   "keywords": [
