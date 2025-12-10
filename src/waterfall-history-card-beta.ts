@@ -490,7 +490,13 @@ export class WaterfallHistoryCardBeta extends LitElement {
       allStateChanges.sort((a, b) => a.timestamp - b.timestamp);
     }
 
-    // Build intervals with multi-state tracking
+    // Determine if this entity is a binary sensor
+    // Check domain first, then check if all values are binary (0 or 1)
+    const entityId = entityConfig.entity;
+    const domain = entityId.split('.')[0];
+    const isBinarySensor = domain === 'binary_sensor' || this._isBinarySensorByValues(allStateChanges);
+
+    // Build intervals with multi-state tracking (only for binary sensors)
     const processedIntervals: Array<{
       time: Date;
       value: number | null;
@@ -511,40 +517,53 @@ export class WaterfallHistoryCardBeta extends LitElement {
 
       let currentStateStart = intervalStart;
 
-      // Process all state changes within this interval
-      allStateChanges.forEach(change => {
-        if (change.timestamp >= intervalStart && change.timestamp < intervalEnd) {
-          // Close out the previous state segment
-          if (currentState !== null) {
-            states.push({
-              state: currentState,
-              startTime: currentStateStart,
-              duration: change.timestamp - currentStateStart
-            });
+      // Process all state changes within this interval (only for binary sensors)
+      if (isBinarySensor) {
+        allStateChanges.forEach(change => {
+          if (change.timestamp >= intervalStart && change.timestamp < intervalEnd) {
+            // Close out the previous state segment
+            if (currentState !== null) {
+              states.push({
+                state: currentState,
+                startTime: currentStateStart,
+                duration: change.timestamp - currentStateStart
+              });
+            }
+
+            // Start new state segment
+            currentState = change.state;
+            currentStateStart = change.timestamp;
           }
+        });
 
-          // Start new state segment
-          currentState = change.state;
-          currentStateStart = change.timestamp;
+        // Close final state segment for this interval
+        if (currentState !== null) {
+          states.push({
+            state: currentState,
+            startTime: currentStateStart,
+            duration: intervalEnd - currentStateStart
+          });
         }
-      });
-
-      // Close final state segment for this interval
-      if (currentState !== null) {
-        states.push({
-          state: currentState,
-          startTime: currentStateStart,
-          duration: intervalEnd - currentStateStart
+      } else {
+        // For non-binary sensors (like temperature), just find the last state in the interval
+        // This gives us the most recent value without splitting bars
+        allStateChanges.forEach(change => {
+          if (change.timestamp >= intervalStart && change.timestamp < intervalEnd) {
+            currentState = change.state;
+          }
         });
       }
 
       // Determine dominant/primary state (for backwards compatibility)
-      const primaryState = this._calculatePrimaryState(states, defaultValue);
+      const primaryState = isBinarySensor
+        ? this._calculatePrimaryState(states, defaultValue)
+        : currentState;
 
       processedIntervals.push({
         time: new Date(intervalStart),
         value: primaryState,
-        states: states.length > 1 ? states : undefined  // Only store states array when multiple states exist
+        // Only store states array for binary sensors when multiple states exist
+        states: (isBinarySensor && states.length > 1) ? states : undefined
       });
     }
 
@@ -737,6 +756,21 @@ export class WaterfallHistoryCardBeta extends LitElement {
 
   private t(key: string): string {
     return (this.translations[this.language]?.[key]) || this.translations.en[key] || key;
+  }
+
+  // Helper method to determine if sensor is binary based on its values
+  private _isBinarySensorByValues(
+    stateChanges: Array<{timestamp: number; state: number | null}>
+  ): boolean {
+    // If no state changes, can't determine - default to non-binary
+    if (stateChanges.length === 0) return false;
+
+    // Check if all non-null states are either 0 or 1
+    return stateChanges.every(change => {
+      const state = change.state;
+      return state === null || state === 0 || state === 1 ||
+             state === UNKNOWN_STATE || state === UNAVAILABLE_STATE;
+    });
   }
 
   // Helper method to find the most recent state before a given timestamp
