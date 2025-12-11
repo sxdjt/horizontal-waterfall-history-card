@@ -18,6 +18,15 @@
 - Multi-state tracking now limited to binary sensors only
 - Continuous sensors (temperature, humidity, etc.) use simple last-value sampling
 - Improved detection of binary sensors via domain check and value analysis
+- **Inline Layout Space Optimization**: Reduced fixed width allocations to maximize graph display
+  - Entity name section: 120px to 100px (17% reduction)
+  - Current value section: 60px to 50px (17% reduction)
+  - Results in approximately 8% more space for waterfall charts
+  - Long entity names gracefully truncate with text-overflow: ellipsis
+- **Customizable Spacing via card-mod**: Users can adjust horizontal spacing to suit their needs
+  - Override entity name width to prevent truncation or save space
+  - Override current value width to accommodate longer values or save space
+  - See documentation for card-mod syntax examples
 
 ### Fixed
 - **Issue #65**: Brief state changes (like door opened for 1 minute) now visible

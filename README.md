@@ -215,6 +215,34 @@ entities:
     name: Attic
 ```
 
+#### Inline Layout Space Optimization
+
+The inline layout allocates horizontal space as follows:
+- Entity name section: 100px fixed width (includes icon)
+- Current value section: 50px fixed width
+- Graph section: Takes all remaining space
+
+Long entity names are automatically truncated with ellipsis (...). The full name is visible in the more-info dialog.
+
+You can use card-mod to adjust the amount of space given for the entity name and graph 'columns'. Use this to adjust as necessary to avoid truncated entity names and give as much space as desired for the graph element.
+
+```yaml
+type: custom:waterfall-history-card
+title: Temperature History
+inline_layout: true
+entities:
+  - sensor.outdoor_temperature
+  - sensor.indoor_temperature
+card_mod:
+  style: |
+    .entity-inline-container .entity-inline-name {
+      width: 120px !important;
+    }
+    .entity-inline-container .entity-inline-value {
+      width: 60px !important;
+    }
+```
+
 ### Unknown & Unavailable State Handling
 
 Customize how entities display when they're in "unknown" or "unavailable" states:

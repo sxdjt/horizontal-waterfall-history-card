@@ -54,6 +54,12 @@ entities:
 - Hover over any segment to see state and duration
 - Format: "5s", "10m", "2h 15m"
 
+### Inline Layout Space Optimization
+- Entity name section: 100px (reduced from 120px)
+- Current value section: 50px (reduced from 60px)
+- More space for graphs
+- Customizable via card-mod (see README for examples)
+
 ## Side-by-Side Comparison
 
 Test production vs beta to see the difference:

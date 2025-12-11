@@ -73,7 +73,7 @@ function t(t,e,i,s){var n,o=arguments.length,a=o<3?e:null===s?s=Object.getOwnPro
       </div>
     `}getCardSize(){return 2*this.config?.entities?.length||2}};var Dt,Rt;zt.styles=a`
     :host {
-      padding: 16px;
+      padding: 16px 16px 16px 8px;
       background: var(--ha-card-background, var(--card-background-color, #fff));
       box-shadow: var(--ha-card-box-shadow, none);
       box-sizing: border-box;
@@ -196,7 +196,7 @@ function t(t,e,i,s){var n,o=arguments.length,a=o<3?e:null===s?s=Object.getOwnPro
       display: flex;
       align-items: center;
       gap: 8px;
-      min-width: 120px;
+      width: 100px;
       flex-shrink: 0;
     }
 
@@ -211,6 +211,8 @@ function t(t,e,i,s){var n,o=arguments.length,a=o<3?e:null===s?s=Object.getOwnPro
       font-size: var(--entity-name-font-size, 14px);
       font-weight: 500;
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       line-height: var(--waterfall-height, 60px);
     }
 
@@ -228,7 +230,7 @@ function t(t,e,i,s){var n,o=arguments.length,a=o<3?e:null===s?s=Object.getOwnPro
     }
 
     .entity-inline-container .entity-inline-value {
-      min-width: 60px;
+      width: 50px;
       flex-shrink: 0;
       text-align: right;
       font-size: var(--current-value-font-size, 18px);
