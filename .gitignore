@@ -8,7 +8,6 @@ horizontal-waterfall-history-card-beta.js
 
 # TypeScript project
 node_modules/
-dist/
 *.tsbuildinfo
 
 # Logs

@@ -5,7 +5,6 @@
 ### What's New in v4.0
 
 - **This is a NON-BREAKING update -** V3.x cards will continue to work with this update
-- **Visual Configuration Editor** - Configure your card through Home Assistant's UI editor
 - **Bug Fix:** - Fixed min/max label centering issue
 
 <img width="520" height="156" alt="Screenshot 2025-11-27 at 00 15 34" src="https://github.com/user-attachments/assets/434b5431-e7b5-43a6-9f45-480d14026e82" />
@@ -136,33 +135,6 @@ Each item in `entities:` can be either a bare entity ID string, or an object wit
 
 ---
 
-## Time Formatting
-
-### Automatic Locale Support
-
-The card automatically formats time labels based on your Home Assistant profile locale settings using the browser's `Intl.DateTimeFormat` API.
-
-**How it works:**
-- Respects your Home Assistant user profile language/locale settings first
-- Falls back to browser locale if HA locale not available
-- Automatically displays times in your regional format
-
-**Examples by locale:**
-- **US English (en-US)**: "3:00 PM - 6:00 PM"
-- **UK English (en-GB)**: "15:00 - 18:00"
-- **French (fr-FR)**: "15:00 - 18:00"
-- **German (de-DE)**: "15:00 - 18:00"
-- **Spanish (es-ES)**: "15:00 - 18:00"
-- **Japanese (ja-JP)**: "15:00 - 18:00"
-
-**Configuration:**
-No configuration needed - time formatting is fully automatic based on your Home Assistant profile settings.
-
-**Fallback behavior:**
-For time ranges greater than 24 hours, the card displays relative time (e.g., "12.5h ago") instead of absolute times.
-
----
-
 ## Examples
 
 ### Basic Multi-Entity Temperature Card
@@ -215,14 +187,7 @@ entities:
     name: Attic
 ```
 
-#### Inline Layout Space Optimization
-
-The inline layout allocates horizontal space as follows:
-- Entity name section: 100px fixed width (includes icon)
-- Current value section: 50px fixed width
-- Graph section: Takes all remaining space
-
-Long entity names are automatically truncated with ellipsis (...). The full name is visible in the more-info dialog.
+### Using CardMod to adjust spacing
 
 You can use card-mod to adjust the amount of space given for the entity name and graph 'columns'. Use this to adjust as necessary to avoid truncated entity names and give as much space as desired for the graph element.
 
@@ -317,36 +282,6 @@ entities:
     color_off: '#4CAF50'
 ```
 
-### Doors & Windows with Custom Labels
-
-```yaml
-type: custom:waterfall-history-card
-title: Doors & Windows
-hours: 24
-state_on: "Open"
-state_off: "Closed"
-color_on: '#FFC107'
-color_off: '#4CAF50'
-entities:
-  - binary_sensor.front_door
-  - binary_sensor.back_door
-  - binary_sensor.window_living_room
-  - binary_sensor.garage_door
-```
-
-### Binary Sensors with Object Notation
-
-```yaml
-type: custom:waterfall-history-card
-title: Security Status
-binary_colors:
-  on: '#F44336'   # Red = triggered
-  off: '#4CAF50'  # Green = safe
-entities:
-  - binary_sensor.front_door
-  - binary_sensor.back_door
-  - binary_sensor.window_sensor
-```
 
 ### Per-Entity Color Overrides
 
@@ -375,30 +310,6 @@ entities:
       off: '#263238'  # Dark when closed
     state_on: "Open"
     state_off: "Closed"
-```
-
-### Mixed Sensor Types
-
-```yaml
-type: custom:waterfall-history-card
-title: Kitchen Dashboard
-# Binary colors for switches/binary sensors
-color_on: '#FFC107'
-color_off: '#37474F'
-# Numeric thresholds for temperature
-thresholds:
-  - value: 60
-    color: '#4FC3F7'
-  - value: 70
-    color: '#81C784'
-  - value: 80
-    color: '#FFB74D'
-  - value: 100
-    color: '#FF8A65'
-entities:
-  - sensor.kitchen_temperature      # Uses thresholds
-  - binary_sensor.motion_kitchen    # Uses binary_colors
-  - switch.kitchen_light            # Uses binary_colors
 ```
 
 ---
@@ -460,22 +371,11 @@ State labels work with any entity that has binary states (0/1, on/off, true/fals
 - `binary_sensor.*` (motion, door, window, etc.)
 - `switch.*`
 - `light.*` (on/off only)
-- `lock.*`
-- `cover.*` (open/closed)
 - `input_boolean.*`
 
 ---
 
 ## Unknown & Unavailable State Customization
-
-### Overview
-
-Entities can enter "unknown" or "unavailable" states for various reasons:
-- Network connectivity issues
-- Sensor failures or battery depletion
-- Integration errors or API timeouts
-- Home Assistant restarts before entity initialization
-- Device reboots or firmware updates
 
 ### Default Behavior
 
@@ -532,12 +432,6 @@ entities:
     color_unavailable: '#D32F2F'
 ```
 
-### Smart State Propagation
-
-- **Forward Fill**: Propagates all states (including unknown/unavailable) forward until the next state change
-- **Backward Fill**: Excludes unknown/unavailable states to prevent incorrect historical data filling
-- **Min/Max Calculations**: Automatically excludes unknown/unavailable values from min/max calculations
-
 ---
 
 ## Binary Sensor Color Customization
@@ -548,8 +442,6 @@ Binary color customization works with any entity that has on/off or 0/1 states:
 - `binary_sensor.*` (motion, door, window, etc.)
 - `switch.*`
 - `light.*` (on/off states only)
-- `lock.*`
-- `cover.*` (open/closed)
 - `input_boolean.*`
 
 ### Color Precedence
@@ -586,8 +478,6 @@ thresholds:
   - value: 100
     color: "#FF8A65"
 ```
-
-Temperatures in Fahrenheit.
 
 | Threshold | Color     | Description |
 |-----------|-----------|-------------|

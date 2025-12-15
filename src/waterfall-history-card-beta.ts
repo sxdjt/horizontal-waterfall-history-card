@@ -6,8 +6,7 @@ import {
   EntityConfig,
   NormalizedEntityConfig,
   ThresholdConfig,
-  ProcessedHistoryData,
-  IntervalState
+  ProcessedHistoryData
 } from './types';
 import {
   UNKNOWN_STATE,
@@ -215,29 +214,6 @@ export class WaterfallHistoryCardBeta extends LitElement {
 
     :host(.compact) .entity-inline-container .entity-inline-value {
       font-size: 12px;
-    }
-
-    /* Multi-state split bar styles */
-    .multi-state-bar {
-      display: flex;
-      flex-direction: row;
-    }
-
-    .state-segment {
-      height: 100%;
-      transition: all 0.3s ease;
-      border-right: 1px solid rgba(0,0,0,0.1);
-      min-width: 1px;  /* Ensure even brief states are visible */
-    }
-
-    .state-segment:last-child {
-      border-right: none;
-    }
-
-    .state-segment:hover {
-      filter: brightness(1.2);
-      z-index: 10;
-      position: relative;
     }
   `;
 
@@ -468,108 +444,90 @@ export class WaterfallHistoryCardBeta extends LitElement {
     this.processedHistories = processedHistories;
   }
 
-  private processHistoryData(historyData: any[], intervals: number, timeStep: number, entityConfig: EntityConfig): Array<{time: Date; value: number | null; states?: IntervalState[]}> {
+  private processHistoryData(historyData: any[], intervals: number, timeStep: number, entityConfig: EntityConfig): Array<{time: Date; value: number | null}> {
     const defaultValue = entityConfig.default_value ?? this.config.default_value;
+    const processed: (number | null)[] = new Array(intervals).fill(defaultValue);
     const hours = entityConfig.hours ?? this.config.hours!;
     const startTime = Date.now() - (hours * 60 * 60 * 1000);
-    const endTime = Date.now();
 
-    // Collect all state changes with timestamps
-    const allStateChanges: Array<{timestamp: number; state: number | null}> = [];
-
-    if (historyData && historyData.length > 0) {
-      historyData.forEach(point => {
-        const pointTime = new Date(point.last_changed || point.last_updated).getTime();
-        if (pointTime >= startTime && pointTime <= endTime) {
-          allStateChanges.push({
-            timestamp: pointTime,
-            state: this.parseState(point.state)
-          });
-        }
-      });
-
-      // Sort by timestamp (should already be sorted, but ensure it)
-      allStateChanges.sort((a, b) => a.timestamp - b.timestamp);
-    }
-
-    // Determine if this entity is a binary sensor
-    // Check domain first, then check if all values are binary (0 or 1)
+    // Detect if entity is binary (for "last different state" logic)
+    // Applies to binary_sensor, switch, light, input_boolean, and other on/off entities
     const entityId = entityConfig.entity;
     const domain = entityId.split('.')[0];
-    const isBinarySensor = domain === 'binary_sensor' || this._isBinarySensorByValues(allStateChanges);
+    const isBinarySensor = domain === 'binary_sensor' || domain === 'switch' || domain === 'light' || domain === 'input_boolean';
 
-    // Build intervals with multi-state tracking (only for binary sensors)
-    const processedIntervals: Array<{
-      time: Date;
-      value: number | null;
-      states?: IntervalState[];
-    }> = [];
+    // Track starting state and last different state for binary sensors
+    const bucketStartState: (number | null)[] = new Array(intervals).fill(null);
+    const bucketLastDifferent: (number | null)[] = new Array(intervals).fill(null);
 
-    for (let i = 0; i < intervals; i++) {
-      const intervalStart = startTime + (i * timeStep);
-      const intervalEnd = intervalStart + timeStep;
-      const states: IntervalState[] = [];
-
-      // Find prior state that carries into this interval
-      let currentState: number | null = defaultValue;
-      const priorState = this._findPriorState(allStateChanges, intervalStart);
-      if (priorState !== null) {
-        currentState = priorState;
-      }
-
-      let currentStateStart = intervalStart;
-
-      // Process all state changes within this interval (only for binary sensors)
-      if (isBinarySensor) {
-        allStateChanges.forEach(change => {
-          if (change.timestamp >= intervalStart && change.timestamp < intervalEnd) {
-            // Close out the previous state segment
-            if (currentState !== null) {
-              states.push({
-                state: currentState,
-                startTime: currentStateStart,
-                duration: change.timestamp - currentStateStart
-              });
-            }
-
-            // Start new state segment
-            currentState = change.state;
-            currentStateStart = change.timestamp;
+    // Assign history points to buckets
+    if (historyData) {
+      historyData.forEach(point => {
+        const pointTime = new Date(point.last_changed || point.last_updated).getTime();
+        const timeDiff = pointTime - startTime;
+        if (timeDiff >= 0) {
+          const bucketIndex = Math.floor(timeDiff / timeStep);
+          if (bucketIndex >= 0 && bucketIndex < intervals) {
+            processed[bucketIndex] = this.parseState(point.state);
           }
-        });
-
-        // Close final state segment for this interval
-        if (currentState !== null) {
-          states.push({
-            state: currentState,
-            startTime: currentStateStart,
-            duration: intervalEnd - currentStateStart
-          });
         }
-      } else {
-        // For non-binary sensors (like temperature), just find the last state in the interval
-        // This gives us the most recent value without splitting bars
-        allStateChanges.forEach(change => {
-          if (change.timestamp >= intervalStart && change.timestamp < intervalEnd) {
-            currentState = change.state;
-          }
-        });
-      }
-
-      // Determine dominant/primary state (for backwards compatibility)
-      const primaryState = isBinarySensor
-        ? this._calculatePrimaryState(states, defaultValue)
-        : currentState;
-
-      processedIntervals.push({
-        time: new Date(intervalStart),
-        value: primaryState,
-        // Only store states array for binary sensors when multiple states exist
-        states: (isBinarySensor && states.length > 1) ? states : undefined
       });
     }
 
-    return processedIntervals;
+    // Forward fill - Propagate all states (including unavailable/unknown) until next actual state change
+    for (let i = 1; i < processed.length; i++) {
+      if (processed[i] === null && processed[i - 1] !== null) {
+        processed[i] = processed[i - 1];
+      }
+    }
+    // Backward fill - Don't fill FROM unavailable/unknown states
+    // Also don't overwrite unavailable/unknown states with normal states
+    for (let i = processed.length - 2; i >= 0; i--) {
+      if (processed[i] === null &&
+          processed[i + 1] !== null &&
+          processed[i + 1] !== UNKNOWN_STATE &&
+          processed[i + 1] !== UNAVAILABLE_STATE) {
+        processed[i] = processed[i + 1];
+      }
+    }
+
+    // Apply "last different state" logic for binary sensors
+    if (isBinarySensor && historyData) {
+      // Determine starting state for each interval
+      for (let i = 0; i < intervals; i++) {
+        bucketStartState[i] = (i > 0 && processed[i - 1] !== null)
+          ? processed[i - 1]
+          : defaultValue;
+      }
+
+      // Find last state different from starting state in each interval
+      historyData.forEach(point => {
+        const pointTime = new Date(point.last_changed || point.last_updated).getTime();
+        const timeDiff = pointTime - startTime;
+        if (timeDiff >= 0) {
+          const bucketIndex = Math.floor(timeDiff / timeStep);
+          if (bucketIndex >= 0 && bucketIndex < intervals) {
+            const state = this.parseState(point.state);
+            // Track if this state is different from the starting state
+            if (state !== bucketStartState[bucketIndex]) {
+              bucketLastDifferent[bucketIndex] = state;
+            }
+          }
+        }
+      });
+
+      // Override with last different state if found
+      for (let i = 0; i < intervals; i++) {
+        if (bucketLastDifferent[i] !== null) {
+          processed[i] = bucketLastDifferent[i];
+        }
+      }
+    }
+
+    return processed.map((value, index) => ({
+      time: new Date(startTime + index * timeStep),
+      value
+    }));
   }
 
   private getMinMax(data: (number | null)[]): [number, number] {
@@ -760,66 +718,6 @@ export class WaterfallHistoryCardBeta extends LitElement {
     return (this.translations[this.language]?.[key]) || this.translations.en[key] || key;
   }
 
-  // Helper method to determine if sensor is binary based on its values
-  private _isBinarySensorByValues(
-    stateChanges: Array<{timestamp: number; state: number | null}>
-  ): boolean {
-    // If no state changes, can't determine - default to non-binary
-    if (stateChanges.length === 0) return false;
-
-    // Check if all non-null states are either 0 or 1
-    return stateChanges.every(change => {
-      const state = change.state;
-      return state === null || state === 0 || state === 1 ||
-             state === UNKNOWN_STATE || state === UNAVAILABLE_STATE;
-    });
-  }
-
-  // Helper method to find the most recent state before a given timestamp
-  private _findPriorState(
-    stateChanges: Array<{timestamp: number; state: number | null}>,
-    timestamp: number
-  ): number | null {
-    for (let i = stateChanges.length - 1; i >= 0; i--) {
-      if (stateChanges[i].timestamp < timestamp) {
-        return stateChanges[i].state;
-      }
-    }
-    return null;
-  }
-
-  // Helper method to calculate the dominant state (longest duration) for an interval
-  private _calculatePrimaryState(
-    states: IntervalState[],
-    defaultValue: number | null
-  ): number | null {
-    if (states.length === 0) return defaultValue;
-    if (states.length === 1) return states[0].state;
-
-    // Find state with longest duration
-    let longestState = states[0];
-    states.forEach(state => {
-      if (state.duration > longestState.duration) {
-        longestState = state;
-      }
-    });
-
-    return longestState.state;
-  }
-
-  // Helper method to format duration for tooltips
-  private _formatDuration(durationMs: number): string {
-    const seconds = Math.floor(durationMs / 1000);
-    if (seconds < 60) return `${seconds}s`;
-
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}m`;
-
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-    return `${hours}h ${remainingMinutes}m`;
-  }
-
   protected render() {
     if (!this.config || !this.hass) {
       return html``;
@@ -872,47 +770,16 @@ export class WaterfallHistoryCardBeta extends LitElement {
     const waterfallBars = html`
       ${historyData.map((dataPoint, index) => {
         const isLast = index === historyData.length - 1;
-
-        // Check if this interval has multiple states
-        if (dataPoint.states && dataPoint.states.length > 1) {
-          // MULTI-STATE: Render split bar with proportional segments
-          const totalDuration = dataPoint.states.reduce((sum, s) => sum + s.duration, 0);
-
-          return html`
-            <div class="bar-segment ${isLast ? 'last-bar' : ''} multi-state-bar">
-              ${dataPoint.states.map((stateSegment, segIdx) => {
-                const widthPercent = (stateSegment.duration / totalDuration) * 100;
-                const color = this.getColorForValue(stateSegment.state, entityObj);
-                const stateLabel = this.displayState(stateSegment.state, entityObj);
-                const durationLabel = this._formatDuration(stateSegment.duration);
-
-                return html`
-                  <div
-                    class="state-segment"
-                    style="
-                      width: ${widthPercent}%;
-                      background-color: ${color};
-                    "
-                    title="${stateLabel} (${durationLabel})"
-                  ></div>
-                `;
-              })}
-            </div>
-          `;
-        } else {
-          // SINGLE-STATE: Normal rendering (backwards compatible)
-          const value = dataPoint.value;
-          const color = this.getColorForValue(value, entityObj);
-          const title = `${this.getTimeLabel(index, intervals, hours)} : ${value !== null ? this.displayState(value, entityObj) : this.t('error_loading_data')}`;
-
-          return html`
-            <div
-              class="bar-segment ${isLast ? 'last-bar' : ''}"
-              style="background-color: ${color};"
-              title=${title}>
-            </div>
-          `;
-        }
+        const value = dataPoint.value;
+        const color = this.getColorForValue(value, entityObj);
+        const title = `${this.getTimeLabel(index, intervals, hours)} : ${value !== null ? this.displayState(value, entityObj) : this.t('error_loading_data')}`;
+        return html`
+          <div
+            class="bar-segment ${isLast ? 'last-bar' : ''}"
+            style="background-color: ${color};"
+            title=${title}>
+          </div>
+        `;
       })}
     `;
 

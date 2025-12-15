@@ -1,23 +1,21 @@
 # Changelog
 
-## [4.1.0-beta] - 2025-12-10
+## [4.1.0-beta] - 2025-12-14
 
 ### Added
-- **Multi-State Interval Tracking for Binary Sensors**: Brief state changes are no longer lost
-  - Stores all state changes per interval with timestamps and durations
-  - Captures transient events like doors briefly opened or alarms momentarily triggered
-  - ONLY applies to binary sensors (binary_sensor domain, or entities with binary values 0/1)
-- **Split-Bar Visualization**: Intervals with multiple states display proportionally
-  - Each state gets its own color segment based on duration
-  - Even 1-second state changes are visible (min-width: 1px)
-  - Only shown for binary sensors to avoid cluttering continuous sensor displays
-- **Duration Tooltips**: Hover over segments shows state name and duration
-  - Human-readable format: "5s", "10m", "2h 15m"
+- **Last Different State for Binary Entities**: State changes are now captured reliably
+  - Shows the last state that differs from the interval's starting state
+  - Captures transient events like doors briefly opened, lights toggled, or motion briefly detected
+  - Example: Closed→Open→Closed shows "Open" (last different from starting Closed)
+  - Example: Open→Closed→Open shows "Closed" (last different from starting Open)
+  - Example: Closed→Open→Closed→Inop shows "Inop" (last different from starting Closed)
+  - Simple, clear visualization without split bars
+  - Applies to binary_sensor, switch, light, and input_boolean domains
 
 ### Changed
-- Multi-state tracking now limited to binary sensors only
+- "Last different state" algorithm for binary entities replaces multi-state tracking
 - Continuous sensors (temperature, humidity, etc.) use simple last-value sampling
-- Improved detection of binary sensors via domain check and value analysis
+- Binary entity detection based on domain: binary_sensor, switch, light, or input_boolean
 - **Inline Layout Space Optimization**: Reduced fixed width allocations to maximize graph display
   - Entity name section: 120px to 100px (17% reduction)
   - Current value section: 60px to 50px (17% reduction)
@@ -29,17 +27,16 @@
   - See documentation for card-mod syntax examples
 
 ### Fixed
-- **Issue #65**: Brief state changes (like door opened for 1 minute) now visible
+- **Issue #65**: Brief state changes now visible for binary entities using "last different state" algorithm
 - Data loss when multiple state changes occur within single interval
-- Algorithm now uses multi-state tracking for binary sensors, simple sampling for others
 
 ### Technical Details
 - Beta version available as `waterfall-history-card-beta`
-- New TypeScript interfaces: `IntervalState`
-- Modified `ProcessedHistoryData` interface to include optional `states` array
-- New helper methods: `_findPriorState`, `_calculatePrimaryState`, `_formatDuration`, `_isBinarySensorByValues`
-- Binary sensor detection: checks domain (`binary_sensor`) or value pattern (all 0/1)
-- Backwards compatible: Single-state intervals render identically to v4.0
+- Binary entity detection: checks domain (binary_sensor, switch, light, or input_boolean)
+- Last different state: shows last state that differs from interval's starting state
+- Works with custom state labels (state_on/state_off can be any text)
+- Simpler implementation: no split bars, no IntervalState tracking, no duration calculations
+- Backwards compatible: Non-binary entities render identically to v4.0
 - Build command: `npm run build:beta`
 
 ## [4.0.0] - 2025-12-04
