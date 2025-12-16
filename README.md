@@ -20,9 +20,40 @@
 - **Entity icons** - show icons next to entity names; toggle globally or per-entity.
 - **Compact mode** - shrink fonts and spacing for tighter dashboards.
 - **Inline layout mode** - display entity name, graph, and current value on a single line.
+- **Short duration event detection** - captures brief state changes for binary entities (doors, motion, lights).
 - **Per-entity overrides** - customize hours, intervals, labels, icons, colors, state labels, and display options per entity.
 
 <img width="476" height="380" alt="Sample card data" src="https://github.com/user-attachments/assets/8bcc7253-d042-43e2-8d68-30bf7b667b91" />
+
+---
+
+## UPDATED: How Short Duration Events Are Displayed
+
+**For binary entities** (binary_sensor, switch, light, input_boolean):
+
+The card uses a **"last different state"** algorithm that captures brief state changes within each interval:
+
+- **What it shows**: The last state that differs from the interval's starting state
+- **Why this matters**: Brief events that occur and resolve within one interval are still visible
+
+**Examples:**
+
+| States during interval | Starting state | Displayed state | What user sees |
+|------------------------|----------------|-----------------|----------------|
+| Closed → Open → Closed | Closed | **Open** | Door was briefly opened |
+| Open → Closed → Open | Open | **Closed** | Door was briefly closed |
+| Off → On → Off | Off | **On** | Light was briefly turned on |
+| No motion → Motion → No motion | No motion | **Motion** | Motion was detected |
+| Closed → Open → Closed → Unavailable | Closed | **Unavailable** | Last different state shown |
+
+**What this means:**
+- A door that briefly opens and closes will show "Open" (not "Closed")
+- A motion sensor that briefly triggers will show "Motion" (not "Clear")
+- You can see that "something happened" even if the entity returned to its original state
+
+**For continuous sensors** (temperature, humidity, etc.):
+- Uses simple last-value sampling
+- Shows the final value at the end of each interval
 
 ---
 
@@ -32,11 +63,6 @@
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=sxdjt&repository=horizontal-waterfall-history-card)
 
-### Manual Installation
-
-1. Download `horizontal-waterfall-history-card.js` from the [GitHub repo](https://github.com/sxdjt/horizontal-waterfall-history-card)
-2. Copy to `config/www/` in your Home Assistant directory
-3. Add to Lovelace resources:
 
 ---
 
