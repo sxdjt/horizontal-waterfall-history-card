@@ -1,12 +1,11 @@
 {
   "name": "horizontal-waterfall-history-card",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "description": "A Home Assistant Lovelace card displaying entity history as horizontal waterfall charts",
   "type": "module",
   "main": "dist/horizontal-waterfall-history-card.js",
   "scripts": {
     "build": "rollup -c",
-    "build:beta": "rollup -c rollup.config-beta.js",
     "watch": "rollup -c --watch"
   },
   "keywords": [
