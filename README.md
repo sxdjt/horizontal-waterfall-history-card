@@ -1,10 +1,12 @@
 # Waterfall History Card for Home Assistant
 
-## v4.0 - Visual Editor & TypeScript
+## v4.1 - Short Duration Event Handling (and layout options/cleanup)
 
-### What's New in v4.0
+### What's New in v4.1
 
-- **This is a NON-BREAKING update -** V3.x cards will continue to work with this update
+- **This is a NON-BREAKING update **
+- **New: Short duration events** are not buried in the history display
+- **New: Entity layout/spacing** can now be controlled for readability/reduced wasted space
 - **Bug Fix:** - Fixed min/max label centering issue
 
 <img width="520" height="156" alt="Screenshot 2025-11-27 at 00 15 34" src="https://github.com/user-attachments/assets/434b5431-e7b5-43a6-9f45-480d14026e82" />
@@ -23,7 +25,6 @@
 - **Short duration event detection** - captures brief state changes for binary entities (doors, motion, lights).
 - **Per-entity overrides** - customize hours, intervals, labels, icons, colors, state labels, and display options per entity.
 
-<img width="476" height="380" alt="Sample card data" src="https://github.com/user-attachments/assets/8bcc7253-d042-43e2-8d68-30bf7b667b91" />
 
 ---
 
