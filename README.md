@@ -1,4 +1,6 @@
-# Waterfall History Card for Home Assistant
+# Waterfall History Card for Home Assistant  
+
+[![AI Assisted](https://img.shields.io/badge/AI-Claude%20Code-AAAAAA.svg)](https://claude.ai/code)
 
 ## v4.1 - Short Duration Event Handling (and layout options/cleanup)
 
