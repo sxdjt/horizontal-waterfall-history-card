@@ -1,5 +1,15 @@
 # Changelog
 
+## [4.1.1-beta] - 2025-12-24
+
+### Fixed
+- Issue #67: Zero values now properly captured in Min/Max calculations
+  - Removed `skip_initial_state` parameter from history API call
+  - Initial state at beginning of time window is now included
+  - Added safety checks for edge cases where all values are null/unavailable
+
+BETA RELEASE: Testing fix for GitHub issue #67 before production release.
+
 ## [4.1.0-beta] - 2025-12-14
 
 ### Added
