@@ -414,7 +414,7 @@ export class WaterfallHistoryCard extends LitElement {
 
       try {
         const history = await this.hass!.callApi('GET',
-          `history/period/${startTime.toISOString()}?filter_entity_id=${entityId}&end_time=${endTime.toISOString()}&significant_changes_only=1&minimal_response&no_attributes&skip_initial_state`
+          `history/period/${startTime.toISOString()}?filter_entity_id=${entityId}&end_time=${endTime.toISOString()}&significant_changes_only=1&minimal_response&no_attributes`
         );
         this._lastHistoryFetch[entityId] = now;
         return { entityId, history: history[0], entityConfig: entityObj };
@@ -493,6 +493,12 @@ export class WaterfallHistoryCard extends LitElement {
       if (d > max) max = d;
       if (d < min) min = d;
     });
+
+    // Handle edge case where all values are null/unknown/unavailable
+    if (min === Infinity || max === -Infinity) {
+      return [0, 0];
+    }
+
     return [min, max];
   }
 
@@ -812,7 +818,7 @@ declare global {
 });
 
 console.info(
-  `%c WATERFALL-HISTORY-CARD %c v4.0.0 `,
+  `%c WATERFALL-HISTORY-CARD %c v4.1.1-beta `,
   'color: orange; font-weight: bold; background: black',
   'color: white; font-weight; bold; background: dimgray'
 );
