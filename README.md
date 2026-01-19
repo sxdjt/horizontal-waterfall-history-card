@@ -32,42 +32,9 @@
 
 ---
 
-## UPDATED: How Short Duration Events Are Displayed
-
-**For binary entities** (binary_sensor, switch, light, input_boolean):
-
-The card uses a **"last different state"** algorithm that captures brief state changes within each interval:
-
-- **What it shows**: The last state that differs from the interval's starting state
-- **Why this matters**: Brief events that occur and resolve within one interval are still visible
-
-**Examples:**
-
-| States during interval | Starting state | Displayed state | What user sees |
-|------------------------|----------------|-----------------|----------------|
-| Closed → Open → Closed | Closed | **Open** | Door was briefly opened |
-| Open → Closed → Open | Open | **Closed** | Door was briefly closed |
-| Off → On → Off | Off | **On** | Light was briefly turned on |
-| No motion → Motion → No motion | No motion | **Motion** | Motion was detected |
-| Closed → Open → Closed → Unavailable | Closed | **Unavailable** | Last different state shown |
-
-**What this means:**
-- A door that briefly opens and closes will show "Open" (not "Closed")
-- A motion sensor that briefly triggers will show "Motion" (not "Clear")
-- You can see that "something happened" even if the entity returned to its original state
-
-**For continuous sensors** (temperature, humidity, etc.):
-- Uses simple last-value sampling
-- Shows the final value at the end of each interval
-
----
-
 ## Installation
 
-### HACS
-
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=sxdjt&repository=horizontal-waterfall-history-card)
-
 
 ---
 
@@ -144,27 +111,55 @@ Each item in `entities:` can be either a bare entity ID string, or an object wit
 | Option           | Type      | Default             | Description                                                         |
 |------------------|-----------|---------------------|---------------------------------------------------------------------|
 | `entity`         | `string`  | **required**        | The entity ID (e.g., `sensor.living_room_temp`).                    |
-| `name`           | `string`  | Friendly name / ID  | Override the display name.                                          |
+| `binary_colors`  | `object`  | Inherits from card  | Alternative: `{on: '#color', off: '#color'}` for this entity.       |
+| `color_off`      | `string`  | Inherits from card  | Color for this binary entity's "off" state.                         |
+| `color_on`       | `string`  | Inherits from card  | Color for this binary entity's "on" state.                          |
+| `color_unavailable` | `string` | Inherits from card | Color for this entity when in "unavailable" state.       |
+| `color_unknown`  | `string`  | Inherits from card  | Color for this entity when in "unknown" state.            |
+| `digits`         | `number`  | Inherits from card  | Override decimal places for this entity.                            |
 | `hours`          | `number`  | Inherits from card  | Override the number of hours shown for this entity.                 |
+| `inline_layout`  | `boolean` | Inherits from card  | Use inline layout for this entity.                        |
 | `intervals`      | `number`  | Inherits from card  | Override the number of intervals (bars) for this entity.            |
-| `start_offset`   | `number`  | Inherits from card  | Hours to offset the time window for this entity.                    |
-| `show_labels`    | `boolean` | Inherits from card  | Show/hide labels just for this entity.                              |
-| `show_min_max`   | `boolean` | Inherits from card  | Show/hide min/max just for this entity.                             |
+| `name`           | `string`  | Friendly name / ID  | Override the display name.                                          |
 | `show_current`   | `boolean` | Inherits from card  | Show/hide current value just for this entity.                       |
 | `show_icons`     | `boolean` | Inherits from card  | Show/hide the icon for just this entity (overrides global setting). |
-| `inline_layout`  | `boolean` | Inherits from card  | Use inline layout for this entity.                        |
-| `color_on`       | `string`  | Inherits from card  | Color for this binary entity's "on" state.                          |
-| `color_off`      | `string`  | Inherits from card  | Color for this binary entity's "off" state.                         |
-| `binary_colors`  | `object`  | Inherits from card  | Alternative: `{on: '#color', off: '#color'}` for this entity.       |
-| `state_on`       | `string`  | Inherits from card  | Label to display for this binary entity's "on" state.               |
+| `show_labels`    | `boolean` | Inherits from card  | Show/hide labels just for this entity.                              |
+| `show_min_max`   | `boolean` | Inherits from card  | Show/hide min/max just for this entity.                             |
+| `start_offset`   | `number`  | Inherits from card  | Hours to offset the time window for this entity.                    |
 | `state_off`      | `string`  | Inherits from card  | Label to display for this binary entity's "off" state.              |
-| `color_unknown`  | `string`  | Inherits from card  | Color for this entity when in "unknown" state.            |
-| `color_unavailable` | `string` | Inherits from card | Color for this entity when in "unavailable" state.       |
-| `state_unknown`  | `string`  | Inherits from card  | Label to display when this entity is "unknown".           |
+| `state_on`       | `string`  | Inherits from card  | Label to display for this binary entity's "on" state.               |
 | `state_unavailable` | `string` | Inherits from card | Label to display when this entity is "unavailable".      |
+| `state_unknown`  | `string`  | Inherits from card  | Label to display when this entity is "unknown".           |
 | `thresholds`     | `array`   | Inherits from card  | Override color thresholds for this entity.                          |
-| `digits`         | `number`  | Inherits from card  | Override decimal places for this entity.                            |
-| `unit`           | `string`  | Inherits from card  | Override unit of measurement for this entity.                       |
+| `unit`           | `string`  | Inherits from card  | Override unit of measurement for this entity.                       |---
+
+## How Short Duration Events Are Displayed
+
+**For binary entities** (binary_sensor, switch, light, input_boolean):
+
+The card uses a **"last different state"** algorithm that captures brief state changes within each interval:
+
+- **What it shows**: The last state that differs from the interval's starting state
+- **Why this matters**: Brief events that occur and resolve within one interval are still visible
+
+**Examples:**
+
+| States during interval | Starting state | Displayed state | What user sees |
+|------------------------|----------------|-----------------|----------------|
+| Closed → Open → Closed | Closed | **Open** | Door was briefly opened |
+| Open → Closed → Open | Open | **Closed** | Door was briefly closed |
+| Off → On → Off | Off | **On** | Light was briefly turned on |
+| No motion → Motion → No motion | No motion | **Motion** | Motion was detected |
+| Closed → Open → Closed → Unavailable | Closed | **Unavailable** | Last different state shown |
+
+**What this means:**
+- A door that briefly opens and closes will show "Open" (not "Closed")
+- A motion sensor that briefly triggers will show "Motion" (not "Clear")
+- You can see that "something happened" even if the entity returned to its original state
+
+**For continuous sensors** (temperature, humidity, etc.):
+- Uses simple last-value sampling
+- Shows the final value at the end of each interval
 
 ---
 
@@ -205,41 +200,6 @@ entities:
 
 The `start_offset` shifts the time window back by the specified hours. With `hours: 24` and `start_offset: 24`, you see data from 24-48 hours ago instead of 0-24 hours ago.
 
-### Inline Layout
-
-Display entity name, graph, and value on a single line for a more compact view:
-
-```yaml
-type: custom:waterfall-history-card
-title: Temperature History
-inline_layout: true
-entities:
-  - entity: sensor.outdoor_temperature
-    name: Outside
-  - entity: sensor.indoor_temperature
-    name: Inside
-  - entity: sensor.basement_temperature
-    name: Basement
-```
-
-Mix inline and stacked layouts:
-
-```yaml
-type: custom:waterfall-history-card
-title: Temperature History
-entities:
-  # Inline layout for these
-  - entity: sensor.outdoor_temperature
-    name: Outside
-    inline_layout: true
-  - entity: sensor.indoor_temperature
-    name: Inside
-    inline_layout: true
-  # Default stacked layout
-  - entity: sensor.attic_temperature
-    name: Attic
-```
-
 ### Using CardMod to adjust spacing
 
 You can use card-mod to adjust the amount of space given for the entity name and graph 'columns'. Use this to adjust as necessary to avoid truncated entity names and give as much space as desired for the graph element.
@@ -259,51 +219,6 @@ card_mod:
     .entity-inline-container .entity-inline-value {
       width: 60px !important;
     }
-```
-
-### Unknown & Unavailable State Handling
-
-Customize how entities display when they're in "unknown" or "unavailable" states:
-
-```yaml
-type: custom:waterfall-history-card
-title: Sensor Monitoring
-# Global defaults for all entities
-color_unknown: '#FFA726'       # Orange for unknown
-color_unavailable: '#78909C'   # Blue-gray for unavailable
-state_unknown: "No Data"
-state_unavailable: "Offline"
-entities:
-  - sensor.outdoor_temperature
-  - sensor.indoor_temperature
-
-  # Custom labels for critical sensor
-  - entity: sensor.water_heater_temp
-    name: Water Heater
-    state_unavailable: "SENSOR FAULT"
-    color_unavailable: '#FF1744'  # Red for fault
-```
-
-Per-entity overrides for different sensor types:
-
-```yaml
-type: custom:waterfall-history-card
-title: IoT Device Status
-entities:
-  # WiFi sensor - custom unavailable state
-  - entity: sensor.wifi_signal
-    name: WiFi Sensor
-    state_unavailable: "Disconnected"
-    color_unavailable: '#FF5722'
-
-  # Battery sensor - warn when unknown
-  - entity: sensor.battery_level
-    name: Battery Monitor
-    state_unknown: "Check Battery"
-    color_unknown: '#FFB300'
-
-  # Default handling for others
-  - sensor.room_temperature
 ```
 
 ### Binary Sensors with Custom State Labels
@@ -335,57 +250,9 @@ entities:
     color_off: '#4CAF50'
 ```
 
-
-### Per-Entity Color Overrides
-
-```yaml
-type: custom:waterfall-history-card
-title: Home Status
-# Global defaults for binary entities
-color_on: '#66BB6A'
-color_off: '#90A4AE'
-entities:
-  # Uses global colors
-  - binary_sensor.motion_living_room
-
-  # Critical sensor - custom red/green
-  - entity: binary_sensor.water_leak
-    name: Water Leak Detector
-    color_on: '#FF1744'
-    color_off: '#00C853'
-    state_on: "LEAK!"
-    state_off: "Dry"
-
-  # Door sensor with custom colors
-  - entity: binary_sensor.front_door
-    binary_colors:
-      on: '#FFD700'   # Gold when open
-      off: '#263238'  # Dark when closed
-    state_on: "Open"
-    state_off: "Closed"
-```
-
 ---
 
 ## Binary State Label Customization
-
-### Overview
-
-Binary entities (switches, lights, locks, binary sensors) now display meaningful text labels instead of numeric values.
-
-**Default behavior:** Binary entities display as "On" / "Off" 
-
-### Common Use Cases
-
-| Entity Type | state_on | state_off |
-|-------------|----------|-----------|
-| Doors/Windows | "Open" | "Closed" |
-| Locks | "Unlocked" | "Locked" |
-| Motion Sensors | "Motion" | "Clear" |
-| Presence | "Home" | "Away" |
-| Occupancy | "Occupied" | "Vacant" |
-| Leak Sensors | "Leak!" | "Dry" |
-| Contact Sensors | "Contact" | "No Contact" |
 
 ### Global State Labels
 
@@ -428,74 +295,6 @@ State labels work with any entity that has binary states (0/1, on/off, true/fals
 
 ---
 
-## Unknown & Unavailable State Customization
-
-### Default Behavior
-
-| State | Color | Hex | Label | When It Happens |
-|-------|-------|-----|-------|-----------------|
-| Unknown | Orange | `#FF9800` | "Unknown" | Entity state cannot be determined |
-| Unavailable | Gray | `#9E9E9E` | "INOP" | Entity is offline or not responding |
-
-### Common Use Cases
-
-| Sensor Type | state_unavailable | color_unavailable |
-|-------------|-------------------|-------------------|
-| WiFi/Network Sensors | "Disconnected" | `#FF5722` (red) |
-| Battery Sensors | "Dead Battery" | `#F44336` (red) |
-| IoT Devices | "Offline" | `#757575` (gray) |
-| Critical Sensors | "FAULT" | `#D32F2F` (dark red) |
-| Temperature Sensors | "Sensor Error" | `#FF9800` (orange) |
-
-### Global State Labels
-
-Set default labels for all entities:
-
-```yaml
-type: custom:waterfall-history-card
-title: Device Monitoring
-color_unknown: '#FFB300'
-color_unavailable: '#B71C1C'
-state_unknown: "No Data"
-state_unavailable: "Device Offline"
-entities:
-  - sensor.outdoor_temperature
-  - sensor.indoor_temperature
-  - sensor.garage_temperature
-```
-
-### Per-Entity State Labels
-
-Override labels for specific entities:
-
-```yaml
-type: custom:waterfall-history-card
-title: Critical Monitoring
-entities:
-  - entity: sensor.water_leak_detector
-    state_unavailable: "SENSOR FAULT"
-    color_unavailable: '#FF0000'
-
-  - entity: sensor.smoke_detector
-    state_unknown: "CHECK SENSOR"
-    color_unknown: '#FF9800'
-
-  - entity: sensor.freezer_temp
-    state_unavailable: "POWER FAILURE"
-    color_unavailable: '#D32F2F'
-```
-
----
-
-## Binary Sensor Color Customization
-
-### Supported Binary Entities
-
-Binary color customization works with any entity that has on/off or 0/1 states:
-- `binary_sensor.*` (motion, door, window, etc.)
-- `switch.*`
-- `light.*` (on/off states only)
-- `input_boolean.*`
 
 ### Color Precedence
 
@@ -600,57 +399,6 @@ thresholds:
 entities:
   - entity: sensor.outside_temp
 ```
-
----
-
-## Troubleshooting
-
-### Binary colors not applying?
-- Ensure the entity state is truly binary (0/1, on/off)
-- Check the entity domain is supported (binary_sensor, switch, light, etc.)
-- Clear browser cache after updating the card (Ctrl+F5 / Cmd+Shift+R)
-
-### Binary state labels not showing?
-- Ensure entity has binary states (0, 1, on, off)
-- Check configuration spelling of `state_on` and `state_off`
-
-### Colors look wrong?
-- Verify color format (must be valid CSS color)
-- Check color precedence - per-entity overrides global
-- For numeric sensors, use `thresholds` instead of `binary_colors`
-
-### Performance issues?
-- Try reducing `intervals` if displaying many entities
-
-### Unknown/unavailable states showing incorrectly?
-- Check entity actually has "unknown" or "unavailable" state in Developer Tools
-- Ensure color format is valid CSS (hex, rgb, rgba, named)
-- Clear browser cache after updating (Ctrl+F5 / Cmd+Shift+R)
-
----
-
-## Advanced: Combining Colors and Labels
-
-State labels work seamlessly with binary color customization:
-
-```yaml
-type: custom:waterfall-history-card
-title: Garage & Doors
-# Visual colors
-color_on: '#F44336'    # Red when open
-color_off: '#4CAF50'   # Green when closed
-# Text labels
-state_on: "Open"
-state_off: "Closed"
-entities:
-  - binary_sensor.garage_door
-  - binary_sensor.front_door
-  - binary_sensor.back_door
-```
-
-**Result:**
-- When open: Shows "Open" text in red (#F44336)
-- When closed: Shows "Closed" text in green (#4CAF50)
 
 ---
 
