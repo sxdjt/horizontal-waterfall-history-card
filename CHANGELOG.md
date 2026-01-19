@@ -1,5 +1,28 @@
 # Changelog
 
+## [4.2.0] - 2026-01-18
+
+### Added
+- **Start Offset Feature**: New `start_offset` option to view historical time windows
+  - Set `start_offset: 24` to view data from 24-48 hours ago instead of 0-24 hours ago
+  - Configurable both globally and per-entity
+  - Allows displaying the same entity multiple times with different time offsets
+  - Useful for comparing today's data with yesterday's data side-by-side
+  - Time labels automatically adjust to show correct ranges (e.g., "48h ago" to "24h ago")
+  - Historical (offset) data uses longer refresh intervals since it changes less frequently
+
+### Technical Details
+- Composite cache keys (`entityId_startOffset`) support same entity with different offsets
+- Offset entities don't append current state (they display historical data only)
+- Refresh interval for offset data is 4x longer than real-time data
+
+### Backwards Compatibility
+- 100% backwards compatible with v4.1 and earlier
+- Default `start_offset: 0` maintains existing behavior
+- No breaking changes
+
+---
+
 ## [4.1.1-beta] - 2025-12-24
 
 ### Fixed

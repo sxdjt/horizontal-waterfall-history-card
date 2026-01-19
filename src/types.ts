@@ -32,6 +32,7 @@ export interface EntityConfig {
   // Time window overrides
   hours?: number;
   intervals?: number;
+  start_offset?: number;  // Hours to offset the start time (e.g., 24 = show 24-48h ago instead of 0-24h ago)
 
   // Display toggles
   show_current?: boolean;
@@ -79,6 +80,7 @@ export interface WaterfallHistoryCardConfig extends LovelaceCardConfig {
   title?: string;
   hours?: number;
   intervals?: number;
+  start_offset?: number;  // Global default for start_offset
   show_current?: boolean;
   show_labels?: boolean;
   show_min_max?: boolean;

@@ -4,14 +4,13 @@
 [![AI Assisted](https://img.shields.io/badge/AI-Claude%20Code-AAAAAA.svg?style=for-the-badge)](https://claude.ai/code)
 ![GitHub License](https://img.shields.io/github/license/sxdjt/horizontal-waterfall-history-card?style=for-the-badge)
 
-## v4.1 - Short Duration Event Handling (and layout options/cleanup)
+## v4.2 - Historical Time Window Offset
 
-### What's New in v4.1
+### What's New in v4.2
 
-- **This is a NON-BREAKING update **
-- **New: Short duration events** are not buried in the history display
-- **New: Entity layout/spacing** can now be controlled for readability/reduced wasted space
-- **Bug Fix:** - Fixed min/max label centering issue
+- **New: `start_offset` option** - View historical time windows (e.g., yesterday's data)
+- Compare today vs yesterday by showing same entity with different offsets
+- Configurable globally or per-entity
 
 <img width="520" height="156" alt="Screenshot 2025-11-27 at 00 15 34" src="https://github.com/user-attachments/assets/434b5431-e7b5-43a6-9f45-480d14026e82" />
 
@@ -112,6 +111,7 @@ entities:
 | `entities`       | `array`   | **required**| List of entity objects to display (see per-entity options below).           |
 | `hours`          | `number`  | `24`        | Time range in hours to show history.                                        |
 | `intervals`      | `number`  | `48`        | Number of intervals (bars) to divide the history into.                      |
+| `start_offset`   | `number`  | `0`         | Hours to offset the time window (e.g., 24 = show 24-48h ago instead of 0-24h). |
 | `height`         | `number`  | `60`        | Height in pixels of each entity's waterfall chart.                          |
 | `show_labels`    | `boolean` | `true`      | Show the "X hours ago" / "now" labels under the bar.                        |
 | `show_min_max`   | `boolean` | `false`     | Show min/max values under the chart.                                        |
@@ -146,6 +146,7 @@ Each item in `entities:` can be either a bare entity ID string, or an object wit
 | `name`           | `string`  | Friendly name / ID  | Override the display name.                                          |
 | `hours`          | `number`  | Inherits from card  | Override the number of hours shown for this entity.                 |
 | `intervals`      | `number`  | Inherits from card  | Override the number of intervals (bars) for this entity.            |
+| `start_offset`   | `number`  | Inherits from card  | Hours to offset the time window for this entity.                    |
 | `show_labels`    | `boolean` | Inherits from card  | Show/hide labels just for this entity.                              |
 | `show_min_max`   | `boolean` | Inherits from card  | Show/hide min/max just for this entity.                             |
 | `show_current`   | `boolean` | Inherits from card  | Show/hide current value just for this entity.                       |
@@ -182,6 +183,26 @@ entities:
   - entity: sensor.kitchen_temp
     hours: 6
 ```
+
+### Historical Comparison with Start Offset
+
+Compare today's data with yesterday's data by using `start_offset`:
+
+```yaml
+type: custom:waterfall-history-card
+title: Temperature Comparison
+hours: 24
+entities:
+  # Today's temperature (default, no offset)
+  - entity: sensor.outdoor_temperature
+    name: Today
+  # Yesterday's temperature (24 hour offset)
+  - entity: sensor.outdoor_temperature
+    name: Yesterday
+    start_offset: 24
+```
+
+The `start_offset` shifts the time window back by the specified hours. With `hours: 24` and `start_offset: 24`, you see data from 24-48 hours ago instead of 0-24 hours ago.
 
 ### Inline Layout
 

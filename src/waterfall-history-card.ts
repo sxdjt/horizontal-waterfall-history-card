@@ -1,3 +1,4 @@
+/* Last modified: 18-Jan-2026 10:30 */
 import { LitElement, html, css, PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { HomeAssistant, LovelaceCardEditor } from 'custom-card-helpers';
@@ -245,6 +246,7 @@ export class WaterfallHistoryCard extends LitElement {
       title: config.title || 'History',
       hours: config.hours || DEFAULTS.hours,
       intervals: config.intervals || DEFAULTS.intervals,
+      start_offset: config.start_offset ?? DEFAULTS.start_offset,
       height: config.height || DEFAULTS.height,
       min_value: config.min_value || null,
       max_value: config.max_value || null,
@@ -379,8 +381,16 @@ export class WaterfallHistoryCard extends LitElement {
       const entityId = typeof entityConfig === 'string' ? entityConfig : entityConfig.entity;
       const hours = typeof entityConfig !== 'string' ? (entityConfig.hours ?? this.config.hours) : this.config.hours;
       const intervals = typeof entityConfig !== 'string' ? (entityConfig.intervals ?? this.config.intervals) : this.config.intervals;
-      const refreshInterval = ((hours! / intervals!) * 60 * 60 * 1000) / 2;
-      return !this._lastHistoryFetch[entityId] || (now - this._lastHistoryFetch[entityId] > refreshInterval);
+      const startOffset = typeof entityConfig !== 'string' ? (entityConfig.start_offset ?? this.config.start_offset ?? 0) : (this.config.start_offset ?? 0);
+
+      // Use composite key to support same entity with different offsets
+      const cacheKey = `${entityId}_${startOffset}`;
+
+      // For offset data (historical), use longer refresh interval since it doesn't change as frequently
+      const baseRefreshInterval = ((hours! / intervals!) * 60 * 60 * 1000) / 2;
+      const refreshInterval = startOffset && startOffset > 0 ? baseRefreshInterval * 4 : baseRefreshInterval;
+
+      return !this._lastHistoryFetch[cacheKey] || (now - this._lastHistoryFetch[cacheKey] > refreshInterval);
     });
 
     if (entitiesToUpdate.length > 0) {
@@ -397,8 +407,15 @@ export class WaterfallHistoryCard extends LitElement {
       const entityId = typeof entityConfig === 'string' ? entityConfig : entityConfig.entity;
       const hours = typeof entityConfig !== 'string' ? (entityConfig.hours ?? this.config.hours) : this.config.hours;
       const intervals = typeof entityConfig !== 'string' ? (entityConfig.intervals ?? this.config.intervals) : this.config.intervals;
-      const refreshInterval = ((hours! / intervals!) * 60 * 60 * 1000) / 2;
-      return !this._lastHistoryFetch[entityId] || (now - this._lastHistoryFetch[entityId] > refreshInterval);
+      const startOffset = typeof entityConfig !== 'string' ? (entityConfig.start_offset ?? this.config.start_offset ?? 0) : (this.config.start_offset ?? 0);
+
+      // Use composite key to support same entity with different offsets
+      const cacheKey = `${entityId}_${startOffset}`;
+
+      const baseRefreshInterval = ((hours! / intervals!) * 60 * 60 * 1000) / 2;
+      const refreshInterval = startOffset && startOffset > 0 ? baseRefreshInterval * 4 : baseRefreshInterval;
+
+      return !this._lastHistoryFetch[cacheKey] || (now - this._lastHistoryFetch[cacheKey] > refreshInterval);
     });
 
     if (entitiesToUpdate.length === 0) {
@@ -409,31 +426,38 @@ export class WaterfallHistoryCard extends LitElement {
       const entityObj = typeof entityConfig === 'string' ? { entity: entityConfig } : entityConfig;
       const entityId = entityObj.entity;
       const hours = entityObj.hours ?? this.config.hours!;
-      const endTime = new Date();
+      const startOffset = entityObj.start_offset ?? this.config.start_offset ?? 0;
+
+      // Use composite key to support same entity with different offsets
+      const cacheKey = `${entityId}_${startOffset}`;
+
+      // Calculate time window with offset
+      // endTime is now shifted back by start_offset hours
+      const endTime = new Date(Date.now() - startOffset * 60 * 60 * 1000);
       const startTime = new Date(endTime.getTime() - hours * 60 * 60 * 1000);
 
       try {
         const history = await this.hass!.callApi('GET',
           `history/period/${startTime.toISOString()}?filter_entity_id=${entityId}&end_time=${endTime.toISOString()}&significant_changes_only=1&minimal_response&no_attributes`
         );
-        this._lastHistoryFetch[entityId] = now;
-        return { entityId, history: history[0], entityConfig: entityObj };
+        this._lastHistoryFetch[cacheKey] = now;
+        return { entityId, history: history[0], entityConfig: entityObj, startOffset, cacheKey };
       } catch (error) {
         console.error(`Error fetching history for ${entityId}:`, error);
-        return { entityId, history: null, entityConfig: entityObj };
+        return { entityId, history: null, entityConfig: entityObj, startOffset, cacheKey };
       }
     });
 
     const results = await Promise.all(historyPromises);
 
     const processedHistories: ProcessedHistoryData = { ...this.processedHistories };
-    results.forEach(({ entityId, history, entityConfig }) => {
+    results.forEach(({ entityId, history, entityConfig, startOffset, cacheKey }) => {
       if (history) {
         const intervals = entityConfig.intervals ?? this.config.intervals!;
         const hours = entityConfig.hours ?? this.config.hours!;
         const timeStep = (hours * 60 * 60 * 1000) / intervals;
-        processedHistories[entityId] = {
-          data: this.processHistoryData(history, intervals, timeStep, entityConfig),
+        processedHistories[cacheKey] = {
+          data: this.processHistoryData(history, intervals, timeStep, entityConfig, startOffset),
           minValue: 0,
           maxValue: 100
         };
@@ -442,11 +466,20 @@ export class WaterfallHistoryCard extends LitElement {
     this.processedHistories = processedHistories;
   }
 
-  private processHistoryData(historyData: any[], intervals: number, timeStep: number, entityConfig: EntityConfig): Array<{time: Date; value: number | null}> {
+  private processHistoryData(
+    historyData: any[],
+    intervals: number,
+    timeStep: number,
+    entityConfig: EntityConfig,
+    startOffset: number = 0
+  ): Array<{time: Date; value: number | null}> {
     const defaultValue = entityConfig.default_value ?? this.config.default_value;
     const processed: (number | null)[] = new Array(intervals).fill(defaultValue);
     const hours = entityConfig.hours ?? this.config.hours!;
-    const startTime = Date.now() - (hours * 60 * 60 * 1000);
+
+    // Calculate start time with offset - endTime is (now - offset), startTime is (endTime - hours)
+    const endTime = Date.now() - (startOffset * 60 * 60 * 1000);
+    const startTime = endTime - (hours * 60 * 60 * 1000);
 
     if (historyData) {
       historyData.forEach(point => {
@@ -645,10 +678,16 @@ export class WaterfallHistoryCard extends LitElement {
     return res ? { r: parseInt(res[1], 16), g: parseInt(res[2], 16), b: parseInt(res[3], 16) } : { r: 0, g: 0, b: 0 };
   }
 
-  private getTimeLabel(index: number, totalIntervals: number, hours: number): string {
-    const hoursAgo = (hours * (totalIntervals - index)) / totalIntervals;
+  private getTimeLabel(index: number, totalIntervals: number, hours: number, startOffset: number = 0): string {
+    // Calculate hours ago from "now", accounting for offset
+    // With offset=0: rightmost bar is "now" (0h ago), leftmost is "hours" ago
+    // With offset=24: rightmost bar is "24h ago", leftmost is "24+hours" ago
+    const intervalHoursAgo = (hours * (totalIntervals - index)) / totalIntervals;
+    const actualHoursAgo = intervalHoursAgo + startOffset;
+
     if (hours <= 24) {
-      const date = new Date(Date.now() - hoursAgo * 60 * 60 * 1000);
+      // Show actual timestamps
+      const date = new Date(Date.now() - actualHoursAgo * 60 * 60 * 1000);
       const nextDate = new Date(date.getTime() + (hours / totalIntervals) * 60 * 60 * 1000);
 
       const locale = this.hass?.locale?.language || this.hass?.language || undefined;
@@ -658,10 +697,10 @@ export class WaterfallHistoryCard extends LitElement {
       });
       return `${timeFormatter.format(date)} - ${timeFormatter.format(nextDate)}`;
     }
-    if (hoursAgo < 1) {
-      return `${Math.round(hoursAgo * 60)}${this.t('minutes_ago')}`;
+    if (actualHoursAgo < 1) {
+      return `${Math.round(actualHoursAgo * 60)}${this.t('minutes_ago')}`;
     }
-    return `${hoursAgo.toFixed(1)}${this.t('hours_ago')}`;
+    return `${actualHoursAgo.toFixed(1)}${this.t('hours_ago')}`;
   }
 
   private _handleEntityClick(entityId: string, e: Event): void {
@@ -712,9 +751,20 @@ export class WaterfallHistoryCard extends LitElement {
     // Check if icon should be shown
     const showIcons = entityObj.show_icons !== undefined ? entityObj.show_icons : this.config.show_icons;
 
-    // Get history data
-    const historyData = this.processedHistories[entityId]?.data || [];
-    const history = [...historyData.map(d => d.value), this.parseState(entity.state)];
+    // Get offset for this entity
+    const startOffset = entityObj.start_offset ?? this.config.start_offset ?? 0;
+
+    // Use composite key to support same entity with different offsets
+    const cacheKey = `${entityId}_${startOffset}`;
+
+    // Get history data using composite key
+    const historyData = this.processedHistories[cacheKey]?.data || [];
+
+    // For offset entities, don't append current state (it's historical data)
+    // For non-offset entities, append current state as the last bar
+    const history = startOffset > 0
+      ? historyData.map(d => d.value)
+      : [...historyData.map(d => d.value), this.parseState(entity.state)];
 
     const [actualMin, actualMax] = this.getMinMax(history);
 
@@ -726,12 +776,18 @@ export class WaterfallHistoryCard extends LitElement {
     const current = this.parseState(entity.state);
     const inlineLayout = entityObj.inline_layout ?? this.config.inline_layout;
 
+    // Calculate label text based on offset
+    const startLabelHours = hours + startOffset;
+    const endLabelHours = startOffset;
+    const startLabel = `${startLabelHours}${this.t('hours_ago')}`;
+    const endLabel = startOffset > 0 ? `${endLabelHours}${this.t('hours_ago')}` : this.t('now');
+
     // Render waterfall bars
     const waterfallBars = html`
       ${history.map((value, index) => {
         const isLast = index === history.length - 1;
         const color = this.getColorForValue(value, entityObj);
-        const title = `${this.getTimeLabel(index, intervals, hours)} : ${value !== null ? this.displayState(value, entityObj) : this.t('error_loading_data')}`;
+        const title = `${this.getTimeLabel(index, intervals, hours, startOffset)} : ${value !== null ? this.displayState(value, entityObj) : this.t('error_loading_data')}`;
         return html`
           <div
             class="bar-segment ${isLast ? 'last-bar' : ''}"
@@ -756,8 +812,8 @@ export class WaterfallHistoryCard extends LitElement {
             </div>
             ${showLabels ? html`
               <div class="labels">
-                <span>${hours}${this.t('hours_ago')}</span>
-                <span>${this.t('now')}</span>
+                <span>${startLabel}</span>
+                <span>${endLabel}</span>
               </div>
             ` : ''}
           </div>
@@ -784,8 +840,8 @@ export class WaterfallHistoryCard extends LitElement {
         </div>
         ${showLabels ? html`
           <div class="labels">
-            <span>${hours}${this.t('hours_ago')}</span>
-            <span>${this.t('now')}</span>
+            <span>${startLabel}</span>
+            <span>${endLabel}</span>
           </div>
         ` : ''}
         ${showMinMax ? html`
@@ -818,7 +874,7 @@ declare global {
 });
 
 console.info(
-  `%c WATERFALL-HISTORY-CARD %c v4.1.1-beta `,
+  `%c WATERFALL-HISTORY-CARD %c v4.2.0 `,
   'color: orange; font-weight: bold; background: black',
   'color: white; font-weight; bold; background: dimgray'
 );

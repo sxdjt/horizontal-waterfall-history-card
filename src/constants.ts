@@ -59,6 +59,7 @@ export const DEFAULTS = {
   title: 'History',
   hours: 24,
   intervals: 48,
+  start_offset: 0,  // No offset by default (show recent history ending at "now")
   height: 60,
   show_current: true,
   show_labels: true,
