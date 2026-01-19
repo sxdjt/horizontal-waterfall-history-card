@@ -12,7 +12,8 @@
 - Compare today vs yesterday by showing same entity with different offsets
 - Configurable globally or per-entity
 
-<img width="520" height="156" alt="Screenshot 2025-11-27 at 00 15 34" src="https://github.com/user-attachments/assets/434b5431-e7b5-43a6-9f45-480d14026e82" />
+<img width="507" height="500" alt="Screenshot 2026-01-18 at 21 56 01" src="https://github.com/user-attachments/assets/acb331e3-3c64-47dc-83c8-bac49d6a25fb" />
+
 
 ## What does this card do?
 
