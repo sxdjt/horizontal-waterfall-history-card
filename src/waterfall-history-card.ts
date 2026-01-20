@@ -877,7 +877,7 @@ declare global {
 });
 
 console.info(
-  `%c WATERFALL-HISTORY-CARD %c v4.2.0 `,
+  `%c WATERFALL-HISTORY-CARD %c v4.2.1 `,
   'color: orange; font-weight: bold; background: black',
   'color: white; font-weight; bold; background: dimgray'
 );
