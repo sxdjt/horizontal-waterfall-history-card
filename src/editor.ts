@@ -1,10 +1,9 @@
 import { LitElement, html, css } from 'lit';
-import { customElement, property, state } from 'lit/decorators.js';
+import { property, state } from 'lit/decorators.js';
 import { HomeAssistant, fireEvent, LovelaceCardEditor } from 'custom-card-helpers';
 import { WaterfallHistoryCardConfig, EntityConfig, ThresholdConfig } from './types';
 import { DEFAULTS } from './constants';
 
-@customElement('waterfall-history-card-editor')
 export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCardEditor {
   @property({ attribute: false }) public hass!: HomeAssistant;
   @state() private _config!: WaterfallHistoryCardConfig;
@@ -763,6 +762,11 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
       }
     `;
   }
+}
+
+// Register custom element with guard to prevent duplicate registration
+if (!customElements.get('waterfall-history-card-editor')) {
+  customElements.define('waterfall-history-card-editor', WaterfallHistoryCardEditor);
 }
 
 declare global {

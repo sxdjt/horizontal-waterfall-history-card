@@ -1,6 +1,6 @@
-/* Last modified: 18-Jan-2026 10:30 */
+/* Last modified: 19-Jan-2026 10:30 */
 import { LitElement, html, css, PropertyValues } from 'lit';
-import { customElement, property, state } from 'lit/decorators.js';
+import { property, state } from 'lit/decorators.js';
 import { HomeAssistant, LovelaceCardEditor } from 'custom-card-helpers';
 import {
   WaterfallHistoryCardConfig,
@@ -19,7 +19,6 @@ import {
   DEFAULTS
 } from './constants';
 
-@customElement('waterfall-history-card')
 export class WaterfallHistoryCard extends LitElement {
   @property({ attribute: false }) public hass!: HomeAssistant;
   @state() private config!: WaterfallHistoryCardConfig;
@@ -858,7 +857,11 @@ export class WaterfallHistoryCard extends LitElement {
   }
 }
 
-// Register custom element
+// Register custom element with guard to prevent duplicate registration
+if (!customElements.get('waterfall-history-card')) {
+  customElements.define('waterfall-history-card', WaterfallHistoryCard);
+}
+
 declare global {
   interface HTMLElementTagNameMap {
     'waterfall-history-card': WaterfallHistoryCard;
