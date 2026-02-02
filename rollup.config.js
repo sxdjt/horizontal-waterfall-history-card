@@ -21,7 +21,7 @@ export default {
     format: 'es',
     sourcemap: true,
     inlineDynamicImports: true,
-    banner: `/* Waterfall History Card v4.2.0 - Last changed: ${timestamp} */`,
+    banner: `/* Waterfall History Card v4.2.2 - Last changed: ${timestamp} */`,
   },
   plugins: [
     resolve(),
@@ -33,7 +33,7 @@ export default {
     terser({
       format: {
         comments: /^!/,
-        preamble: `/* Waterfall History Card v4.2.0 */`,
+        preamble: `/* Waterfall History Card v4.2.2 */`,
       },
     }),
   ],

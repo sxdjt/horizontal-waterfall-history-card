@@ -1,4 +1,4 @@
-/* Last modified: 19-Jan-2026 10:30 */
+/* Last modified: 01-Feb-2026 */
 import { LitElement, html, css, PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { HomeAssistant, LovelaceCardEditor } from 'custom-card-helpers';
@@ -480,17 +480,35 @@ export class WaterfallHistoryCard extends LitElement {
     const endTime = Date.now() - (startOffset * 60 * 60 * 1000);
     const startTime = endTime - (hours * 60 * 60 * 1000);
 
+    // Track initial state: when the API returns a point with last_changed before startTime,
+    // it represents the state that was active at startTime (but hasn't changed since before
+    // our time window). We need to capture this to fill bucket 0.
+    let initialState: number | null = null;
+    let bucket0ExplicitlySet = false;
+
     if (historyData) {
       historyData.forEach(point => {
         const pointTime = new Date(point.last_changed || point.last_updated).getTime();
         const timeDiff = pointTime - startTime;
-        if (timeDiff >= 0) {
+        if (timeDiff < 0) {
+          // This point's last_changed is before our window, but it represents
+          // the state that was active at startTime. Capture it as initial state.
+          initialState = this.parseState(point.state);
+        } else {
           const bucketIndex = Math.floor(timeDiff / timeStep);
           if (bucketIndex >= 0 && bucketIndex < intervals) {
             processed[bucketIndex] = this.parseState(point.state);
+            if (bucketIndex === 0) {
+              bucket0ExplicitlySet = true;
+            }
           }
         }
       });
+    }
+
+    // Apply initial state to bucket 0 if it wasn't set by a state change within the window
+    if (initialState !== null && !bucket0ExplicitlySet) {
+      processed[0] = initialState;
     }
 
     // Forward fill - Propagate all states (including unavailable/unknown) until next actual state change
@@ -877,7 +895,7 @@ declare global {
 });
 
 console.info(
-  `%c WATERFALL-HISTORY-CARD %c v4.2.1 `,
+  `%c WATERFALL-HISTORY-CARD %c v4.2.2 `,
   'color: orange; font-weight: bold; background: black',
   'color: white; font-weight; bold; background: dimgray'
 );
