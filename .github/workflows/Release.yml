@@ -1,0 +1,29 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag to upload assets to (e.g. v1.0.0)'
+        required: true
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Upload JS to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.event.inputs.tag_name || github.event.release.tag_name }}
+          files: horizontal-waterfall-history-card.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
