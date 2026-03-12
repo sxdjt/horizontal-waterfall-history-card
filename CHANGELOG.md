@@ -1,5 +1,26 @@
 # Changelog
 
+## [4.3.0-beta.1] - 2026-03-12
+
+### Added
+- **Interval Value Mode** (`interval_value`): New option to control which value is shown when multiple state changes occur within a single time bucket
+  - `last` (default) - final recorded value in the interval (prior behavior, no breaking change)
+  - `min` - lowest value in the interval; reveals brief dips (e.g., latency dropping to 0, brief signal loss)
+  - `max` - highest value in the interval; reveals brief spikes and transient activations (e.g., a door that opened and closed within one interval)
+  - Configurable globally or per-entity as an override
+  - Available in the visual editor under Basic Settings (global) and entity Advanced Overrides (per-entity)
+
+### Fixed
+- Issue #71: Short-lived state changes within a time bucket were silently overwritten by the final value in that bucket. With `interval_value: min` or `interval_value: max`, brief but meaningful events are now visible.
+
+### Technical Details
+- Special sentinel values (unknown/unavailable) are excluded from min/max comparison and handled separately
+- Default `interval_value: last` is 100% backwards compatible
+
+BETA RELEASE: Testing `interval_value` feature for GitHub issue #71.
+
+---
+
 ## [4.2.0] - 2026-01-18
 
 ### Added

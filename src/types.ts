@@ -69,6 +69,12 @@ export interface EntityConfig {
   color_unavailable?: string;
   state_unknown?: string;
   state_unavailable?: string;
+
+  // How to resolve multiple state changes within a single interval bucket:
+  // 'last' = use the last recorded value (default, preserves prior behavior)
+  // 'min'  = use the minimum value in the bucket (shows brief dips)
+  // 'max'  = use the maximum value in the bucket (shows brief spikes / transient activations)
+  interval_value?: 'last' | 'min' | 'max';
 }
 
 // Global card configuration
@@ -106,6 +112,7 @@ export interface WaterfallHistoryCardConfig extends LovelaceCardConfig {
   state_unknown?: string;
   state_unavailable?: string;
   card_mod?: Record<string, any>;
+  interval_value?: 'last' | 'min' | 'max';
 }
 
 // Normalized entity config (after setConfig processing)

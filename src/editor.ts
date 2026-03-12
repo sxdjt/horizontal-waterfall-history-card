@@ -223,6 +223,23 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
             this._configValueChanged('digits', Number((ev.target as HTMLInputElement).value))}
           helper-text="Number of decimal places for numeric values (0-5)"
         ></ha-textfield>
+
+        <ha-selector
+          .hass=${this.hass}
+          .selector=${{
+            select: {
+              options: [
+                { value: 'last', label: 'Last (default) - use final value in each interval' },
+                { value: 'min', label: 'Minimum - show lowest value (reveals brief dips)' },
+                { value: 'max', label: 'Maximum - show highest value (reveals brief spikes/activations)' },
+              ]
+            }
+          }}
+          .value=${this._config.interval_value || DEFAULTS.interval_value}
+          @value-changed=${(ev: CustomEvent) =>
+            this._configValueChanged('interval_value', ev.detail.value)}
+          .label=${'Interval Value'}
+        ></ha-selector>
       </div>
     `;
   }
@@ -586,6 +603,23 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
               this._entityChanged(index, 'digits', (ev.target as HTMLInputElement).value ? Number((ev.target as HTMLInputElement).value) : undefined)}
             helper-text="Leave blank to use global value"
           ></ha-textfield>
+
+          <ha-selector
+            .hass=${this.hass}
+            .selector=${{
+              select: {
+                options: [
+                  { value: 'last', label: 'Last (default)' },
+                  { value: 'min', label: 'Minimum (show lowest value per interval)' },
+                  { value: 'max', label: 'Maximum (show highest value per interval)' },
+                ]
+              }
+            }}
+            .value=${(entityConfig as any).interval_value || ''}
+            @value-changed=${(ev: CustomEvent) =>
+              this._entityChanged(index, 'interval_value' as any, ev.detail.value || undefined)}
+            .label=${'Interval Value (override)'}
+          ></ha-selector>
 
           <h4>Binary State Overrides</h4>
 

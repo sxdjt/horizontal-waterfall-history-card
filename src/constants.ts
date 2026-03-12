@@ -77,4 +77,5 @@ export const DEFAULTS = {
   color_off: '#636363',
   color_unknown: '#FF9800',  // Orange
   color_unavailable: '#9E9E9E',  // Gray
+  interval_value: 'last' as 'last' | 'min' | 'max',
 };

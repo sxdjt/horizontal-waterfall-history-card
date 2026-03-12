@@ -271,6 +271,7 @@ export class WaterfallHistoryCard extends LitElement {
       color_unavailable: config.color_unavailable || DEFAULTS.color_unavailable,
       state_unknown: config.state_unknown || DEFAULTS.state_unknown,
       state_unavailable: config.state_unavailable || DEFAULTS.state_unavailable,
+      interval_value: config.interval_value || DEFAULTS.interval_value,
     };
 
     this.config = {
@@ -475,10 +476,18 @@ export class WaterfallHistoryCard extends LitElement {
     const defaultValue = entityConfig.default_value ?? this.config.default_value;
     const processed: (number | null)[] = new Array(intervals).fill(defaultValue);
     const hours = entityConfig.hours ?? this.config.hours!;
+    const intervalValue = entityConfig.interval_value ?? this.config.interval_value ?? DEFAULTS.interval_value;
 
     // Calculate start time with offset - endTime is (now - offset), startTime is (endTime - hours)
     const endTime = Date.now() - (startOffset * 60 * 60 * 1000);
     const startTime = endTime - (hours * 60 * 60 * 1000);
+
+    // When using min or max mode, track the extreme real value per bucket separately.
+    // Special sentinel values (unknown/unavailable) are excluded from min/max comparison.
+    const bucketExtreme: (number | null)[] | null =
+      (intervalValue === 'min' || intervalValue === 'max')
+        ? new Array(intervals).fill(null)
+        : null;
 
     // Track initial state: when the API returns a point with last_changed before startTime,
     // it represents the state that was active at startTime (but hasn't changed since before
@@ -497,13 +506,39 @@ export class WaterfallHistoryCard extends LitElement {
         } else {
           const bucketIndex = Math.floor(timeDiff / timeStep);
           if (bucketIndex >= 0 && bucketIndex < intervals) {
-            processed[bucketIndex] = this.parseState(point.state);
+            const value = this.parseState(point.state);
+
+            // Always track the last value (needed for special state handling)
+            processed[bucketIndex] = value;
             if (bucketIndex === 0) {
               bucket0ExplicitlySet = true;
+            }
+
+            // Track extreme (min/max) for real numeric values only
+            if (bucketExtreme !== null && value !== null &&
+                value !== UNKNOWN_STATE && value !== UNAVAILABLE_STATE) {
+              if (bucketExtreme[bucketIndex] === null) {
+                bucketExtreme[bucketIndex] = value;
+              } else if (intervalValue === 'min' && value < bucketExtreme[bucketIndex]!) {
+                bucketExtreme[bucketIndex] = value;
+              } else if (intervalValue === 'max' && value > bucketExtreme[bucketIndex]!) {
+                bucketExtreme[bucketIndex] = value;
+              }
             }
           }
         }
       });
+    }
+
+    // Merge extreme values into processed array.
+    // Where a real extreme exists, it replaces the last value for that bucket.
+    // Buckets that only had special states (unknown/unavailable) are left as-is.
+    if (bucketExtreme !== null) {
+      for (let i = 0; i < intervals; i++) {
+        if (bucketExtreme[i] !== null) {
+          processed[i] = bucketExtreme[i];
+        }
+      }
     }
 
     // Apply initial state to bucket 0 if it wasn't set by a state change within the window
@@ -895,7 +930,7 @@ declare global {
 });
 
 console.info(
-  `%c WATERFALL-HISTORY-CARD %c v4.2.2 `,
+  `%c WATERFALL-HISTORY-CARD %c v4.3.0-beta.1 `,
   'color: black; background: #F2720C; font-weight: 600;',
   'color: black; background: #00a5c9; font-weight: 600;'
 );
