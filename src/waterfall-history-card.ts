@@ -249,22 +249,22 @@ export class WaterfallHistoryCard extends LitElement {
       height: config.height || DEFAULTS.height,
       min_value: config.min_value || null,
       max_value: config.max_value || null,
-      thresholds: config.thresholds || null,
+      thresholds: config.thresholds ?? undefined,
       gradient: config.gradient || DEFAULTS.gradient,
       show_current: config.show_current !== false,
       show_labels: config.show_labels !== false,
       show_min_max: config.show_min_max || DEFAULTS.show_min_max,
       show_icons: config.show_icons !== false,
-      unit: config.unit || null,
-      icon: config.icon || null,
+      unit: config.unit ?? undefined,
+      icon: config.icon ?? undefined,
       compact: config.compact || DEFAULTS.compact,
       inline_layout: config.inline_layout || DEFAULTS.inline_layout,
       default_value: config.default_value ?? null,
       digits: typeof config.digits === 'number' ? config.digits : DEFAULTS.digits,
       card_mod: config.card_mod || {},
-      binary_colors: config.binary_colors || null,
-      color_on: config.color_on || null,
-      color_off: config.color_off || null,
+      binary_colors: config.binary_colors ?? undefined,
+      color_on: config.color_on ?? undefined,
+      color_off: config.color_off ?? undefined,
       state_on: config.state_on || DEFAULTS.state_on,
       state_off: config.state_off || DEFAULTS.state_off,
       color_unknown: config.color_unknown || DEFAULTS.color_unknown,
@@ -441,7 +441,7 @@ export class WaterfallHistoryCard extends LitElement {
           `history/period/${startTime.toISOString()}?filter_entity_id=${entityId}&end_time=${endTime.toISOString()}&significant_changes_only=1&minimal_response&no_attributes`
         );
         this._lastHistoryFetch[cacheKey] = now;
-        return { entityId, history: history[0], entityConfig: entityObj, startOffset, cacheKey };
+        return { entityId, history: (history as any[])[0], entityConfig: entityObj, startOffset, cacheKey };
       } catch (error) {
         console.error(`Error fetching history for ${entityId}:`, error);
         return { entityId, history: null, entityConfig: entityObj, startOffset, cacheKey };
@@ -614,7 +614,7 @@ export class WaterfallHistoryCard extends LitElement {
     if (this.isBinaryValue(state)) {
       const stateOn = entityConfig.state_on ?? this.config.state_on ?? DEFAULTS.state_on;
       const stateOff = entityConfig.state_off ?? this.config.state_off ?? DEFAULTS.state_off;
-      return (state === 1 || state === true) ? stateOn : stateOff;
+      return (state === 1) ? stateOn : stateOff;
     }
 
     // Numeric values
