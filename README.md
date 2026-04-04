@@ -97,6 +97,7 @@ entities:
 | `state_unknown`  | `string`  | `"Unknown"` | Label to display for entities in "unknown" state.                           |
 | `state_unavailable` | `string` | `"INOP"`  | Label to display for entities in "unavailable" state.                       |
 | `thresholds`     | `array`   | see below   | Color thresholds for numeric sensors.                                       |
+| `interval_value` | `string`  | `"last"`    | How to represent each bucket: `last` (final value), `min` (lowest value), `max` (highest value). |
 | `gradient`       | `boolean` | `false`     | Use gradient interpolation between thresholds.                              |
 | `digits`         | `number`  | `1`         | Number of decimal places for numeric values.                                |
 | `unit`           | `string`  | auto        | Override unit of measurement.                                               |
@@ -119,6 +120,7 @@ Each item in `entities:` can be either a bare entity ID string, or an object wit
 | `digits`         | `number`  | Inherits from card  | Override decimal places for this entity.                            |
 | `hours`          | `number`  | Inherits from card  | Override the number of hours shown for this entity.                 |
 | `inline_layout`  | `boolean` | Inherits from card  | Use inline layout for this entity.                        |
+| `interval_value` | `string`  | Inherits from card  | How to represent each bucket: `last`, `min`, or `max`.              |
 | `intervals`      | `number`  | Inherits from card  | Override the number of intervals (bars) for this entity.            |
 | `name`           | `string`  | Friendly name / ID  | Override the display name.                                          |
 | `show_current`   | `boolean` | Inherits from card  | Show/hide current value just for this entity.                       |
@@ -131,35 +133,48 @@ Each item in `entities:` can be either a bare entity ID string, or an object wit
 | `state_unavailable` | `string` | Inherits from card | Label to display when this entity is "unavailable".      |
 | `state_unknown`  | `string`  | Inherits from card  | Label to display when this entity is "unknown".           |
 | `thresholds`     | `array`   | Inherits from card  | Override color thresholds for this entity.                          |
-| `unit`           | `string`  | Inherits from card  | Override unit of measurement for this entity.                       |---
+| `unit`           | `string`  | Inherits from card  | Override unit of measurement for this entity.                       |
 
-## How Short Duration Events Are Displayed
+---
 
-**For binary entities** (binary_sensor, switch, light, input_boolean):
+## How Each Interval Is Represented: `interval_value`
 
-The card uses a **"last different state"** algorithm that captures brief state changes within each interval:
+The time range is divided into equal-width buckets (controlled by `intervals`). Multiple state changes can occur within a single bucket. The `interval_value` option controls which value is used to represent each bucket.
 
-- **What it shows**: The last state that differs from the interval's starting state
-- **Why this matters**: Brief events that occur and resolve within one interval are still visible
+| Value  | Behavior                                         | Use case                                              |
+|--------|--------------------------------------------------|-------------------------------------------------------|
+| `last` | Last recorded state in the bucket (default)      | General use; shows where the entity ended up          |
+| `min`  | Lowest value recorded in the bucket              | Detecting brief dips (e.g., latency spike to 0)       |
+| `max`  | Highest value recorded in the bucket             | Detecting brief activations (e.g., door briefly opened) |
 
-**Examples:**
+**For binary sensors**, on=1 and off=0, so:
+- `interval_value: max` - shows the bucket as "on" if the entity was on at any point, even briefly
+- `interval_value: min` - shows the bucket as "off" if the entity was off at any point, even briefly
+- `interval_value: last` (default) - shows whichever state the entity was in at the end of the bucket; brief events that return to the original state are not visible
 
-| States during interval | Starting state | Displayed state | What user sees |
-|------------------------|----------------|-----------------|----------------|
-| Closed → Open → Closed | Closed | **Open** | Door was briefly opened |
-| Open → Closed → Open | Open | **Closed** | Door was briefly closed |
-| Off → On → Off | Off | **On** | Light was briefly turned on |
-| No motion → Motion → No motion | No motion | **Motion** | Motion was detected |
-| Closed → Open → Closed → Unavailable | Closed | **Unavailable** | Last different state shown |
+**For numeric sensors**, `min` and `max` capture the extreme value within the bucket rather than just the final reading.
 
-**What this means:**
-- A door that briefly opens and closes will show "Open" (not "Closed")
-- A motion sensor that briefly triggers will show "Motion" (not "Clear")
-- You can see that "something happened" even if the entity returned to its original state
+**Examples (binary sensor, 1-minute buckets):**
 
-**For continuous sensors** (temperature, humidity, etc.):
-- Uses simple last-value sampling
-- Shows the final value at the end of each interval
+| Activity in bucket          | `last` | `min` | `max` |
+|-----------------------------|--------|-------|-------|
+| Closed → Open → Closed      | Off    | Off   | **On**  |
+| Open → Closed → Open        | On     | **Off** | On  |
+| Closed the whole time       | Off    | Off   | Off   |
+
+Set globally or per-entity:
+
+```yaml
+# Detect any brief door opening within each bucket
+- entity: binary_sensor.front_door
+  interval_value: max
+  state_on: "Open"
+  state_off: "Closed"
+
+# Detect any brief latency drop to zero
+- entity: sensor.wan_latency
+  interval_value: min
+```
 
 ---
 

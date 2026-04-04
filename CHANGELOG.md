@@ -1,5 +1,20 @@
 # Changelog
 
+## [4.3.0-beta.2] - 2026-04-03
+
+### Added
+- `interval_value` option documented in README with usage guide, behavior table, and per-entity examples
+
+### Fixed
+- Build banner no longer includes a "Last changed" timestamp
+
+### Changed
+- Dependency updates; TypeScript 6 compatibility fixes
+
+BETA RELEASE: Documentation and maintenance update for the `interval_value` feature.
+
+---
+
 ## [4.3.0-beta.1] - 2026-03-12
 
 ### Added
