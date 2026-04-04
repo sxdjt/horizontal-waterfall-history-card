@@ -5,7 +5,7 @@
   "type": "module",
   "main": "dist/horizontal-waterfall-history-card.js",
   "scripts": {
-    "build": "rollup -c",
+    "build": "rollup -c && cp dist/horizontal-waterfall-history-card.js horizontal-waterfall-history-card.js",
     "watch": "rollup -c --watch"
   },
   "keywords": [
