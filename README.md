@@ -90,6 +90,7 @@ entities:
 | `color_on`       | `string`  | `#EEEEEE`   | Color for binary sensors in "on" state (global default).                    |
 | `color_off`      | `string`  | `#636363`   | Color for binary sensors in "off" state (global default).                   |
 | `binary_colors`  | `object`  | -           | Alternative way to set binary colors: `{on: '#color', off: '#color'}`.      |
+| `global_colors`  | `object`  | -           | State-based colors for non-numeric sensors. Use `states:` sub-key to map state strings to colors (e.g. thermostat modes). |
 | `state_on`       | `string`  | `"On"`      | Label to display for binary "on" state (global default).                    |
 | `state_off`      | `string`  | `"Off"`     | Label to display for binary "off" state (global default).                   |
 | `color_unknown`  | `string`  | `#FF9800`   | Color for entities in "unknown" state (orange).                             |
@@ -113,6 +114,7 @@ Each item in `entities:` can be either a bare entity ID string, or an object wit
 |------------------|-----------|---------------------|---------------------------------------------------------------------|
 | `entity`         | `string`  | **required**        | The entity ID (e.g., `sensor.living_room_temp`).                    |
 | `binary_colors`  | `object`  | Inherits from card  | Alternative: `{on: '#color', off: '#color'}` for this entity.       |
+| `global_colors`  | `object`  | Inherits from card  | Override state-based colors for this entity. Use `states:` sub-key. |
 | `color_off`      | `string`  | Inherits from card  | Color for this binary entity's "off" state.                         |
 | `color_on`       | `string`  | Inherits from card  | Color for this binary entity's "on" state.                          |
 | `color_unavailable` | `string` | Inherits from card | Color for this entity when in "unavailable" state.       |
@@ -175,6 +177,67 @@ Set globally or per-entity:
 - entity: sensor.wan_latency
   interval_value: min
 ```
+
+---
+
+## String State Colors: `global_colors`
+
+Some entities have non-numeric, non-binary states - for example, thermostats report `heating`, `cooling`, or `idle` rather than on/off. The `global_colors` option maps these raw state strings to display colors.
+
+### Card-level (applies to all entities)
+
+```yaml
+type: custom:waterfall-history-card
+entities:
+  - climate.living_room
+  - climate.bedroom
+global_colors:
+  states:
+    heating: crimson
+    cooling: "#99FFFF"
+    idle: "#444444"
+    "off": "#222222"
+```
+
+### Per-entity override
+
+```yaml
+type: custom:waterfall-history-card
+global_colors:
+  states:
+    heating: crimson
+    cooling: "#99FFFF"
+    idle: "#444444"
+entities:
+  - entity: climate.living_room
+    # Uses card-level global_colors
+  - entity: climate.bedroom
+    # Override colors for this entity only
+    global_colors:
+      states:
+        heating: orange
+        cooling: lightblue
+        idle: "#333333"
+```
+
+### Supported entity types
+
+Any entity whose state is a plain string works with `global_colors.states`:
+
+- `climate.*` - `heating`, `cooling`, `idle`, `off`, `fan_only`, `dry`
+- `cover.*` - `open`, `closed`, `opening`, `closing`
+- `media_player.*` - `playing`, `paused`, `idle`, `standby`, `off`
+- `alarm_control_panel.*` - `armed_home`, `armed_away`, `disarmed`, `triggered`
+- Any custom integration with string states
+
+### Notes
+
+- State strings are case-sensitive and must match the raw HA state exactly.
+- States not listed in `global_colors.states` fall back to `#666666`.
+- `"off"` must be quoted in YAML to prevent it from being interpreted as a boolean.
+- String states are displayed as-is in tooltips and current value labels.
+- String states are excluded from min/max calculations (`show_min_max`).
+- `interval_value: min/max` has no effect on string states (last value in the bucket is always used).
 
 ---
 

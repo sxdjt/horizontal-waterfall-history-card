@@ -1,5 +1,35 @@
 # Changelog
 
+## [4.3.0-beta.3] - 2026-04-06
+
+### Added
+- `global_colors.states` option for non-numeric (string) sensor states such as thermostat modes
+  (heating, cooling, idle) and cover states (open, closed, opening, closing).
+  - Supports both card-level global defaults and per-entity overrides.
+  - Color lookup precedence: per-entity `global_colors.states` -> card-level `global_colors.states` -> `#666666` fallback.
+  - String states are displayed as-is in tooltips and current value labels.
+  - String states participate in forward/backward fill like any other state.
+  - String states are excluded from min/max calculations.
+
+### Fixed
+- HA 2026.4 compatibility: binary sensor history going blank after first refresh cycle.
+  - Root cause: HA 2026.4 appears to return an empty array `[]` from the history API for
+    entities that have not changed recently, rather than the initial state point the card
+    previously relied on. An empty array is truthy in JS, so `processHistoryData([])` ran,
+    produced all-null buckets, and blanked the chart.
+  - Fix: three-way response handling in `updateCard()`:
+    1. Non-empty response - process normally (no behavior change)
+    2. Empty response + no cache (first load, stable entity) - backfill all buckets with
+       `hass.states[entityId].state` so stable sensors show a solid bar instead of blank
+    3. Empty response + cache exists (refresh) - preserve cached data; this is critical for
+       `interval_value: max/min` users where brief events must survive refresh cycles and
+       must not be overwritten by the current state (which would erase detected events)
+  - NOTE: "backfill current state on empty" was considered and rejected for case 3 because
+    it would silently erase brief binary events (e.g., a door that briefly opened) that were
+    correctly detected on first load but would be lost after the first refresh.
+
+---
+
 ## [4.3.0-beta.2] - 2026-04-03
 
 ### Added
