@@ -6,11 +6,6 @@ export interface ThresholdConfig {
   color: string;
 }
 
-// State-based color mapping for non-numeric (string) sensor states
-export interface GlobalColorsConfig {
-  states?: Record<string, string>;
-}
-
 // Binary colors configuration (supports both object and individual properties)
 export interface BinaryColorsConfig {
   on?: string;
@@ -80,9 +75,6 @@ export interface EntityConfig {
   // 'min'  = use the minimum value in the bucket (shows brief dips)
   // 'max'  = use the maximum value in the bucket (shows brief spikes / transient activations)
   interval_value?: 'last' | 'min' | 'max';
-
-  // State-based colors for non-numeric sensor states (e.g. thermostat modes: heating, cooling, idle)
-  global_colors?: GlobalColorsConfig;
 }
 
 // Global card configuration
@@ -121,9 +113,6 @@ export interface WaterfallHistoryCardConfig extends LovelaceCardConfig {
   state_unavailable?: string;
   card_mod?: Record<string, any>;
   interval_value?: 'last' | 'min' | 'max';
-
-  // State-based colors for non-numeric sensor states (e.g. thermostat modes: heating, cooling, idle)
-  global_colors?: GlobalColorsConfig;
 }
 
 // Normalized entity config (after setConfig processing)
@@ -136,7 +125,7 @@ export interface ProcessedHistoryData {
   [entityId: string]: {
     data: Array<{
       time: Date;
-      value: number | string | null;     // Numeric, raw string state (e.g. thermostat mode), or null
+      value: number | null;              // Primary/dominant state (backwards compatible)
       states?: IntervalState[];          // Multi-state data (optional, only when multiple states exist)
     }>;
     minValue: number;

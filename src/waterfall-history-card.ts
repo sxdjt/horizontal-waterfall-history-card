@@ -7,7 +7,6 @@ import {
   EntityConfig,
   NormalizedEntityConfig,
   ThresholdConfig,
-  GlobalColorsConfig,
   ProcessedHistoryData
 } from './types';
 import {
@@ -273,7 +272,6 @@ export class WaterfallHistoryCard extends LitElement {
       state_unknown: config.state_unknown || DEFAULTS.state_unknown,
       state_unavailable: config.state_unavailable || DEFAULTS.state_unavailable,
       interval_value: config.interval_value || DEFAULTS.interval_value,
-      global_colors: config.global_colors ?? undefined,
     };
 
     this.config = {
@@ -454,37 +452,16 @@ export class WaterfallHistoryCard extends LitElement {
 
     const processedHistories: ProcessedHistoryData = { ...this.processedHistories };
     results.forEach(({ entityId, history, entityConfig, startOffset, cacheKey }) => {
-      const intervals = entityConfig.intervals ?? this.config.intervals!;
-      const hours = entityConfig.hours ?? this.config.hours!;
-      const timeStep = (hours * 60 * 60 * 1000) / intervals;
-
-      if (history && history.length > 0) {
-        // API returned data - process normally
+      if (history) {
+        const intervals = entityConfig.intervals ?? this.config.intervals!;
+        const hours = entityConfig.hours ?? this.config.hours!;
+        const timeStep = (hours * 60 * 60 * 1000) / intervals;
         processedHistories[cacheKey] = {
           data: this.processHistoryData(history, intervals, timeStep, entityConfig, startOffset),
           minValue: 0,
           maxValue: 100
         };
-      } else if (!processedHistories[cacheKey]) {
-        // No API data and no cached data (first load for a stable entity).
-        // Backfill all buckets with the entity's current state so stable sensors
-        // show a solid bar rather than a blank chart.
-        const currentState = this.hass?.states[entityId]?.state;
-        const currentValue = currentState ? this.parseState(currentState) : null;
-        const endTime = Date.now() - (startOffset * 60 * 60 * 1000);
-        const startTime = endTime - (hours * 60 * 60 * 1000);
-        processedHistories[cacheKey] = {
-          data: Array.from({ length: intervals }, (_, i) => ({
-            time: new Date(startTime + i * timeStep),
-            value: currentValue
-          })),
-          minValue: 0,
-          maxValue: 100
-        };
       }
-      // If history is empty AND cached data exists, do nothing - preserve the cache.
-      // This protects brief events (interval_value: max/min) from being erased by
-      // a refresh that returns empty due to HA API changes (e.g. HA 2026.4).
     });
     this.processedHistories = processedHistories;
   }
@@ -495,9 +472,9 @@ export class WaterfallHistoryCard extends LitElement {
     timeStep: number,
     entityConfig: EntityConfig,
     startOffset: number = 0
-  ): Array<{time: Date; value: number | string | null}> {
+  ): Array<{time: Date; value: number | null}> {
     const defaultValue = entityConfig.default_value ?? this.config.default_value;
-    const processed: (number | string | null)[] = new Array(intervals).fill(defaultValue);
+    const processed: (number | null)[] = new Array(intervals).fill(defaultValue);
     const hours = entityConfig.hours ?? this.config.hours!;
     const intervalValue = entityConfig.interval_value ?? this.config.interval_value ?? DEFAULTS.interval_value;
 
@@ -515,7 +492,7 @@ export class WaterfallHistoryCard extends LitElement {
     // Track initial state: when the API returns a point with last_changed before startTime,
     // it represents the state that was active at startTime (but hasn't changed since before
     // our time window). We need to capture this to fill bucket 0.
-    let initialState: number | string | null = null;
+    let initialState: number | null = null;
     let bucket0ExplicitlySet = false;
 
     if (historyData) {
@@ -537,8 +514,8 @@ export class WaterfallHistoryCard extends LitElement {
               bucket0ExplicitlySet = true;
             }
 
-            // Track extreme (min/max) for real numeric values only - exclude strings and sentinels
-            if (bucketExtreme !== null && typeof value === 'number' &&
+            // Track extreme (min/max) for real numeric values only
+            if (bucketExtreme !== null && value !== null &&
                 value !== UNKNOWN_STATE && value !== UNAVAILABLE_STATE) {
               if (bucketExtreme[bucketIndex] === null) {
                 bucketExtreme[bucketIndex] = value;
@@ -592,12 +569,12 @@ export class WaterfallHistoryCard extends LitElement {
     }));
   }
 
-  private getMinMax(data: (number | string | null)[]): [number, number] {
+  private getMinMax(data: (number | null)[]): [number, number] {
     let min = Infinity;
     let max = -Infinity;
     data.forEach(d => {
-      // Skip null, strings, and special sentinel values (unavailable/unknown)
-      if (d === null || typeof d === 'string' || d === UNKNOWN_STATE || d === UNAVAILABLE_STATE) return;
+      // Skip null and special sentinel values (unavailable/unknown)
+      if (d === null || d === UNKNOWN_STATE || d === UNAVAILABLE_STATE) return;
       if (d > max) max = d;
       if (d < min) min = d;
     });
@@ -610,7 +587,7 @@ export class WaterfallHistoryCard extends LitElement {
     return [min, max];
   }
 
-  private parseState(state: any): number | string | null {
+  private parseState(state: any): number | null {
     if (typeof state === 'number') return state;
     if (typeof state === 'string') {
       const lowerState = state.toLowerCase();
@@ -620,14 +597,12 @@ export class WaterfallHistoryCard extends LitElement {
       if (lowerState === 'on') return 1;
       const casted = parseFloat(state);
       if (!Number.isNaN(casted)) return casted;
-      // Return raw string for non-numeric states (e.g. thermostat modes: heating, cooling, idle)
-      return state;
     }
     return null;
   }
 
-  private displayState(state: number | string | null, entityConfig: EntityConfig): string {
-    // Handle special sentinel states first
+  private displayState(state: number | null, entityConfig: EntityConfig): string {
+    // Handle special states first
     if (state === UNKNOWN_STATE) {
       return entityConfig.state_unknown ?? this.config.state_unknown ?? DEFAULTS.state_unknown;
     }
@@ -635,12 +610,7 @@ export class WaterfallHistoryCard extends LitElement {
       return entityConfig.state_unavailable ?? this.config.state_unavailable ?? DEFAULTS.state_unavailable;
     }
 
-    // String states (non-numeric sensor states such as thermostat modes)
-    if (typeof state === 'string') {
-      return state;
-    }
-
-    // Check if this is a binary value (0 or 1)
+    // Check if this is a binary value (0, 1, true, false)
     if (this.isBinaryValue(state)) {
       const stateOn = entityConfig.state_on ?? this.config.state_on ?? DEFAULTS.state_on;
       const stateOff = entityConfig.state_off ?? this.config.state_off ?? DEFAULTS.state_off;
@@ -657,7 +627,7 @@ export class WaterfallHistoryCard extends LitElement {
     return (state ?? 'N/A') + this.getUnit(entityConfig);
   }
 
-  private isBinaryValue(value: number | string | null): boolean {
+  private isBinaryValue(value: number | null): boolean {
     return value === 0 || value === 1;
   }
 
@@ -698,24 +668,10 @@ export class WaterfallHistoryCard extends LitElement {
     return DEFAULT_THRESHOLDS_BOOLEAN;
   }
 
-  private getColorForValue(value: number | string | null, entityConfig: EntityConfig): string {
-    if (value === null) return '#666666';
+  private getColorForValue(value: number | null, entityConfig: EntityConfig): string {
+    if (value === null || isNaN(value)) return '#666666';
 
-    // Handle string states (non-numeric sensor states such as thermostat modes)
-    if (typeof value === 'string') {
-      // Per-entity state color lookup
-      const entityStateColor = entityConfig.global_colors?.states?.[value];
-      if (entityStateColor) return entityStateColor;
-      // Global state color lookup
-      const globalStateColor = this.config.global_colors?.states?.[value];
-      if (globalStateColor) return globalStateColor;
-      // No color mapped for this state
-      return '#666666';
-    }
-
-    if (isNaN(value)) return '#666666';
-
-    // Handle special sentinel states
+    // Handle special states first
     if (value === UNKNOWN_STATE) {
       return entityConfig.color_unknown ?? this.config.color_unknown ?? DEFAULTS.color_unknown;
     }
@@ -974,7 +930,7 @@ declare global {
 });
 
 console.info(
-  `%c WATERFALL-HISTORY-CARD %c v4.3.0-beta.3 `,
+  `%c WATERFALL-HISTORY-CARD %c v4.3.0-beta.2 `,
   'color: black; background: #F2720C; font-weight: 600;',
   'color: black; background: #00a5c9; font-weight: 600;'
 );
