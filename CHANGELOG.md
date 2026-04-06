@@ -1,5 +1,33 @@
 # Changelog
 
+## [4.3.0] - 2026-04-06
+
+### Added
+- **Interval Value Mode** (`interval_value`): New option to control which value represents each time bucket when multiple state changes occur within it
+  - `last` (default) - final recorded value in the bucket (prior behavior, no breaking change)
+  - `min` - lowest value in the bucket; reveals brief dips (e.g., latency dropping to 0, brief signal loss)
+  - `max` - highest value in the bucket; reveals brief spikes and transient activations (e.g., a door that opened and closed within one bucket)
+  - Configurable globally or per-entity
+  - Available in the visual editor under Basic Settings (global) and entity Advanced Overrides (per-entity)
+
+### Fixed
+- Issue #71: Short-lived state changes within a time bucket were silently overwritten by the final value in that bucket. With `interval_value: min` or `interval_value: max`, brief but meaningful events are now visible.
+- HA 2026.4 compatibility: binary sensor history going blank after first refresh cycle.
+  - Root cause: HA 2026.4 returns an empty array `[]` from the history API for entities that have not changed recently, rather than an initial state point. An empty array is truthy in JS, so the card ran `processHistoryData([])`, produced all-null buckets, and blanked the chart.
+  - Fix: three-way response handling in `updateCard()`:
+    1. Non-empty response - process normally (no behavior change)
+    2. Empty response + no cache (first load for a stable entity) - backfill all buckets with current state so stable sensors show a solid bar instead of blank
+    3. Empty response + cache exists (refresh) - preserve cached data; critical for `interval_value: max/min` users where brief events must survive refresh cycles
+
+### Changed
+- Dependency updates; TypeScript 6 compatibility fixes
+
+### Notes
+- `interval_value: last` is 100% backwards compatible; default behavior is unchanged
+- Special sentinel values (unknown/unavailable) are excluded from min/max comparison
+
+---
+
 ## [4.3.0-beta.2] - 2026-04-03
 
 ### Added
@@ -11,28 +39,15 @@
 ### Changed
 - Dependency updates; TypeScript 6 compatibility fixes
 
-BETA RELEASE: Documentation and maintenance update for the `interval_value` feature.
-
 ---
 
 ## [4.3.0-beta.1] - 2026-03-12
 
 ### Added
-- **Interval Value Mode** (`interval_value`): New option to control which value is shown when multiple state changes occur within a single time bucket
-  - `last` (default) - final recorded value in the interval (prior behavior, no breaking change)
-  - `min` - lowest value in the interval; reveals brief dips (e.g., latency dropping to 0, brief signal loss)
-  - `max` - highest value in the interval; reveals brief spikes and transient activations (e.g., a door that opened and closed within one interval)
-  - Configurable globally or per-entity as an override
-  - Available in the visual editor under Basic Settings (global) and entity Advanced Overrides (per-entity)
+- `interval_value` option (`last` / `min` / `max`) to control bucket value representation
 
 ### Fixed
-- Issue #71: Short-lived state changes within a time bucket were silently overwritten by the final value in that bucket. With `interval_value: min` or `interval_value: max`, brief but meaningful events are now visible.
-
-### Technical Details
-- Special sentinel values (unknown/unavailable) are excluded from min/max comparison and handled separately
-- Default `interval_value: last` is 100% backwards compatible
-
-BETA RELEASE: Testing `interval_value` feature for GitHub issue #71.
+- Issue #71: Short-lived state changes within a time bucket were silently overwritten
 
 ---
 

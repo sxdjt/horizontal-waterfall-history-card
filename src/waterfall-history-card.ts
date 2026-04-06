@@ -452,16 +452,37 @@ export class WaterfallHistoryCard extends LitElement {
 
     const processedHistories: ProcessedHistoryData = { ...this.processedHistories };
     results.forEach(({ entityId, history, entityConfig, startOffset, cacheKey }) => {
-      if (history) {
-        const intervals = entityConfig.intervals ?? this.config.intervals!;
-        const hours = entityConfig.hours ?? this.config.hours!;
-        const timeStep = (hours * 60 * 60 * 1000) / intervals;
+      const intervals = entityConfig.intervals ?? this.config.intervals!;
+      const hours = entityConfig.hours ?? this.config.hours!;
+      const timeStep = (hours * 60 * 60 * 1000) / intervals;
+
+      if (history && history.length > 0) {
+        // API returned data - process normally (no behavior change)
         processedHistories[cacheKey] = {
           data: this.processHistoryData(history, intervals, timeStep, entityConfig, startOffset),
           minValue: 0,
           maxValue: 100
         };
+      } else if (!processedHistories[cacheKey]) {
+        // No API data and no cached data (first load for a stable entity).
+        // Backfill all buckets with the entity's current state so stable sensors
+        // show a solid bar rather than a blank chart.
+        const currentState = this.hass?.states[entityId]?.state;
+        const currentValue = currentState ? this.parseState(currentState) : null;
+        const endTime = Date.now() - (startOffset * 60 * 60 * 1000);
+        const startTime = endTime - (hours * 60 * 60 * 1000);
+        processedHistories[cacheKey] = {
+          data: Array.from({ length: intervals }, (_, i) => ({
+            time: new Date(startTime + i * timeStep),
+            value: currentValue
+          })),
+          minValue: 0,
+          maxValue: 100
+        };
       }
+      // If history is empty AND cached data exists, do nothing - preserve the cache.
+      // This protects brief events (interval_value: max/min) from being erased by
+      // a refresh that returns empty due to HA API changes (e.g. HA 2026.4).
     });
     this.processedHistories = processedHistories;
   }
@@ -930,7 +951,7 @@ declare global {
 });
 
 console.info(
-  `%c WATERFALL-HISTORY-CARD %c v4.3.0-beta.2 `,
+  `%c WATERFALL-HISTORY-CARD %c v4.3.0 `,
   'color: black; background: #F2720C; font-weight: 600;',
   'color: black; background: #00a5c9; font-weight: 600;'
 );
