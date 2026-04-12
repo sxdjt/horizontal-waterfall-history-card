@@ -90,8 +90,8 @@ entities:
 | `color_on`       | `string`  | `#EEEEEE`   | Color for binary sensors in "on" state (global default).                    |
 | `color_off`      | `string`  | `#636363`   | Color for binary sensors in "off" state (global default).                   |
 | `binary_colors`  | `object`  | -           | Alternative way to set binary colors: `{on: '#color', off: '#color'}`.      |
-| `state_on`       | `string`  | `"On"`      | Label to display for binary "on" state (global default).                    |
-| `state_off`      | `string`  | `"Off"`     | Label to display for binary "off" state (global default).                   |
+| `state_on`       | `string`  | `"On"`      | Matches the HA state string for "on" and sets the display label (global default). E.g. `"home"` for a person entity.  |
+| `state_off`      | `string`  | `"Off"`     | Matches the HA state string for "off" and sets the display label (global default). E.g. `"not_home"` for a person entity. |
 | `color_unknown`  | `string`  | `#FF9800`   | Color for entities in "unknown" state (orange).                             |
 | `color_unavailable` | `string` | `#9E9E9E` | Color for entities in "unavailable" state (gray).                           |
 | `state_unknown`  | `string`  | `"Unknown"` | Label to display for entities in "unknown" state.                           |
@@ -128,8 +128,8 @@ Each item in `entities:` can be either a bare entity ID string, or an object wit
 | `show_labels`    | `boolean` | Inherits from card  | Show/hide labels just for this entity.                              |
 | `show_min_max`   | `boolean` | Inherits from card  | Show/hide min/max just for this entity.                             |
 | `start_offset`   | `number`  | Inherits from card  | Hours to offset the time window for this entity.                    |
-| `state_off`      | `string`  | Inherits from card  | Label to display for this binary entity's "off" state.              |
-| `state_on`       | `string`  | Inherits from card  | Label to display for this binary entity's "on" state.               |
+| `state_off`      | `string`  | Inherits from card  | Matches the HA state string for "off" and sets the display label for this entity. |
+| `state_on`       | `string`  | Inherits from card  | Matches the HA state string for "on" and sets the display label for this entity.  |
 | `state_unavailable` | `string` | Inherits from card | Label to display when this entity is "unavailable".      |
 | `state_unknown`  | `string`  | Inherits from card  | Label to display when this entity is "unknown".           |
 | `thresholds`     | `array`   | Inherits from card  | Override color thresholds for this entity.                          |
@@ -299,14 +299,36 @@ entities:
     state_off: "Locked"
 ```
 
+### Custom State Matching for Non-Binary Entities
+
+Entities like `person` or `device_tracker` use state strings other than `on`/`off`. Use `state_on` and `state_off` to tell the card which HA state values map to on/off. The same values are used as the display labels.
+
+```yaml
+type: custom:waterfall-history-card
+title: Presence History
+hours: 12
+entities:
+  - entity: person.jane
+    state_on: "home"
+    state_off: "not_home"
+    color_on: "#4CAF50"
+    color_off: "#9E9E9E"
+```
+
+Note: check the exact state values your entity uses in Developer Tools -> States. For example, `person.*` uses `home` and `not_home`; `device_tracker.*` may use `home` and `not_home` or zone names.
+
 ### Supported Binary Entity Types
 
-State labels work with any entity that has binary states (0/1, on/off, true/false):
+`state_on`/`state_off` work with any entity type, including:
 
 - `binary_sensor.*` (motion, door, window, etc.)
 - `switch.*`
 - `light.*` (on/off only)
 - `input_boolean.*`
+- `person.*` (e.g. `home` / `not_home`)
+- `device_tracker.*`
+- `alarm_control_panel.*`
+- `cover.*` (e.g. `open` / `closed`)
 
 ---
 

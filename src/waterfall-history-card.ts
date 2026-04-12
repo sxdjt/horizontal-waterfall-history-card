@@ -469,7 +469,7 @@ export class WaterfallHistoryCard extends LitElement {
         // Backfill all buckets with the entity's current state so stable sensors
         // show a solid bar rather than a blank chart.
         const currentState = this.hass?.states[entityId]?.state;
-        const currentValue = currentState ? this.parseState(currentState) : null;
+        const currentValue = currentState ? this.parseState(currentState, entityConfig) : null;
         const endTime = Date.now() - (startOffset * 60 * 60 * 1000);
         const startTime = endTime - (hours * 60 * 60 * 1000);
         processedHistories[cacheKey] = {
@@ -524,11 +524,11 @@ export class WaterfallHistoryCard extends LitElement {
         if (timeDiff < 0) {
           // This point's last_changed is before our window, but it represents
           // the state that was active at startTime. Capture it as initial state.
-          initialState = this.parseState(point.state);
+          initialState = this.parseState(point.state, entityConfig);
         } else {
           const bucketIndex = Math.floor(timeDiff / timeStep);
           if (bucketIndex >= 0 && bucketIndex < intervals) {
-            const value = this.parseState(point.state);
+            const value = this.parseState(point.state, entityConfig);
 
             // Always track the last value (needed for special state handling)
             processed[bucketIndex] = value;
@@ -609,7 +609,7 @@ export class WaterfallHistoryCard extends LitElement {
     return [min, max];
   }
 
-  private parseState(state: any): number | null {
+  private parseState(state: any, entityConfig?: EntityConfig): number | null {
     if (typeof state === 'number') return state;
     if (typeof state === 'string') {
       const lowerState = state.toLowerCase();
@@ -617,6 +617,11 @@ export class WaterfallHistoryCard extends LitElement {
       if (lowerState === 'unavailable') return UNAVAILABLE_STATE;
       if (lowerState === 'off') return 0;
       if (lowerState === 'on') return 1;
+      // Check configured state_on / state_off so custom states (e.g. 'home', 'not_home') map to binary 1/0
+      const stateOnCfg = (entityConfig?.state_on ?? this.config.state_on ?? '').toLowerCase();
+      const stateOffCfg = (entityConfig?.state_off ?? this.config.state_off ?? '').toLowerCase();
+      if (stateOnCfg && lowerState === stateOnCfg) return 1;
+      if (stateOffCfg && lowerState === stateOffCfg) return 0;
       const casted = parseFloat(state);
       if (!Number.isNaN(casted)) return casted;
     }
@@ -838,7 +843,7 @@ export class WaterfallHistoryCard extends LitElement {
     // For non-offset entities, append current state as the last bar
     const history = startOffset > 0
       ? historyData.map(d => d.value)
-      : [...historyData.map(d => d.value), this.parseState(entity.state)];
+      : [...historyData.map(d => d.value), this.parseState(entity.state, entityObj)];
 
     const [actualMin, actualMax] = this.getMinMax(history);
 
@@ -847,7 +852,7 @@ export class WaterfallHistoryCard extends LitElement {
     const showCurrent = entityObj.show_current ?? this.config.show_current;
     const hours = entityObj.hours ?? this.config.hours!;
     const intervals = entityObj.intervals ?? this.config.intervals!;
-    const current = this.parseState(entity.state);
+    const current = this.parseState(entity.state, entityObj);
     const inlineLayout = entityObj.inline_layout ?? this.config.inline_layout;
 
     // Calculate label text based on offset
@@ -962,7 +967,7 @@ declare global {
 });
 
 console.info(
-  `%c WATERFALL-HISTORY-CARD %c v4.3.0 `,
+  `%c WATERFALL-HISTORY-CARD %c v4.4.0 `,
   'color: black; background: #F2720C; font-weight: 600;',
   'color: black; background: #00a5c9; font-weight: 600;'
 );

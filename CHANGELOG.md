@@ -1,5 +1,15 @@
 # Changelog
 
+## [4.4.0] - 2026-04-12
+
+### Added
+- **Custom state matching for non-binary entities**: `state_on` and `state_off` now match against the raw HA state string in addition to serving as display labels. This enables tracking of entities like `person.*` (states: `home`/`not_home`), `device_tracker.*`, `cover.*`, `alarm_control_panel.*`, and any other entity whose states are not `on`/`off`.
+
+### Fixed
+- Sections view sizing: added `getGridOptions()` and `height: 100%` so the card renders correctly in HA dashboard sections layout.
+
+---
+
 ## [4.3.0] - 2026-04-06
 
 ### Added
