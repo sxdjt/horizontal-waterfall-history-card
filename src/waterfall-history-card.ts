@@ -42,6 +42,7 @@ export class WaterfallHistoryCard extends LitElement {
       border-color: var(--ha-card-border-color, var(--divider-color, #e0e0e0));
       color: var(--primary-text-color);
       display: block;
+      height: 100%;
       position: relative;
     }
 
@@ -928,6 +929,16 @@ export class WaterfallHistoryCard extends LitElement {
 
   getCardSize(): number {
     return this.config?.entities?.length * 2 || 2;
+  }
+
+  // Sections view (grid layout) sizing - 12-column grid system
+  getGridOptions() {
+    return {
+      rows: 3,
+      columns: 12,
+      min_rows: 2,
+      min_columns: 6,
+    };
   }
 }
 
