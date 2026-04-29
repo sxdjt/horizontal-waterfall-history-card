@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.4.1] - 2026-04-29
+
+### Fixed
+- Issue #76: Numeric sensors whose current value is exactly 0 or 1 (e.g. PM2.5 = 1.0 ug/m3) were incorrectly displayed as "On"/"Off" instead of their numeric value. The binary display path in `displayState` now mirrors the existing guard in `getColorForValue`: it only applies when no thresholds are configured. Sensors with thresholds are always treated as numeric.
+
+---
+
 ## [4.4.0] - 2026-04-12
 
 ### Added

@@ -637,8 +637,11 @@ export class WaterfallHistoryCard extends LitElement {
       return entityConfig.state_unavailable ?? this.config.state_unavailable ?? DEFAULTS.state_unavailable;
     }
 
-    // Check if this is a binary value (0, 1, true, false)
-    if (this.isBinaryValue(state)) {
+    // Only treat 0/1 as binary when no thresholds are configured. A numeric sensor whose
+    // current reading happens to be 0 or 1 (e.g. PM2.5 = 1.0) must not be shown as On/Off.
+    // This mirrors the guard already present in getColorForValue().
+    const hasThresholds = !!(entityConfig.thresholds ?? this.config.thresholds);
+    if (!hasThresholds && this.isBinaryValue(state)) {
       const stateOn = entityConfig.state_on ?? this.config.state_on ?? DEFAULTS.state_on;
       const stateOff = entityConfig.state_off ?? this.config.state_off ?? DEFAULTS.state_off;
       return (state === 1) ? stateOn : stateOff;
@@ -967,7 +970,7 @@ declare global {
 });
 
 console.info(
-  `%c WATERFALL-HISTORY-CARD %c v4.4.0 `,
+  `%c WATERFALL-HISTORY-CARD %c v4.4.1 `,
   'color: black; background: #F2720C; font-weight: 600;',
   'color: black; background: #00a5c9; font-weight: 600;'
 );
