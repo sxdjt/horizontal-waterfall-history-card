@@ -219,7 +219,6 @@ class WaterfallHistoryCard extends i {
         // Set CSS custom properties for dynamic values
         this.style.setProperty('--header-font-size', this.config.compact ? '10px' : '11px');
         this.style.setProperty('--entity-name-font-size', this.config.compact ? '10px' : '11px');
-        this.style.setProperty('--current-value-font-size', this.config.compact ? '12px' : '16px');
         this.style.setProperty('--waterfall-height', `${this.config.height}px`);
         this.style.setProperty('--labels-margin-top', this.config.compact ? '2px' : '5px');
     }
@@ -272,6 +271,7 @@ class WaterfallHistoryCard extends i {
             // Check if we need to refresh history data
             this._checkHistoryRefresh();
         }
+        this._syncInlineColumnWidths();
         // Apply card-mod once
         if (!this._cardModApplied && this.config?.card_mod) {
             customElements.whenDefined("card-mod").then(() => {
@@ -283,6 +283,23 @@ class WaterfallHistoryCard extends i {
             }).catch(() => {
                 // card-mod not available, ignore
             });
+        }
+    }
+    _syncInlineColumnWidths() {
+        requestAnimationFrame(() => {
+            this._syncColumnWidth('.entity-inline-name');
+            this._syncColumnWidth('.entity-inline-value');
+        });
+    }
+    _syncColumnWidth(selector) {
+        const els = this.shadowRoot?.querySelectorAll(selector);
+        if (!els?.length)
+            return;
+        els.forEach(el => { el.style.width = 'auto'; });
+        let maxWidth = 0;
+        els.forEach(el => { maxWidth = Math.max(maxWidth, el.offsetWidth); });
+        if (maxWidth > 0) {
+            els.forEach(el => { el.style.width = `${maxWidth}px`; });
         }
     }
     _checkHistoryRefresh() {
@@ -839,13 +856,17 @@ WaterfallHistoryCard.styles = i$3 `
     .entity-header {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       margin-bottom: 6px;
     }
 
     .entity-icon {
-      width: 14px;
-      height: 14px;
+      --mdc-icon-size: 18px;
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
       opacity: 0.45;
     }
 
@@ -854,16 +875,18 @@ WaterfallHistoryCard.styles = i$3 `
       font-weight: 500;
       letter-spacing: 0.07em;
       text-transform: uppercase;
-      color: var(--secondary-text-color, #727272);
+      color: var(--primary-text-color);
     }
 
     .current-value {
       margin-left: auto;
-      font-size: var(--current-value-font-size, 16px);
+      font-size: var(--entity-name-font-size, 11px);
       font-weight: 500;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--primary-text-color);
       font-variant-numeric: tabular-nums lining-nums;
       font-feature-settings: 'tnum' 1;
-      letter-spacing: -0.02em;
     }
 
     .waterfall-container {
@@ -891,9 +914,8 @@ WaterfallHistoryCard.styles = i$3 `
       justify-content: space-between;
       font-size: 9.5px;
       letter-spacing: 0.04em;
-      color: var(--secondary-text-color, gray);
+      color: var(--primary-text-color);
       margin-top: var(--labels-margin-top, 5px);
-      opacity: 0.7;
     }
 
     .min-max-label {
@@ -901,8 +923,7 @@ WaterfallHistoryCard.styles = i$3 `
       width: 100%;
       font-size: 10px;
       letter-spacing: 0.03em;
-      color: var(--secondary-text-color, gray);
-      opacity: 0.6;
+      color: var(--primary-text-color);
       text-align: center;
     }
 
@@ -919,12 +940,16 @@ WaterfallHistoryCard.styles = i$3 `
       font-size: 10px;
     }
 
-    :host(.compact) .current-value {
-      font-size: 12px;
-    }
-
     :host(.compact) .labels {
       margin-top: 2px;
+    }
+
+    :host(.compact) .entity-container {
+      margin-bottom: 6px;
+    }
+
+    :host(.compact) .entity-container + .entity-container {
+      padding-top: 5px;
     }
 
     /* Inline layout styles */
@@ -943,15 +968,16 @@ WaterfallHistoryCard.styles = i$3 `
       display: flex;
       align-items: center;
       gap: 10px;
-      min-width: 120px;
       flex-shrink: 0;
     }
 
     .entity-inline-container .entity-icon {
-      width: 14px;
-      height: 14px;
+      --mdc-icon-size: 18px;
+      width: 18px;
+      height: 18px;
       flex-shrink: 0;
-      display: block;
+      display: flex;
+      align-items: center;
     }
 
     .entity-inline-container .entity-name {
@@ -975,21 +1001,26 @@ WaterfallHistoryCard.styles = i$3 `
     }
 
     .entity-inline-container .entity-inline-value {
-      min-width: 60px;
       flex-shrink: 0;
       text-align: right;
-      font-size: var(--current-value-font-size, 16px);
+      font-size: var(--entity-name-font-size, 11px);
       font-weight: 500;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--primary-text-color);
       font-variant-numeric: tabular-nums lining-nums;
       font-feature-settings: 'tnum' 1;
-      letter-spacing: -0.02em;
       white-space: nowrap;
       line-height: var(--waterfall-height, 60px);
     }
 
     /* Compact mode for inline layout */
     :host(.compact) .entity-inline-container {
-      margin-bottom: 8px;
+      margin-bottom: 6px;
+    }
+
+    :host(.compact) .entity-inline-container + .entity-inline-container {
+      padding-top: 5px;
     }
 
     :host(.compact) .entity-inline-container .entity-icon {
@@ -1001,9 +1032,6 @@ WaterfallHistoryCard.styles = i$3 `
       font-size: 10px;
     }
 
-    :host(.compact) .entity-inline-container .entity-inline-value {
-      font-size: 12px;
-    }
   `;
 __decorate([
     n({ attribute: false })
