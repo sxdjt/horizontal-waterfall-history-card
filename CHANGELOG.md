@@ -1,5 +1,14 @@
 # Changelog
 
+## [4.5.0] - 2026-04-30
+
+### Fixed
+- Dark mode text contrast: entity names, current values, time labels, and min/max labels now use `--primary-text-color` instead of the dimmed `--secondary-text-color`
+- Inline layout: removed fixed `min-width` reservations on name and value columns; widths now sync dynamically to the widest content across all rows
+- Icon rendering: set `--mdc-icon-size` so `ha-icon` respects the configured size; icons now vertically centre-align with entity name labels in both standard and inline layouts
+
+---
+
 ## [4.5.0-beta.2] - 2026-04-29
 
 ### Changed
