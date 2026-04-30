@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.5.0-beta.2] - 2026-04-29
+
+### Changed
+- Removed horizontal separator lines between entity rows and below the card header - reduces visual clutter
+
+---
+
 ## [4.5.0-beta.1] - 2026-04-29
 
 ### Changed

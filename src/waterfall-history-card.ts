@@ -53,7 +53,6 @@ export class WaterfallHistoryCard extends LitElement {
       text-transform: uppercase;
       padding-bottom: 10px;
       margin-bottom: 2px;
-      border-bottom: 1px solid var(--divider-color, rgba(0,0,0,0.1));
       color: var(--secondary-text-color, #727272);
       display: flex;
       justify-content: space-between;
@@ -70,7 +69,6 @@ export class WaterfallHistoryCard extends LitElement {
     }
 
     .entity-container + .entity-container {
-      border-top: 1px solid var(--divider-color, rgba(0,0,0,0.08));
       padding-top: 10px;
     }
 
@@ -174,7 +172,6 @@ export class WaterfallHistoryCard extends LitElement {
     }
 
     .entity-inline-container + .entity-inline-container {
-      border-top: 1px solid var(--divider-color, rgba(0,0,0,0.08));
       padding-top: 10px;
     }
 
@@ -999,7 +996,7 @@ declare global {
 });
 
 console.info(
-  `%c WATERFALL-HISTORY-CARD %c v4.5.0-beta.1 `,
+  `%c WATERFALL-HISTORY-CARD %c v4.5.0-beta.2 `,
   'color: black; background: #F2720C; font-weight: 600;',
   'color: black; background: #00a5c9; font-weight: 600;'
 );

@@ -817,7 +817,6 @@ WaterfallHistoryCard.styles = i$3 `
       text-transform: uppercase;
       padding-bottom: 10px;
       margin-bottom: 2px;
-      border-bottom: 1px solid var(--divider-color, rgba(0,0,0,0.1));
       color: var(--secondary-text-color, #727272);
       display: flex;
       justify-content: space-between;
@@ -834,7 +833,6 @@ WaterfallHistoryCard.styles = i$3 `
     }
 
     .entity-container + .entity-container {
-      border-top: 1px solid var(--divider-color, rgba(0,0,0,0.08));
       padding-top: 10px;
     }
 
@@ -938,7 +936,6 @@ WaterfallHistoryCard.styles = i$3 `
     }
 
     .entity-inline-container + .entity-inline-container {
-      border-top: 1px solid var(--divider-color, rgba(0,0,0,0.08));
       padding-top: 10px;
     }
 
@@ -1028,7 +1025,7 @@ window.customCards.push({
     name: 'Waterfall History Card',
     description: 'A horizontal waterfall display for historical sensor data with visual editor'
 });
-console.info(`%c WATERFALL-HISTORY-CARD %c v4.5.0-beta.1 `, 'color: black; background: #F2720C; font-weight: 600;', 'color: black; background: #00a5c9; font-weight: 600;');
+console.info(`%c WATERFALL-HISTORY-CARD %c v4.5.0-beta.2 `, 'color: black; background: #F2720C; font-weight: 600;', 'color: black; background: #00a5c9; font-weight: 600;');
 
 var NumberFormat;
 (function (NumberFormat) {
