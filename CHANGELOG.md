@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.5.1] - 2026-04-30
+
+### Changed
+- Updated README
+
+---
+
 ## [4.5.0] - 2026-04-30
 
 ### Fixed
