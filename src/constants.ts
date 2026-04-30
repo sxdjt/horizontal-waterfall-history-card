@@ -6,16 +6,16 @@ export const UNAVAILABLE_STATE = -998;
 
 // Default thresholds for numeric sensors (temperature-based)
 export const DEFAULT_THRESHOLDS_NUMERIC: ThresholdConfig[] = [
-  { value: 60, color: '#4FC3F7' },  // cold
-  { value: 70, color: '#81C784' },  // cool
-  { value: 80, color: '#FFB74D' },  // warm
-  { value: 100, color: '#FF8A65' }  // hot
+  { value: 60, color: '#5b8fce' },  // cold - precise blue
+  { value: 70, color: '#52a870' },  // cool - measured green
+  { value: 80, color: '#d4894a' },  // warm - amber
+  { value: 100, color: '#c85c4a' }  // hot - alert
 ];
 
 // Default thresholds for binary sensors
 export const DEFAULT_THRESHOLDS_BOOLEAN: ThresholdConfig[] = [
-  { value: 0, color: '#636363' },  // off
-  { value: 1, color: '#EEEEEE' },  // on
+  { value: 0, color: '#2d3245' },  // off - dark recessed
+  { value: 1, color: '#4a9eff' },  // on - electric blue
 ];
 
 // Default icons by domain
@@ -73,8 +73,8 @@ export const DEFAULTS = {
   state_off: 'Off',
   state_unknown: 'Unknown',
   state_unavailable: 'INOP',
-  color_on: '#EEEEEE',
-  color_off: '#636363',
+  color_on: '#4a9eff',
+  color_off: '#2d3245',
   color_unknown: '#FF9800',  // Orange
   color_unavailable: '#9E9E9E',  // Gray
   interval_value: 'last' as 'last' | 'min' | 'max',

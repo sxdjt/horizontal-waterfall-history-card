@@ -71,15 +71,15 @@ const UNKNOWN_STATE = -999;
 const UNAVAILABLE_STATE = -998;
 // Default thresholds for numeric sensors (temperature-based)
 const DEFAULT_THRESHOLDS_NUMERIC = [
-    { value: 60, color: '#4FC3F7' }, // cold
-    { value: 70, color: '#81C784' }, // cool
-    { value: 80, color: '#FFB74D' }, // warm
-    { value: 100, color: '#FF8A65' } // hot
+    { value: 60, color: '#5b8fce' }, // cold - precise blue
+    { value: 70, color: '#52a870' }, // cool - measured green
+    { value: 80, color: '#d4894a' }, // warm - amber
+    { value: 100, color: '#c85c4a' } // hot - alert
 ];
 // Default thresholds for binary sensors
 const DEFAULT_THRESHOLDS_BOOLEAN = [
-    { value: 0, color: '#636363' }, // off
-    { value: 1, color: '#EEEEEE' }, // on
+    { value: 0, color: '#2d3245' }, // off - dark recessed
+    { value: 1, color: '#4a9eff' }, // on - electric blue
 ];
 // Default icons by domain
 const DEFAULT_DOMAIN_ICONS = {
@@ -131,8 +131,8 @@ const DEFAULTS = {
     state_off: 'Off',
     state_unknown: 'Unknown',
     state_unavailable: 'INOP',
-    color_on: '#EEEEEE',
-    color_off: '#636363',
+    color_on: '#4a9eff',
+    color_off: '#2d3245',
     color_unknown: '#FF9800', // Orange
     color_unavailable: '#9E9E9E', // Gray
     interval_value: 'last',
@@ -217,11 +217,11 @@ class WaterfallHistoryCard extends i {
             this.classList.remove('compact');
         }
         // Set CSS custom properties for dynamic values
-        this.style.setProperty('--header-font-size', this.config.compact ? '12px' : '16px');
-        this.style.setProperty('--entity-name-font-size', this.config.compact ? '12px' : '14px');
-        this.style.setProperty('--current-value-font-size', this.config.compact ? '12px' : '18px');
+        this.style.setProperty('--header-font-size', this.config.compact ? '10px' : '11px');
+        this.style.setProperty('--entity-name-font-size', this.config.compact ? '10px' : '11px');
+        this.style.setProperty('--current-value-font-size', this.config.compact ? '12px' : '16px');
         this.style.setProperty('--waterfall-height', `${this.config.height}px`);
-        this.style.setProperty('--labels-margin-top', this.config.compact ? '0px' : '4px');
+        this.style.setProperty('--labels-margin-top', this.config.compact ? '2px' : '5px');
     }
     shouldUpdate(changedProps) {
         if (!this.config || !this.hass) {
@@ -811,17 +811,21 @@ WaterfallHistoryCard.styles = i$3 `
     }
 
     .card-header {
-      font-size: var(--header-font-size, 16px);
-      font-weight: 500;
-      padding-bottom: 8px;
-      color: var(--primary-text-color, black);
+      font-size: var(--header-font-size, 11px);
+      font-weight: 600;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      padding-bottom: 10px;
+      margin-bottom: 2px;
+      border-bottom: 1px solid var(--divider-color, rgba(0,0,0,0.1));
+      color: var(--secondary-text-color, #727272);
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
     .entity-container {
-      margin-bottom: 16px;
+      margin-bottom: 12px;
       cursor: pointer;
     }
 
@@ -829,61 +833,78 @@ WaterfallHistoryCard.styles = i$3 `
       margin-bottom: 0;
     }
 
+    .entity-container + .entity-container {
+      border-top: 1px solid var(--divider-color, rgba(0,0,0,0.08));
+      padding-top: 10px;
+    }
+
     .entity-header {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 4px;
+      gap: 7px;
+      margin-bottom: 6px;
     }
 
     .entity-icon {
-      width: 20px;
-      height: 20px;
+      width: 14px;
+      height: 14px;
+      opacity: 0.45;
     }
 
     .entity-name {
-      font-size: var(--entity-name-font-size, 14px);
+      font-size: var(--entity-name-font-size, 11px);
       font-weight: 500;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--secondary-text-color, #727272);
     }
 
     .current-value {
       margin-left: auto;
-      font-size: var(--current-value-font-size, 18px);
-      font-weight: bold;
+      font-size: var(--current-value-font-size, 16px);
+      font-weight: 500;
+      font-variant-numeric: tabular-nums lining-nums;
+      font-feature-settings: 'tnum' 1;
+      letter-spacing: -0.02em;
     }
 
     .waterfall-container {
       position: relative;
       height: var(--waterfall-height, 60px);
-      border-radius: 2px;
+      border-radius: 3px;
       overflow: hidden;
       display: flex;
+      gap: 1px;
+      background: rgba(0,0,0,0.35);
     }
 
     .bar-segment {
       flex: 1;
       height: 100%;
-      transition: all 0.3s ease;
-      border-right: 1px solid rgba(255,255,255,0.2);
+      transition: filter 0.15s ease;
     }
 
-    .bar-segment:last-child {
-      border-right: none;
+    .bar-segment:hover {
+      filter: brightness(1.18);
     }
 
     .labels {
       display: flex;
       justify-content: space-between;
-      font-size: 11px;
+      font-size: 9.5px;
+      letter-spacing: 0.04em;
       color: var(--secondary-text-color, gray);
-      margin-top: var(--labels-margin-top, 4px);
+      margin-top: var(--labels-margin-top, 5px);
+      opacity: 0.7;
     }
 
     .min-max-label {
       display: block;
       width: 100%;
-      font-size: 11px;
+      font-size: 10px;
+      letter-spacing: 0.03em;
       color: var(--secondary-text-color, gray);
+      opacity: 0.6;
       text-align: center;
     }
 
@@ -893,11 +914,11 @@ WaterfallHistoryCard.styles = i$3 `
 
     /* Compact mode overrides */
     :host(.compact) .card-header {
-      font-size: 12px;
+      font-size: 10px;
     }
 
     :host(.compact) .entity-name {
-      font-size: 12px;
+      font-size: 10px;
     }
 
     :host(.compact) .current-value {
@@ -905,7 +926,7 @@ WaterfallHistoryCard.styles = i$3 `
     }
 
     :host(.compact) .labels {
-      margin-top: 0px;
+      margin-top: 2px;
     }
 
     /* Inline layout styles */
@@ -913,26 +934,31 @@ WaterfallHistoryCard.styles = i$3 `
       display: flex;
       align-items: center;
       gap: 12px;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
+    }
+
+    .entity-inline-container + .entity-inline-container {
+      border-top: 1px solid var(--divider-color, rgba(0,0,0,0.08));
+      padding-top: 10px;
     }
 
     .entity-inline-container .entity-inline-name {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 7px;
       min-width: 120px;
       flex-shrink: 0;
     }
 
     .entity-inline-container .entity-icon {
-      width: 20px;
-      height: 20px;
+      width: 14px;
+      height: 14px;
       flex-shrink: 0;
       display: block;
     }
 
     .entity-inline-container .entity-name {
-      font-size: var(--entity-name-font-size, 14px);
+      font-size: var(--entity-name-font-size, 11px);
       font-weight: 500;
       white-space: nowrap;
       line-height: var(--waterfall-height, 60px);
@@ -955,8 +981,11 @@ WaterfallHistoryCard.styles = i$3 `
       min-width: 60px;
       flex-shrink: 0;
       text-align: right;
-      font-size: var(--current-value-font-size, 18px);
-      font-weight: bold;
+      font-size: var(--current-value-font-size, 16px);
+      font-weight: 500;
+      font-variant-numeric: tabular-nums lining-nums;
+      font-feature-settings: 'tnum' 1;
+      letter-spacing: -0.02em;
       white-space: nowrap;
       line-height: var(--waterfall-height, 60px);
     }
@@ -967,12 +996,12 @@ WaterfallHistoryCard.styles = i$3 `
     }
 
     :host(.compact) .entity-inline-container .entity-icon {
-      width: 16px;
-      height: 16px;
+      width: 12px;
+      height: 12px;
     }
 
     :host(.compact) .entity-inline-container .entity-name {
-      font-size: 12px;
+      font-size: 10px;
     }
 
     :host(.compact) .entity-inline-container .entity-inline-value {
@@ -999,7 +1028,7 @@ window.customCards.push({
     name: 'Waterfall History Card',
     description: 'A horizontal waterfall display for historical sensor data with visual editor'
 });
-console.info(`%c WATERFALL-HISTORY-CARD %c v4.4.1 `, 'color: black; background: #F2720C; font-weight: 600;', 'color: black; background: #00a5c9; font-weight: 600;');
+console.info(`%c WATERFALL-HISTORY-CARD %c v4.5.0-beta.1 `, 'color: black; background: #F2720C; font-weight: 600;', 'color: black; background: #00a5c9; font-weight: 600;');
 
 var NumberFormat;
 (function (NumberFormat) {

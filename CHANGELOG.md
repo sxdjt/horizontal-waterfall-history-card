@@ -1,5 +1,22 @@
 # Changelog
 
+## [4.5.0-beta.1] - 2026-04-29
+
+### Changed
+- **Refined Data Instrument visual redesign** - CSS-only changes, no config schema changes.
+  - Card header: recedes to small-caps uppercase tracked label with a hairline rule below; color shifts to secondary text so the data takes priority
+  - Entity names: condensed uppercase with letter-spacing (instrument label style)
+  - Current values: tabular-nums / lining-nums so digits don't shift width when values change; weight reduced from bold to medium
+  - Bar chart: replaced per-bar `border-right` separators with `gap: 1px` on the flex container; the container's dark background shows through as clean tick-mark divisions
+  - Bar segments: `filter: brightness(1.18)` hover feedback replaces no feedback
+  - Entity rows: hairline `border-top` dividers between rows (replaces pure margin spacing)
+  - Icons: reduced from 20px to 14px at 45% opacity - locator markers, not primary elements
+  - Time labels: 9.5px monospace-style with letter-spacing and 70% opacity
+  - Inline layout: same improvements plus hairline separators between rows and tabular-nums on inline values
+  - Default threshold colors tightened: more saturated / less pastel for numeric sensors; binary off-state deepened to dark blue-gray (`#2d3245`), on-state to electric blue (`#4a9eff`)
+
+---
+
 ## [4.4.1] - 2026-04-29
 
 ### Fixed
