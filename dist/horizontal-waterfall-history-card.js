@@ -841,7 +841,7 @@ WaterfallHistoryCard.styles = i$3 `
     .entity-header {
       display: flex;
       align-items: center;
-      gap: 7px;
+      gap: 10px;
       margin-bottom: 6px;
     }
 
@@ -945,7 +945,7 @@ WaterfallHistoryCard.styles = i$3 `
     .entity-inline-container .entity-inline-name {
       display: flex;
       align-items: center;
-      gap: 7px;
+      gap: 10px;
       min-width: 120px;
       flex-shrink: 0;
     }

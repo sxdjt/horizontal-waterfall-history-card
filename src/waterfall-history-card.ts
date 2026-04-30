@@ -77,7 +77,7 @@ export class WaterfallHistoryCard extends LitElement {
     .entity-header {
       display: flex;
       align-items: center;
-      gap: 7px;
+      gap: 10px;
       margin-bottom: 6px;
     }
 
@@ -181,7 +181,7 @@ export class WaterfallHistoryCard extends LitElement {
     .entity-inline-container .entity-inline-name {
       display: flex;
       align-items: center;
-      gap: 7px;
+      gap: 10px;
       min-width: 120px;
       flex-shrink: 0;
     }
