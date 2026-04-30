@@ -4,17 +4,6 @@
 [![AI Assisted](https://img.shields.io/badge/AI-Claude%20Code-AAAAAA.svg?style=for-the-badge)](https://claude.ai/code)
 ![GitHub License](https://img.shields.io/github/license/sxdjt/horizontal-waterfall-history-card?style=for-the-badge)
 
-## v4.2 - Historical Time Window Offset
-
-### What's New in v4.2
-
-- **New: `start_offset` option** - View historical time windows (e.g., yesterday's data)
-- Compare today vs yesterday by showing same entity with different offsets
-- Configurable globally or per-entity
-
-<img width="507" height="500" alt="Screenshot 2026-01-18 at 21 56 01" src="https://github.com/user-attachments/assets/81699cdb-5bd5-49ba-812f-e19dd646200a" />
-
-
 ## What does this card do?
 
 - **Horizontal waterfall charts** - visualize entity history as a sequence of colored bar segments.
@@ -29,6 +18,7 @@
 - **Short duration event detection** - captures brief state changes for binary entities (doors, motion, lights).
 - **Per-entity overrides** - customize hours, intervals, labels, icons, colors, state labels, and display options per entity.
 
+<img  height="600" alt="Card" src="https://github.com/user-attachments/assets/d6a1f295-16be-461d-b332-b9c07b04f37e" />
 
 ---
 
