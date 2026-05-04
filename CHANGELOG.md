@@ -1,6 +1,6 @@
 # Changelog
 
-## [4.5.2-beta.1] - 2026-05-03
+## [4.5.2] - 2026-05-03
 
 ### Added
 - `cell_gap` option (integer, pixels, default `1`) - controls the gap between bar segments. Set to `0` to eliminate gaps, which resolves the zebra-stripe appearance on e-ink and high-contrast themes (issue #77).
