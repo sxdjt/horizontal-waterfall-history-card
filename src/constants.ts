@@ -78,4 +78,5 @@ export const DEFAULTS = {
   color_unknown: '#FF9800',  // Orange
   color_unavailable: '#9E9E9E',  // Gray
   interval_value: 'last' as 'last' | 'min' | 'max',
+  cell_gap: 1,  // px gap between bar segments; set to 0 to disable
 };

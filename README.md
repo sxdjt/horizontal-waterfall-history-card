@@ -88,6 +88,7 @@ entities:
 | `state_unavailable` | `string` | `"INOP"`  | Label to display for entities in "unavailable" state.                       |
 | `thresholds`     | `array`   | see below   | Color thresholds for numeric sensors.                                       |
 | `interval_value` | `string`  | `"last"`    | How to represent each bucket: `last` (final value), `min` (lowest value), `max` (highest value). |
+| `cell_gap`       | `number`  | `1`         | Gap in pixels between bar segments. Set to `0` to disable gaps (useful for e-ink/high-contrast themes). |
 | `gradient`       | `boolean` | `false`     | Use gradient interpolation between thresholds.                              |
 | `digits`         | `number`  | `1`         | Number of decimal places for numeric values.                                |
 | `unit`           | `string`  | auto        | Override unit of measurement.                                               |

@@ -113,6 +113,7 @@ export interface WaterfallHistoryCardConfig extends LovelaceCardConfig {
   state_unavailable?: string;
   card_mod?: Record<string, any>;
   interval_value?: 'last' | 'min' | 'max';
+  cell_gap?: number;
 }
 
 // Normalized entity config (after setConfig processing)

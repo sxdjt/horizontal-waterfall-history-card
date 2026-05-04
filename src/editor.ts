@@ -312,6 +312,17 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
               this._configValueChanged('gradient', (ev.target as HTMLInputElement).checked)}
           ></ha-switch>
         </div>
+
+        <ha-textfield
+          label="Cell Gap (pixels)"
+          type="number"
+          min="0"
+          max="10"
+          .value=${this._config.cell_gap ?? DEFAULTS.cell_gap}
+          @input=${(ev: Event) =>
+            this._configValueChanged('cell_gap', Number((ev.target as HTMLInputElement).value))}
+          helper-text="Gap between bar segments in pixels (0 = no gaps, default 1)"
+        ></ha-textfield>
       </div>
     `;
   }

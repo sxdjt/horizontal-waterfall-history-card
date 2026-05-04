@@ -114,8 +114,8 @@ export class WaterfallHistoryCard extends LitElement {
       border-radius: 3px;
       overflow: hidden;
       display: flex;
-      gap: 1px;
-      background: rgba(0,0,0,0.35);
+      gap: var(--waterfall-cell-gap, 1px);
+      background: var(--divider-color, rgba(0,0,0,0.35));
     }
 
     .bar-segment {
@@ -275,9 +275,8 @@ export class WaterfallHistoryCard extends LitElement {
   }
 
   setConfig(config: WaterfallHistoryCardConfig): void {
-    if (!config.entities || !Array.isArray(config.entities) || config.entities.length === 0) {
-      throw new Error('Please define a list of entities.');
-    }
+    // Use empty array as fallback - auto-entities calls setConfig without entities on first render
+    const entities = Array.isArray(config.entities) ? config.entities : [];
 
     const globalConfig: Partial<WaterfallHistoryCardConfig> = {
       title: config.title || 'History',
@@ -310,12 +309,13 @@ export class WaterfallHistoryCard extends LitElement {
       state_unknown: config.state_unknown || DEFAULTS.state_unknown,
       state_unavailable: config.state_unavailable || DEFAULTS.state_unavailable,
       interval_value: config.interval_value || DEFAULTS.interval_value,
+      cell_gap: config.cell_gap ?? DEFAULTS.cell_gap,
     };
 
     this.config = {
       type: 'custom:waterfall-history-card',
       ...globalConfig,
-      entities: config.entities.map(entityConfig => {
+      entities: entities.map(entityConfig => {
         if (typeof entityConfig === 'string') {
           return { entity: entityConfig };
         }
@@ -333,8 +333,9 @@ export class WaterfallHistoryCard extends LitElement {
     // Set CSS custom properties for dynamic values
     this.style.setProperty('--header-font-size', this.config.compact ? '10px' : '11px');
     this.style.setProperty('--entity-name-font-size', this.config.compact ? '10px' : '11px');
-this.style.setProperty('--waterfall-height', `${this.config.height}px`);
+    this.style.setProperty('--waterfall-height', `${this.config.height}px`);
     this.style.setProperty('--labels-margin-top', this.config.compact ? '2px' : '5px');
+    this.style.setProperty('--waterfall-cell-gap', `${this.config.cell_gap ?? DEFAULTS.cell_gap}px`);
   }
 
   shouldUpdate(changedProps: PropertyValues): boolean {
@@ -1026,7 +1027,7 @@ declare global {
 });
 
 console.info(
-  `%c WATERFALL-HISTORY-CARD %c v4.5.1 `,
+  `%c WATERFALL-HISTORY-CARD %c v4.5.2-beta.1 `,
   'color: black; background: #F2720C; font-weight: 600;',
   'color: black; background: #00a5c9; font-weight: 600;'
 );

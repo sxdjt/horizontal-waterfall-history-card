@@ -1,5 +1,15 @@
 # Changelog
 
+## [4.5.2-beta.1] - 2026-05-03
+
+### Added
+- `cell_gap` option (integer, pixels, default `1`) - controls the gap between bar segments. Set to `0` to eliminate gaps, which resolves the zebra-stripe appearance on e-ink and high-contrast themes (issue #77).
+
+### Fixed
+- Gap background now uses `--divider-color` CSS variable instead of a hardcoded dark `rgba(0,0,0,0.35)`, so it inherits from the active HA theme correctly.
+
+---
+
 ## [4.5.1] - 2026-04-30
 
 ### Changed
