@@ -1,7 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { HomeAssistant, fireEvent, LovelaceCardEditor } from 'custom-card-helpers';
-import { WaterfallHistoryCardConfig, EntityConfig, ThresholdConfig } from './types';
+import { WaterfallHistoryCardConfig, EntityConfig } from './types';
 import { DEFAULTS } from './constants';
 
 export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCardEditor {

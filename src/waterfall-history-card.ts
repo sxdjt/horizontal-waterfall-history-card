@@ -5,7 +5,6 @@ import { HomeAssistant, LovelaceCardEditor } from 'custom-card-helpers';
 import {
   WaterfallHistoryCardConfig,
   EntityConfig,
-  NormalizedEntityConfig,
   ThresholdConfig,
   ProcessedHistoryData
 } from './types';
