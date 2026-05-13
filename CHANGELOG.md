@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.5.3] - 2026-05-13
+
+### Fixed
+- Replace deprecated `ha-textfield` with `ha-selector` in visual editor for compatibility with HA 2026.5.1+
+
+### Changed
+- Add ESLint; fix unused imports in editor and card source files
+
 ## [4.5.2] - 2026-05-03
 
 ### Added

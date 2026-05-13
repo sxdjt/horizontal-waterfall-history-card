@@ -1055,7 +1055,7 @@ window.customCards.push({
     name: 'Waterfall History Card',
     description: 'A horizontal waterfall display for historical sensor data with visual editor'
 });
-console.info(`%c WATERFALL-HISTORY-CARD %c v4.5.2 `, 'color: black; background: #F2720C; font-weight: 600;', 'color: black; background: #00a5c9; font-weight: 600;');
+console.info(`%c WATERFALL-HISTORY-CARD %c v4.5.3 `, 'color: black; background: #F2720C; font-weight: 600;', 'color: black; background: #00a5c9; font-weight: 600;');
 
 var NumberFormat;
 (function (NumberFormat) {
@@ -1265,51 +1265,45 @@ class WaterfallHistoryCardEditor extends i {
       <div class="section">
         <h3>Basic Settings</h3>
 
-        <ha-textfield
-          label="Card Title"
+        <ha-selector
+          .hass=${this.hass}
+          .label=${'Card Title'}
           .value=${this._config.title || DEFAULTS.title}
-          @input=${(ev) => this._configValueChanged('title', ev.target.value)}
-        ></ha-textfield>
+          .selector=${{ text: {} }}
+          @value-changed=${(ev) => this._configValueChanged('title', ev.detail.value)}
+        ></ha-selector>
 
-        <ha-textfield
-          label="Time Window (hours)"
-          type="number"
-          min="1"
-          max="168"
+        <ha-selector
+          .hass=${this.hass}
+          .label=${'Time Window (hours)'}
           .value=${this._config.hours || DEFAULTS.hours}
-          @input=${(ev) => this._configValueChanged('hours', Number(ev.target.value))}
-          helper-text="How many hours of history to display (1-168)"
-        ></ha-textfield>
+          .selector=${{ number: { min: 1, max: 168, mode: 'box', step: 1 } }}
+          @value-changed=${(ev) => this._configValueChanged('hours', Number(ev.detail.value))}
+        ></ha-selector>
 
-        <ha-textfield
-          label="Intervals"
-          type="number"
-          min="24"
-          max="96"
+        <ha-selector
+          .hass=${this.hass}
+          .label=${'Intervals'}
           .value=${this._config.intervals || DEFAULTS.intervals}
-          @input=${(ev) => this._configValueChanged('intervals', Number(ev.target.value))}
-          helper-text="Number of segments in the waterfall (24-96)"
-        ></ha-textfield>
+          .selector=${{ number: { min: 24, max: 96, mode: 'box', step: 1 } }}
+          @value-changed=${(ev) => this._configValueChanged('intervals', Number(ev.detail.value))}
+        ></ha-selector>
 
-        <ha-textfield
-          label="Bar Height (pixels)"
-          type="number"
-          min="30"
-          max="200"
+        <ha-selector
+          .hass=${this.hass}
+          .label=${'Bar Height (pixels)'}
           .value=${this._config.height || DEFAULTS.height}
-          @input=${(ev) => this._configValueChanged('height', Number(ev.target.value))}
-          helper-text="Height of each waterfall bar in pixels"
-        ></ha-textfield>
+          .selector=${{ number: { min: 30, max: 200, mode: 'box', step: 1 } }}
+          @value-changed=${(ev) => this._configValueChanged('height', Number(ev.detail.value))}
+        ></ha-selector>
 
-        <ha-textfield
-          label="Decimal Places"
-          type="number"
-          min="0"
-          max="5"
+        <ha-selector
+          .hass=${this.hass}
+          .label=${'Decimal Places'}
           .value=${this._config.digits ?? DEFAULTS.digits}
-          @input=${(ev) => this._configValueChanged('digits', Number(ev.target.value))}
-          helper-text="Number of decimal places for numeric values (0-5)"
-        ></ha-textfield>
+          .selector=${{ number: { min: 0, max: 5, mode: 'box', step: 1 } }}
+          @value-changed=${(ev) => this._configValueChanged('digits', Number(ev.detail.value))}
+        ></ha-selector>
 
         <ha-selector
           .hass=${this.hass}
@@ -1391,15 +1385,13 @@ class WaterfallHistoryCardEditor extends i {
           ></ha-switch>
         </div>
 
-        <ha-textfield
-          label="Cell Gap (pixels)"
-          type="number"
-          min="0"
-          max="10"
+        <ha-selector
+          .hass=${this.hass}
+          .label=${'Cell Gap (pixels)'}
           .value=${this._config.cell_gap ?? DEFAULTS.cell_gap}
-          @input=${(ev) => this._configValueChanged('cell_gap', Number(ev.target.value))}
-          helper-text="Gap between bar segments in pixels (0 = no gaps, default 1)"
-        ></ha-textfield>
+          .selector=${{ number: { min: 0, max: 10, mode: 'box', step: 1 } }}
+          @value-changed=${(ev) => this._configValueChanged('cell_gap', Number(ev.detail.value))}
+        ></ha-selector>
       </div>
     `;
     }
@@ -1412,63 +1404,71 @@ class WaterfallHistoryCardEditor extends i {
             Configure colors and labels for binary sensors (on/off states).
           </p>
 
-          <ha-textfield
-            label="On State Color"
+          <ha-selector
+            .hass=${this.hass}
+            .label=${'On State Color'}
             .value=${this._config.color_on || DEFAULTS.color_on}
-            @input=${(ev) => this._configValueChanged('color_on', ev.target.value)}
-            helper-text="Color when state is ON (e.g., #EEEEEE or white)"
-          ></ha-textfield>
+            .selector=${{ text: {} }}
+            @value-changed=${(ev) => this._configValueChanged('color_on', ev.detail.value)}
+          ></ha-selector>
 
-          <ha-textfield
-            label="Off State Color"
+          <ha-selector
+            .hass=${this.hass}
+            .label=${'Off State Color'}
             .value=${this._config.color_off || DEFAULTS.color_off}
-            @input=${(ev) => this._configValueChanged('color_off', ev.target.value)}
-            helper-text="Color when state is OFF (e.g., #636363 or gray)"
-          ></ha-textfield>
+            .selector=${{ text: {} }}
+            @value-changed=${(ev) => this._configValueChanged('color_off', ev.detail.value)}
+          ></ha-selector>
 
-          <ha-textfield
-            label="On State Label"
+          <ha-selector
+            .hass=${this.hass}
+            .label=${'On State Label'}
             .value=${this._config.state_on || DEFAULTS.state_on}
-            @input=${(ev) => this._configValueChanged('state_on', ev.target.value)}
-            helper-text="Text to display for ON state (default: On)"
-          ></ha-textfield>
+            .selector=${{ text: {} }}
+            @value-changed=${(ev) => this._configValueChanged('state_on', ev.detail.value)}
+          ></ha-selector>
 
-          <ha-textfield
-            label="Off State Label"
+          <ha-selector
+            .hass=${this.hass}
+            .label=${'Off State Label'}
             .value=${this._config.state_off || DEFAULTS.state_off}
-            @input=${(ev) => this._configValueChanged('state_off', ev.target.value)}
-            helper-text="Text to display for OFF state (default: Off)"
-          ></ha-textfield>
+            .selector=${{ text: {} }}
+            @value-changed=${(ev) => this._configValueChanged('state_off', ev.detail.value)}
+          ></ha-selector>
 
           <h4>Unknown & Unavailable States</h4>
 
-          <ha-textfield
-            label="Unknown State Color"
+          <ha-selector
+            .hass=${this.hass}
+            .label=${'Unknown State Color'}
             .value=${this._config.color_unknown || DEFAULTS.color_unknown}
-            @input=${(ev) => this._configValueChanged('color_unknown', ev.target.value)}
-            helper-text="Color for unknown states (default: #FF9800 orange)"
-          ></ha-textfield>
+            .selector=${{ text: {} }}
+            @value-changed=${(ev) => this._configValueChanged('color_unknown', ev.detail.value)}
+          ></ha-selector>
 
-          <ha-textfield
-            label="Unknown State Label"
+          <ha-selector
+            .hass=${this.hass}
+            .label=${'Unknown State Label'}
             .value=${this._config.state_unknown || DEFAULTS.state_unknown}
-            @input=${(ev) => this._configValueChanged('state_unknown', ev.target.value)}
-            helper-text="Text to display for unknown state (default: Unknown)"
-          ></ha-textfield>
+            .selector=${{ text: {} }}
+            @value-changed=${(ev) => this._configValueChanged('state_unknown', ev.detail.value)}
+          ></ha-selector>
 
-          <ha-textfield
-            label="Unavailable State Color"
+          <ha-selector
+            .hass=${this.hass}
+            .label=${'Unavailable State Color'}
             .value=${this._config.color_unavailable || DEFAULTS.color_unavailable}
-            @input=${(ev) => this._configValueChanged('color_unavailable', ev.target.value)}
-            helper-text="Color for unavailable states (default: #9E9E9E gray)"
-          ></ha-textfield>
+            .selector=${{ text: {} }}
+            @value-changed=${(ev) => this._configValueChanged('color_unavailable', ev.detail.value)}
+          ></ha-selector>
 
-          <ha-textfield
-            label="Unavailable State Label"
+          <ha-selector
+            .hass=${this.hass}
+            .label=${'Unavailable State Label'}
             .value=${this._config.state_unavailable || DEFAULTS.state_unavailable}
-            @input=${(ev) => this._configValueChanged('state_unavailable', ev.target.value)}
-            helper-text="Text to display for unavailable state (default: INOP)"
-          ></ha-textfield>
+            .selector=${{ text: {} }}
+            @value-changed=${(ev) => this._configValueChanged('state_unavailable', ev.detail.value)}
+          ></ha-selector>
         </div>
       </ha-expansion-panel>
     `;
@@ -1490,20 +1490,19 @@ class WaterfallHistoryCardEditor extends i {
 
           ${thresholds.map((threshold, index) => b `
             <div class="threshold-item">
-              <ha-textfield
-                label="Threshold Value"
+              <input
                 type="number"
-                .value=${threshold.value}
-                @input=${(ev) => this._thresholdChanged(index, 'value', ev.target.value)}
-              ></ha-textfield>
-
-              <ha-textfield
-                label="Color"
+                .value=${String(threshold.value)}
+                style="flex:1;padding:4px 8px;font-size:14px;border:1px solid var(--divider-color,#e0e0e0);border-radius:4px;background:var(--card-background-color,#fff);color:var(--primary-text-color);"
+                @change=${(ev) => this._thresholdChanged(index, 'value', ev.target.value)}
+              >
+              <input
+                type="text"
+                placeholder="e.g., #FF0000"
                 .value=${threshold.color}
+                style="flex:1;padding:4px 8px;font-size:14px;border:1px solid var(--divider-color,#e0e0e0);border-radius:4px;background:var(--card-background-color,#fff);color:var(--primary-text-color);"
                 @input=${(ev) => this._thresholdChanged(index, 'color', ev.target.value)}
-                helper-text="e.g., #FF0000 or red"
-              ></ha-textfield>
-
+              >
               <mwc-button @click=${() => this._removeThreshold(index)}>
                 Remove
               </mwc-button>
@@ -1561,12 +1560,13 @@ class WaterfallHistoryCardEditor extends i {
             .label=${'Entity'}
           ></ha-selector>
 
-          <ha-textfield
-            label="Custom Name (optional)"
+          <ha-selector
+            .hass=${this.hass}
+            .label=${'Custom Name (optional)'}
             .value=${entityConfig.name || ''}
-            @input=${(ev) => this._entityChanged(index, 'name', ev.target.value)}
-            helper-text="Leave blank to use entity's friendly name"
-          ></ha-textfield>
+            .selector=${{ text: {} }}
+            @value-changed=${(ev) => this._entityChanged(index, 'name', ev.detail.value)}
+          ></ha-selector>
 
           ${this._renderEntityAdvancedOptions(entityConfig, index)}
         </div>
@@ -1583,25 +1583,21 @@ class WaterfallHistoryCardEditor extends i {
 
           <h4>Time Window Overrides</h4>
 
-          <ha-textfield
-            label="Hours (override)"
-            type="number"
-            min="1"
-            max="168"
+          <ha-selector
+            .hass=${this.hass}
+            .label=${'Hours (override)'}
             .value=${entityConfig.hours || ''}
-            @input=${(ev) => this._entityChanged(index, 'hours', ev.target.value ? Number(ev.target.value) : undefined)}
-            helper-text="Leave blank to use global value"
-          ></ha-textfield>
+            .selector=${{ number: { min: 1, max: 168, mode: 'box', step: 1 } }}
+            @value-changed=${(ev) => this._entityChanged(index, 'hours', ev.detail.value ? Number(ev.detail.value) : undefined)}
+          ></ha-selector>
 
-          <ha-textfield
-            label="Intervals (override)"
-            type="number"
-            min="24"
-            max="96"
+          <ha-selector
+            .hass=${this.hass}
+            .label=${'Intervals (override)'}
             .value=${entityConfig.intervals || ''}
-            @input=${(ev) => this._entityChanged(index, 'intervals', ev.target.value ? Number(ev.target.value) : undefined)}
-            helper-text="Leave blank to use global value"
-          ></ha-textfield>
+            .selector=${{ number: { min: 24, max: 96, mode: 'box', step: 1 } }}
+            @value-changed=${(ev) => this._entityChanged(index, 'intervals', ev.detail.value ? Number(ev.detail.value) : undefined)}
+          ></ha-selector>
 
           <h4>Display Overrides</h4>
 
@@ -1639,29 +1635,29 @@ class WaterfallHistoryCardEditor extends i {
 
           <h4>Styling Overrides</h4>
 
-          <ha-textfield
-            label="Custom Icon"
+          <ha-selector
+            .hass=${this.hass}
+            .label=${'Custom Icon'}
             .value=${entityConfig.icon || ''}
-            @input=${(ev) => this._entityChanged(index, 'icon', ev.target.value)}
-            helper-text="e.g., mdi:thermometer"
-          ></ha-textfield>
+            .selector=${{ text: {} }}
+            @value-changed=${(ev) => this._entityChanged(index, 'icon', ev.detail.value)}
+          ></ha-selector>
 
-          <ha-textfield
-            label="Custom Unit"
+          <ha-selector
+            .hass=${this.hass}
+            .label=${'Custom Unit'}
             .value=${entityConfig.unit || ''}
-            @input=${(ev) => this._entityChanged(index, 'unit', ev.target.value)}
-            helper-text="Override unit of measurement (e.g., °F)"
-          ></ha-textfield>
+            .selector=${{ text: {} }}
+            @value-changed=${(ev) => this._entityChanged(index, 'unit', ev.detail.value)}
+          ></ha-selector>
 
-          <ha-textfield
-            label="Decimal Places (override)"
-            type="number"
-            min="0"
-            max="5"
+          <ha-selector
+            .hass=${this.hass}
+            .label=${'Decimal Places (override)'}
             .value=${entityConfig.digits ?? ''}
-            @input=${(ev) => this._entityChanged(index, 'digits', ev.target.value ? Number(ev.target.value) : undefined)}
-            helper-text="Leave blank to use global value"
-          ></ha-textfield>
+            .selector=${{ number: { min: 0, max: 5, mode: 'box', step: 1 } }}
+            @value-changed=${(ev) => this._entityChanged(index, 'digits', ev.detail.value ? Number(ev.detail.value) : undefined)}
+          ></ha-selector>
 
           <ha-selector
             .hass=${this.hass}
@@ -1681,19 +1677,21 @@ class WaterfallHistoryCardEditor extends i {
 
           <h4>Binary State Overrides</h4>
 
-          <ha-textfield
-            label="On State Color (override)"
+          <ha-selector
+            .hass=${this.hass}
+            .label=${'On State Color (override)'}
             .value=${entityConfig.color_on || ''}
-            @input=${(ev) => this._entityChanged(index, 'color_on', ev.target.value)}
-            helper-text="Leave blank to use global value"
-          ></ha-textfield>
+            .selector=${{ text: {} }}
+            @value-changed=${(ev) => this._entityChanged(index, 'color_on', ev.detail.value)}
+          ></ha-selector>
 
-          <ha-textfield
-            label="Off State Color (override)"
+          <ha-selector
+            .hass=${this.hass}
+            .label=${'Off State Color (override)'}
             .value=${entityConfig.color_off || ''}
-            @input=${(ev) => this._entityChanged(index, 'color_off', ev.target.value)}
-            helper-text="Leave blank to use global value"
-          ></ha-textfield>
+            .selector=${{ text: {} }}
+            @value-changed=${(ev) => this._entityChanged(index, 'color_off', ev.detail.value)}
+          ></ha-selector>
 
           ${this._renderEntityThresholds(entityConfig, index)}
         </div>
@@ -1715,20 +1713,19 @@ class WaterfallHistoryCardEditor extends i {
 
         ${thresholds.map((threshold, thresholdIndex) => b `
           <div class="threshold-item">
-            <ha-textfield
-              label="Threshold Value"
+            <input
               type="number"
-              .value=${threshold.value}
-              @input=${(ev) => this._entityThresholdChanged(entityIndex, thresholdIndex, 'value', ev.target.value)}
-            ></ha-textfield>
-
-            <ha-textfield
-              label="Color"
+              .value=${String(threshold.value)}
+              style="flex:1;padding:4px 8px;font-size:14px;border:1px solid var(--divider-color,#e0e0e0);border-radius:4px;background:var(--card-background-color,#fff);color:var(--primary-text-color);"
+              @change=${(ev) => this._entityThresholdChanged(entityIndex, thresholdIndex, 'value', ev.target.value)}
+            >
+            <input
+              type="text"
+              placeholder="e.g., #FF0000"
               .value=${threshold.color}
+              style="flex:1;padding:4px 8px;font-size:14px;border:1px solid var(--divider-color,#e0e0e0);border-radius:4px;background:var(--card-background-color,#fff);color:var(--primary-text-color);"
               @input=${(ev) => this._entityThresholdChanged(entityIndex, thresholdIndex, 'color', ev.target.value)}
-              helper-text="e.g., #FF0000 or red"
-            ></ha-textfield>
-
+            >
             <mwc-button @click=${() => this._removeEntityThreshold(entityIndex, thresholdIndex)}>
               Remove
             </mwc-button>
@@ -1772,7 +1769,6 @@ class WaterfallHistoryCardEditor extends i {
         color: var(--primary-text-color);
       }
 
-      ha-textfield,
       ha-selector {
         display: block;
         margin-bottom: 12px;
