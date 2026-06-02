@@ -1,5 +1,10 @@
 # Changelog
 
+## [4.6.0] - 2026-06-02
+
+### Added
+- `state_colors` option: map HA state strings to distinct colors for multi-state entities such as HVAC modes (`cool`, `heat`, `fan_only`, `idle`, `off`). Supported at both card level and per-entity level. Visual editor support included (issue #78).
+
 ## [4.5.3] - 2026-05-13
 
 ### Fixed
