@@ -665,12 +665,27 @@ export class WaterfallHistoryCard extends LitElement {
     return [min, max];
   }
 
+  // Returns the state_colors map for an entity, checking per-entity then global config.
+  private getStateColors(entityConfig?: EntityConfig): Record<string, string> | undefined {
+    return entityConfig?.state_colors ?? this.config?.state_colors;
+  }
+
   private parseState(state: any, entityConfig?: EntityConfig): number | null {
     if (typeof state === 'number') return state;
     if (typeof state === 'string') {
       const lowerState = state.toLowerCase();
       if (lowerState === 'unknown') return UNKNOWN_STATE;
       if (lowerState === 'unavailable') return UNAVAILABLE_STATE;
+
+      // Multi-state: check state_colors before binary on/off so that states like 'off'
+      // in an HVAC context map to their configured index rather than binary 0.
+      const stateColors = this.getStateColors(entityConfig);
+      if (stateColors) {
+        const keys = Object.keys(stateColors);
+        const matchIndex = keys.findIndex(k => k.toLowerCase() === lowerState);
+        if (matchIndex !== -1) return matchIndex;
+      }
+
       if (lowerState === 'off') return 0;
       if (lowerState === 'on') return 1;
       // Check configured state_on / state_off so custom states (e.g. 'home', 'not_home') map to binary 1/0
@@ -691,6 +706,15 @@ export class WaterfallHistoryCard extends LitElement {
     }
     if (state === UNAVAILABLE_STATE) {
       return entityConfig.state_unavailable ?? this.config.state_unavailable ?? DEFAULTS.state_unavailable;
+    }
+
+    // Multi-state: return the original state name for the given index
+    const stateColors = this.getStateColors(entityConfig);
+    if (stateColors && state !== null) {
+      const keys = Object.keys(stateColors);
+      if (Number.isInteger(state) && state >= 0 && state < keys.length) {
+        return keys[state];
+      }
     }
 
     // Only treat 0/1 as binary when no thresholds are configured. A numeric sensor whose
@@ -763,6 +787,15 @@ export class WaterfallHistoryCard extends LitElement {
     }
     if (value === UNAVAILABLE_STATE) {
       return entityConfig.color_unavailable ?? this.config.color_unavailable ?? DEFAULTS.color_unavailable;
+    }
+
+    // Multi-state: look up color by index into state_colors keys
+    const stateColors = this.getStateColors(entityConfig);
+    if (stateColors) {
+      const keys = Object.keys(stateColors);
+      if (Number.isInteger(value) && value >= 0 && value < keys.length) {
+        return stateColors[keys[value]] || '#666666';
+      }
     }
 
     let thresholds = entityConfig.thresholds ?? this.config.thresholds;

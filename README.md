@@ -11,6 +11,7 @@
 - **Threshold-based colors** - colors automatically adapt to value thresholds (configurable).
 - **Binary sensor customization** - customize on/off colors and state labels for binary sensors, switches, and other binary entities.
 - **Binary state labels** - display "On"/"Off", "Open"/"Closed", "Unlocked"/"Locked" instead of numeric values.
+- **Multi-state sensor support** - map any set of HA state strings to distinct colors (e.g. HVAC modes: cool, heat, fan_only, idle, off).
 - **Unknown/unavailable state handling** - entities in unknown or unavailable states display with customizable colors and labels instead of errors.
 - **Entity icons** - show icons next to entity names; toggle globally or per-entity.
 - **Compact mode** - shrink fonts and spacing for tighter dashboards.
@@ -82,6 +83,7 @@ entities:
 | `binary_colors`  | `object`  | -           | Alternative way to set binary colors: `{on: '#color', off: '#color'}`.      |
 | `state_on`       | `string`  | `"On"`      | Matches the HA state string for "on" and sets the display label (global default). E.g. `"home"` for a person entity.  |
 | `state_off`      | `string`  | `"Off"`     | Matches the HA state string for "off" and sets the display label (global default). E.g. `"not_home"` for a person entity. |
+| `state_colors`   | `object`  | -           | Map HA state strings to colors for multi-state entities (e.g. HVAC modes). Keys are state names, values are hex colors. Order determines display precedence. Overrides binary on/off logic when present. |
 | `color_unknown`  | `string`  | `#FF9800`   | Color for entities in "unknown" state (orange).                             |
 | `color_unavailable` | `string` | `#9E9E9E` | Color for entities in "unavailable" state (gray).                           |
 | `state_unknown`  | `string`  | `"Unknown"` | Label to display for entities in "unknown" state.                           |
@@ -119,6 +121,7 @@ Each item in `entities:` can be either a bare entity ID string, or an object wit
 | `show_labels`    | `boolean` | Inherits from card  | Show/hide labels just for this entity.                              |
 | `show_min_max`   | `boolean` | Inherits from card  | Show/hide min/max just for this entity.                             |
 | `start_offset`   | `number`  | Inherits from card  | Hours to offset the time window for this entity.                    |
+| `state_colors`   | `object`  | Inherits from card  | Map HA state strings to colors for this entity. Overrides global `state_colors`. |
 | `state_off`      | `string`  | Inherits from card  | Matches the HA state string for "off" and sets the display label for this entity. |
 | `state_on`       | `string`  | Inherits from card  | Matches the HA state string for "on" and sets the display label for this entity.  |
 | `state_unavailable` | `string` | Inherits from card | Label to display when this entity is "unavailable".      |
@@ -226,6 +229,33 @@ card_mod:
       width: 60px !important;
     }
 ```
+
+### HVAC Multi-State Sensor
+
+```yaml
+type: custom:waterfall-history-card
+title: HVAC History
+hours: 24
+intervals: 48
+entities:
+  - entity: climate.living_room
+    state_colors:
+      'off': '#2d3245'
+      idle: '#9E9E9E'
+      cool: '#4FC3F7'
+      heat: '#EF5350'
+      fan_only: '#66BB6A'
+  - entity: climate.bedroom
+    state_colors:
+      'off': '#2d3245'
+      idle: '#9E9E9E'
+      cool: '#4FC3F7'
+      heat: '#EF5350'
+```
+
+State names must match the HA state values exactly (case-insensitive). The order you list the states determines the key ordering used internally - it has no effect on color or display. Use `interval_value: last` (the default) for HVAC entities; `min` or `max` are not meaningful for mode states.
+
+---
 
 ### Binary Sensors with Custom State Labels
 

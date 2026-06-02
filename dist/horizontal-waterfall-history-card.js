@@ -506,6 +506,10 @@ class WaterfallHistoryCard extends i {
         }
         return [min, max];
     }
+    // Returns the state_colors map for an entity, checking per-entity then global config.
+    getStateColors(entityConfig) {
+        return entityConfig?.state_colors ?? this.config?.state_colors;
+    }
     parseState(state, entityConfig) {
         if (typeof state === 'number')
             return state;
@@ -515,6 +519,15 @@ class WaterfallHistoryCard extends i {
                 return UNKNOWN_STATE;
             if (lowerState === 'unavailable')
                 return UNAVAILABLE_STATE;
+            // Multi-state: check state_colors before binary on/off so that states like 'off'
+            // in an HVAC context map to their configured index rather than binary 0.
+            const stateColors = this.getStateColors(entityConfig);
+            if (stateColors) {
+                const keys = Object.keys(stateColors);
+                const matchIndex = keys.findIndex(k => k.toLowerCase() === lowerState);
+                if (matchIndex !== -1)
+                    return matchIndex;
+            }
             if (lowerState === 'off')
                 return 0;
             if (lowerState === 'on')
@@ -539,6 +552,14 @@ class WaterfallHistoryCard extends i {
         }
         if (state === UNAVAILABLE_STATE) {
             return entityConfig.state_unavailable ?? this.config.state_unavailable ?? DEFAULTS.state_unavailable;
+        }
+        // Multi-state: return the original state name for the given index
+        const stateColors = this.getStateColors(entityConfig);
+        if (stateColors && state !== null) {
+            const keys = Object.keys(stateColors);
+            if (Number.isInteger(state) && state >= 0 && state < keys.length) {
+                return keys[state];
+            }
         }
         // Only treat 0/1 as binary when no thresholds are configured. A numeric sensor whose
         // current reading happens to be 0 or 1 (e.g. PM2.5 = 1.0) must not be shown as On/Off.
@@ -601,6 +622,14 @@ class WaterfallHistoryCard extends i {
         }
         if (value === UNAVAILABLE_STATE) {
             return entityConfig.color_unavailable ?? this.config.color_unavailable ?? DEFAULTS.color_unavailable;
+        }
+        // Multi-state: look up color by index into state_colors keys
+        const stateColors = this.getStateColors(entityConfig);
+        if (stateColors) {
+            const keys = Object.keys(stateColors);
+            if (Number.isInteger(value) && value >= 0 && value < keys.length) {
+                return stateColors[keys[value]] || '#666666';
+            }
         }
         let thresholds = entityConfig.thresholds ?? this.config.thresholds;
         // Check if this is a binary value and apply binary colors
@@ -1199,6 +1228,66 @@ class WaterfallHistoryCardEditor extends i {
         };
         fireEvent(this, 'config-changed', { config: newConfig });
     }
+    // Global state_colors management
+    _addStateColor() {
+        const entries = Object.entries(this._config.state_colors || {});
+        entries.push(['', '#cccccc']);
+        this._configValueChanged('state_colors', Object.fromEntries(entries));
+    }
+    _removeStateColor(index) {
+        const entries = Object.entries(this._config.state_colors || {});
+        entries.splice(index, 1);
+        this._configValueChanged('state_colors', entries.length > 0 ? Object.fromEntries(entries) : undefined);
+    }
+    _stateColorChanged(index, key, value) {
+        const entries = Object.entries(this._config.state_colors || {});
+        if (key === 'state') {
+            entries[index] = [value, entries[index][1]];
+        }
+        else {
+            entries[index] = [entries[index][0], value];
+        }
+        this._configValueChanged('state_colors', Object.fromEntries(entries));
+    }
+    // Per-entity state_colors management
+    _addEntityStateColor(entityIndex) {
+        const newConfig = { ...this._config };
+        newConfig.entities = [...newConfig.entities];
+        const currentEntity = newConfig.entities[entityIndex];
+        const entityConfig = typeof currentEntity === 'string' ? { entity: currentEntity } : { ...currentEntity };
+        const entries = Object.entries(entityConfig.state_colors || {});
+        entries.push(['', '#cccccc']);
+        entityConfig.state_colors = Object.fromEntries(entries);
+        newConfig.entities[entityIndex] = entityConfig;
+        fireEvent(this, 'config-changed', { config: newConfig });
+    }
+    _removeEntityStateColor(entityIndex, stateIndex) {
+        const newConfig = { ...this._config };
+        newConfig.entities = [...newConfig.entities];
+        const currentEntity = newConfig.entities[entityIndex];
+        const entityConfig = typeof currentEntity === 'string' ? { entity: currentEntity } : { ...currentEntity };
+        const entries = Object.entries(entityConfig.state_colors || {});
+        entries.splice(stateIndex, 1);
+        entityConfig.state_colors = entries.length > 0 ? Object.fromEntries(entries) : undefined;
+        newConfig.entities[entityIndex] = entityConfig;
+        fireEvent(this, 'config-changed', { config: newConfig });
+    }
+    _entityStateColorChanged(entityIndex, stateIndex, key, value) {
+        const newConfig = { ...this._config };
+        newConfig.entities = [...newConfig.entities];
+        const currentEntity = newConfig.entities[entityIndex];
+        const entityConfig = typeof currentEntity === 'string' ? { entity: currentEntity } : { ...currentEntity };
+        const entries = Object.entries(entityConfig.state_colors || {});
+        if (key === 'state') {
+            entries[stateIndex] = [value, entries[stateIndex][1]];
+        }
+        else {
+            entries[stateIndex] = [entries[stateIndex][0], value];
+        }
+        entityConfig.state_colors = Object.fromEntries(entries);
+        newConfig.entities[entityIndex] = entityConfig;
+        fireEvent(this, 'config-changed', { config: newConfig });
+    }
     // Per-entity threshold management
     _addEntityThreshold(entityIndex) {
         const newConfig = { ...this._config };
@@ -1469,6 +1558,8 @@ class WaterfallHistoryCardEditor extends i {
             .selector=${{ text: {} }}
             @value-changed=${(ev) => this._configValueChanged('state_unavailable', ev.detail.value)}
           ></ha-selector>
+
+          ${this._renderGlobalStateColors()}
         </div>
       </ha-expansion-panel>
     `;
@@ -1693,9 +1784,95 @@ class WaterfallHistoryCardEditor extends i {
             @value-changed=${(ev) => this._entityChanged(index, 'color_off', ev.detail.value)}
           ></ha-selector>
 
+          ${this._renderEntityStateColors(entityConfig, index)}
           ${this._renderEntityThresholds(entityConfig, index)}
         </div>
       </ha-expansion-panel>
+    `;
+    }
+    _renderGlobalStateColors() {
+        const entries = Object.entries(this._config.state_colors || {});
+        return b `
+      <div class="entity-thresholds">
+        <h4>Multi-State Colors (Global)</h4>
+        <p class="helper-text">
+          Map HA state strings to colors for multi-state entities (e.g. HVAC modes).
+          Add one row per state in the order they should appear. The state name must
+          match the HA state value exactly (case-insensitive).
+        </p>
+
+        ${entries.length === 0 ? b `
+          <p class="info-text">No state colors defined.</p>
+        ` : ''}
+
+        ${entries.map(([stateName, color], index) => b `
+          <div class="threshold-item">
+            <input
+              type="text"
+              placeholder="State name (e.g. cool)"
+              .value=${stateName}
+              style="flex:1;padding:4px 8px;font-size:14px;border:1px solid var(--divider-color,#e0e0e0);border-radius:4px;background:var(--card-background-color,#fff);color:var(--primary-text-color);"
+              @change=${(ev) => this._stateColorChanged(index, 'state', ev.target.value)}
+            >
+            <input
+              type="text"
+              placeholder="e.g., #FF0000"
+              .value=${color}
+              style="flex:1;padding:4px 8px;font-size:14px;border:1px solid var(--divider-color,#e0e0e0);border-radius:4px;background:var(--card-background-color,#fff);color:var(--primary-text-color);"
+              @input=${(ev) => this._stateColorChanged(index, 'color', ev.target.value)}
+            >
+            <mwc-button @click=${() => this._removeStateColor(index)}>
+              Remove
+            </mwc-button>
+          </div>
+        `)}
+
+        <mwc-button @click=${this._addStateColor}>
+          Add State Color
+        </mwc-button>
+      </div>
+    `;
+    }
+    _renderEntityStateColors(entityConfig, entityIndex) {
+        const entries = Object.entries(entityConfig.state_colors || {});
+        return b `
+      <div class="entity-thresholds">
+        <h4>Multi-State Colors (Per-Entity)</h4>
+        <p class="helper-text">
+          Map HA state strings to colors for this entity. Overrides global state colors.
+          Add one row per state in the order they should appear.
+        </p>
+
+        ${entries.length === 0 ? b `
+          <p class="info-text">No entity-specific state colors. Using global state colors.</p>
+        ` : ''}
+
+        ${entries.map(([stateName, color], stateIndex) => b `
+          <div class="threshold-item">
+            <input
+              type="text"
+              placeholder="State name (e.g. cool)"
+              .value=${stateName}
+              style="flex:1;padding:4px 8px;font-size:14px;border:1px solid var(--divider-color,#e0e0e0);border-radius:4px;background:var(--card-background-color,#fff);color:var(--primary-text-color);"
+              @change=${(ev) => this._entityStateColorChanged(entityIndex, stateIndex, 'state', ev.target.value)}
+            >
+            <input
+              type="text"
+              placeholder="e.g., #FF0000"
+              .value=${color}
+              style="flex:1;padding:4px 8px;font-size:14px;border:1px solid var(--divider-color,#e0e0e0);border-radius:4px;background:var(--card-background-color,#fff);color:var(--primary-text-color);"
+              @input=${(ev) => this._entityStateColorChanged(entityIndex, stateIndex, 'color', ev.target.value)}
+            >
+            <mwc-button @click=${() => this._removeEntityStateColor(entityIndex, stateIndex)}>
+              Remove
+            </mwc-button>
+          </div>
+        `)}
+
+        <mwc-button @click=${() => this._addEntityStateColor(entityIndex)}>
+          Add State Color
+        </mwc-button>
+      </div>
     `;
     }
     _renderEntityThresholds(entityConfig, entityIndex) {

@@ -64,6 +64,9 @@ export interface EntityConfig {
   state_on?: string;
   state_off?: string;
 
+  // Multi-state configuration: maps HA state strings to colors (e.g. HVAC modes)
+  state_colors?: Record<string, string>;
+
   // Unknown and unavailable states
   color_unknown?: string;
   color_unavailable?: string;
@@ -107,6 +110,7 @@ export interface WaterfallHistoryCardConfig extends LovelaceCardConfig {
   color_off?: string;
   state_on?: string;
   state_off?: string;
+  state_colors?: Record<string, string>;
   color_unknown?: string;
   color_unavailable?: string;
   state_unknown?: string;
