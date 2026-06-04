@@ -72,7 +72,9 @@ entities:
 | `intervals`      | `number`  | `48`        | Number of intervals (bars) to divide the history into.                      |
 | `start_offset`   | `number`  | `0`         | Hours to offset the time window (e.g., 24 = show 24-48h ago instead of 0-24h). |
 | `height`         | `number`  | `60`        | Height in pixels of each entity's waterfall chart.                          |
-| `show_labels`    | `boolean` | `true`      | Show the "X hours ago" / "now" labels under the bar.                        |
+| `show_labels`    | `boolean` | `true`      | Show time labels under the bar.                                             |
+| `label_count`    | `number`  | `1`         | Number of label segments. `1` = start + end only; `2` = start + midpoint + end; max = `hours`. |
+| `label_format`   | `string`  | `"relative"`| Label format: `relative` (e.g. `24h ago`, `Now`), `24h` (e.g. `14:30`), `12h` (e.g. `2:30 PM`). |
 | `show_min_max`   | `boolean` | `false`     | Show min/max values under the chart.                                        |
 | `show_current`   | `boolean` | `true`      | Show the current value next to the entity name.                             |
 | `show_icons`     | `boolean` | `true`      | Show entity icons globally. Can be overridden per entity.                   |
@@ -119,6 +121,8 @@ Each item in `entities:` can be either a bare entity ID string, or an object wit
 | `show_current`   | `boolean` | Inherits from card  | Show/hide current value just for this entity.                       |
 | `show_icons`     | `boolean` | Inherits from card  | Show/hide the icon for just this entity (overrides global setting). |
 | `show_labels`    | `boolean` | Inherits from card  | Show/hide labels just for this entity.                              |
+| `label_count`    | `number`  | Inherits from card  | Override label segment count for this entity.                       |
+| `label_format`   | `string`  | Inherits from card  | Override label format: `relative`, `24h`, or `12h`.                |
 | `show_min_max`   | `boolean` | Inherits from card  | Show/hide min/max just for this entity.                             |
 | `start_offset`   | `number`  | Inherits from card  | Hours to offset the time window for this entity.                    |
 | `state_colors`   | `object`  | Inherits from card  | Map HA state strings to colors for this entity. Overrides global `state_colors`. |
