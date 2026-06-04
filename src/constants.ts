@@ -63,6 +63,8 @@ export const DEFAULTS = {
   height: 60,
   show_current: true,
   show_labels: true,
+  label_count: 1,
+  label_format: 'relative' as 'relative' | '24h' | '12h',
   show_min_max: false,
   show_icons: true,
   digits: 1,

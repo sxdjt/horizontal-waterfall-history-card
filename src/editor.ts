@@ -326,6 +326,32 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
           ></ha-switch>
         </div>
 
+        <ha-selector
+          .hass=${this.hass}
+          .label=${'Label Count'}
+          .value=${this._config.label_count ?? DEFAULTS.label_count}
+          .selector=${{number: {min: 1, max: 168, mode: 'box', step: 1}}}
+          @value-changed=${(ev: CustomEvent) =>
+            this._configValueChanged('label_count', Number(ev.detail.value))}
+        ></ha-selector>
+
+        <ha-selector
+          .hass=${this.hass}
+          .label=${'Label Format'}
+          .selector=${{
+            select: {
+              options: [
+                { value: 'relative', label: 'Relative (e.g. 24h ago, Now)' },
+                { value: '24h', label: '24-hour time (e.g. 14:30)' },
+                { value: '12h', label: '12-hour time (e.g. 2:30 PM)' },
+              ]
+            }
+          }}
+          .value=${this._config.label_format || DEFAULTS.label_format}
+          @value-changed=${(ev: CustomEvent) =>
+            this._configValueChanged('label_format', ev.detail.value)}
+        ></ha-selector>
+
         <div class="toggle-row">
           <label>Show Current Value</label>
           <ha-switch
@@ -629,6 +655,32 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
                 this._entityChanged(index, 'show_labels', (ev.target as HTMLInputElement).checked)}
             ></ha-switch>
           </div>
+
+          <ha-selector
+            .hass=${this.hass}
+            .label=${'Label Count (override)'}
+            .value=${entityConfig.label_count || ''}
+            .selector=${{number: {min: 1, max: 168, mode: 'box', step: 1}}}
+            @value-changed=${(ev: CustomEvent) =>
+              this._entityChanged(index, 'label_count', ev.detail.value ? Number(ev.detail.value) : undefined)}
+          ></ha-selector>
+
+          <ha-selector
+            .hass=${this.hass}
+            .label=${'Label Format (override)'}
+            .selector=${{
+              select: {
+                options: [
+                  { value: 'relative', label: 'Relative (e.g. 24h ago, Now)' },
+                  { value: '24h', label: '24-hour time (e.g. 14:30)' },
+                  { value: '12h', label: '12-hour time (e.g. 2:30 PM)' },
+                ]
+              }
+            }}
+            .value=${entityConfig.label_format || ''}
+            @value-changed=${(ev: CustomEvent) =>
+              this._entityChanged(index, 'label_format', ev.detail.value || undefined)}
+          ></ha-selector>
 
           <div class="toggle-row">
             <label>Show Current (override)</label>

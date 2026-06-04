@@ -37,6 +37,8 @@ export interface EntityConfig {
   // Display toggles
   show_current?: boolean;
   show_labels?: boolean;
+  label_count?: number;
+  label_format?: 'relative' | '24h' | '12h';
   show_min_max?: boolean;
   show_icons?: boolean;
 
@@ -92,6 +94,8 @@ export interface WaterfallHistoryCardConfig extends LovelaceCardConfig {
   start_offset?: number;  // Global default for start_offset
   show_current?: boolean;
   show_labels?: boolean;
+  label_count?: number;
+  label_format?: 'relative' | '24h' | '12h';
   show_min_max?: boolean;
   show_icons?: boolean;
   height?: number;
