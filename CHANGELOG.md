@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.7.0] - 2026-06-04
+
+### Added
+- `label_count` option: control the number of time labels under the waterfall bar. `1` (default) = start + end only; `2` = start + midpoint + end; up to `hours` segments. Supported at card and per-entity level.
+- `label_format` option: choose between `relative` (default, e.g. `24h ago`, `Now`), `24h` (e.g. `14:30`), or `12h` (e.g. `2:30 PM`) label styles. Supported at card and per-entity level.
+
+### Fixed
+- Min/max mode: `initialState` (the pre-window carry-over value) was excluded from bucket 0's extreme calculation when bucket 0 had any readings, causing incorrect min/max for that bucket.
+- Min/max mode: forward and backward fill propagated the bucket's extreme value (e.g. peak 70) into empty adjacent buckets instead of the actual stable carry-over state (e.g. last reading 67).
+
+Thanks to [@olpal](https://github.com/olpal) for both contributions.
+
 ## [4.6.0] - 2026-06-02
 
 ### Added
