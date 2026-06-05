@@ -289,6 +289,8 @@ export class WaterfallHistoryCard extends LitElement {
       gradient: config.gradient || DEFAULTS.gradient,
       show_current: config.show_current !== false,
       show_labels: config.show_labels !== false,
+      label_count: typeof config.label_count === 'number' ? config.label_count : DEFAULTS.label_count,
+      label_format: config.label_format || DEFAULTS.label_format,
       show_min_max: config.show_min_max || DEFAULTS.show_min_max,
       show_icons: config.show_icons !== false,
       unit: config.unit ?? undefined,
@@ -969,6 +971,8 @@ export class WaterfallHistoryCard extends LitElement {
     const [actualMin, actualMax] = this.getMinMax(history);
 
     const showLabels = entityObj.show_labels ?? this.config.show_labels;
+    const labelCount = entityObj.label_count ?? this.config.label_count ?? DEFAULTS.label_count;
+    const labelFormat = entityObj.label_format ?? this.config.label_format ?? DEFAULTS.label_format;
     const showMinMax = entityObj.show_min_max ?? this.config.show_min_max;
     const showCurrent = entityObj.show_current ?? this.config.show_current;
     const hours = entityObj.hours ?? this.config.hours!;
@@ -976,11 +980,21 @@ export class WaterfallHistoryCard extends LitElement {
     const current = this.parseState(entity.state, entityObj);
     const inlineLayout = entityObj.inline_layout ?? this.config.inline_layout;
 
-    // Calculate label text based on offset
-    const startLabelHours = hours + startOffset;
-    const endLabelHours = startOffset;
-    const startLabel = `${startLabelHours}${this.t('hours_ago')}`;
-    const endLabel = startOffset > 0 ? `${endLabelHours}${this.t('hours_ago')}` : this.t('now');
+    // Build evenly-spaced time labels. label_count=1 gives [start, end].
+    // label_count=N gives N+1 labels spaced (hours/N) apart, capped at hours.
+    const segments = Math.max(1, Math.min(Math.round(labelCount), hours));
+    const endTime = Date.now() - startOffset * 60 * 60 * 1000;
+    const timeLabels = Array.from({ length: segments + 1 }, (_, i) => {
+      const hoursAgo = (hours + startOffset) - (i * hours / segments);
+      if (labelFormat === 'relative') {
+        if (hoursAgo <= startOffset && startOffset === 0) return this.t('now');
+        return `${Math.round(hoursAgo)}${this.t('hours_ago')}`;
+      }
+      const ts = new Date(endTime - (segments - i) * (hours / segments) * 60 * 60 * 1000);
+      return ts.toLocaleTimeString([], labelFormat === '12h'
+        ? { hour: 'numeric', minute: '2-digit', hour12: true }
+        : { hour: '2-digit', minute: '2-digit', hour12: false });
+    });
 
     // Render waterfall bars
     const waterfallBars = html`
@@ -1012,8 +1026,7 @@ export class WaterfallHistoryCard extends LitElement {
             </div>
             ${showLabels ? html`
               <div class="labels">
-                <span>${startLabel}</span>
-                <span>${endLabel}</span>
+                ${timeLabels.map(l => html`<span>${l}</span>`)}
               </div>
             ` : ''}
           </div>
@@ -1040,8 +1053,7 @@ export class WaterfallHistoryCard extends LitElement {
         </div>
         ${showLabels ? html`
           <div class="labels">
-            <span>${startLabel}</span>
-            <span>${endLabel}</span>
+            ${timeLabels.map(l => html`<span>${l}</span>`)}
           </div>
         ` : ''}
         ${showMinMax ? html`

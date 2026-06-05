@@ -122,6 +122,8 @@ const DEFAULTS = {
     intervals: 48,
     start_offset: 0, // No offset by default (show recent history ending at "now")
     height: 60,
+    label_count: 1,
+    label_format: 'relative',
     show_min_max: false,
     digits: 1,
     compact: false,
@@ -179,6 +181,8 @@ class WaterfallHistoryCard extends i {
             gradient: config.gradient || DEFAULTS.gradient,
             show_current: config.show_current !== false,
             show_labels: config.show_labels !== false,
+            label_count: typeof config.label_count === 'number' ? config.label_count : DEFAULTS.label_count,
+            label_format: config.label_format || DEFAULTS.label_format,
             show_min_max: config.show_min_max || DEFAULTS.show_min_max,
             show_icons: config.show_icons !== false,
             unit: config.unit ?? undefined,
@@ -782,17 +786,30 @@ class WaterfallHistoryCard extends i {
             : [...historyData.map(d => d.value), this.parseState(entity.state, entityObj)];
         const [actualMin, actualMax] = this.getMinMax(history);
         const showLabels = entityObj.show_labels ?? this.config.show_labels;
+        const labelCount = entityObj.label_count ?? this.config.label_count ?? DEFAULTS.label_count;
+        const labelFormat = entityObj.label_format ?? this.config.label_format ?? DEFAULTS.label_format;
         const showMinMax = entityObj.show_min_max ?? this.config.show_min_max;
         const showCurrent = entityObj.show_current ?? this.config.show_current;
         const hours = entityObj.hours ?? this.config.hours;
         const intervals = entityObj.intervals ?? this.config.intervals;
         const current = this.parseState(entity.state, entityObj);
         const inlineLayout = entityObj.inline_layout ?? this.config.inline_layout;
-        // Calculate label text based on offset
-        const startLabelHours = hours + startOffset;
-        const endLabelHours = startOffset;
-        const startLabel = `${startLabelHours}${this.t('hours_ago')}`;
-        const endLabel = startOffset > 0 ? `${endLabelHours}${this.t('hours_ago')}` : this.t('now');
+        // Build evenly-spaced time labels. label_count=1 gives [start, end].
+        // label_count=N gives N+1 labels spaced (hours/N) apart, capped at hours.
+        const segments = Math.max(1, Math.min(Math.round(labelCount), hours));
+        const endTime = Date.now() - startOffset * 60 * 60 * 1000;
+        const timeLabels = Array.from({ length: segments + 1 }, (_, i) => {
+            const hoursAgo = (hours + startOffset) - (i * hours / segments);
+            if (labelFormat === 'relative') {
+                if (hoursAgo <= startOffset && startOffset === 0)
+                    return this.t('now');
+                return `${Math.round(hoursAgo)}${this.t('hours_ago')}`;
+            }
+            const ts = new Date(endTime - (segments - i) * (hours / segments) * 60 * 60 * 1000);
+            return ts.toLocaleTimeString([], labelFormat === '12h'
+                ? { hour: 'numeric', minute: '2-digit', hour12: true }
+                : { hour: '2-digit', minute: '2-digit', hour12: false });
+        });
         // Render waterfall bars
         const waterfallBars = b `
       ${history.map((value, index) => {
@@ -822,8 +839,7 @@ class WaterfallHistoryCard extends i {
             </div>
             ${showLabels ? b `
               <div class="labels">
-                <span>${startLabel}</span>
-                <span>${endLabel}</span>
+                ${timeLabels.map(l => b `<span>${l}</span>`)}
               </div>
             ` : ''}
           </div>
@@ -849,8 +865,7 @@ class WaterfallHistoryCard extends i {
         </div>
         ${showLabels ? b `
           <div class="labels">
-            <span>${startLabel}</span>
-            <span>${endLabel}</span>
+            ${timeLabels.map(l => b `<span>${l}</span>`)}
           </div>
         ` : ''}
         ${showMinMax ? b `
@@ -1466,6 +1481,30 @@ class WaterfallHistoryCardEditor extends i {
           ></ha-switch>
         </div>
 
+        <ha-selector
+          .hass=${this.hass}
+          .label=${'Label Count'}
+          .value=${this._config.label_count ?? DEFAULTS.label_count}
+          .selector=${{ number: { min: 1, max: 168, mode: 'box', step: 1 } }}
+          @value-changed=${(ev) => this._configValueChanged('label_count', Number(ev.detail.value))}
+        ></ha-selector>
+
+        <ha-selector
+          .hass=${this.hass}
+          .label=${'Label Format'}
+          .selector=${{
+            select: {
+                options: [
+                    { value: 'relative', label: 'Relative (e.g. 24h ago, Now)' },
+                    { value: '24h', label: '24-hour time (e.g. 14:30)' },
+                    { value: '12h', label: '12-hour time (e.g. 2:30 PM)' },
+                ]
+            }
+        }}
+          .value=${this._config.label_format || DEFAULTS.label_format}
+          @value-changed=${(ev) => this._configValueChanged('label_format', ev.detail.value)}
+        ></ha-selector>
+
         <div class="toggle-row">
           <label>Show Current Value</label>
           <ha-switch
@@ -1739,6 +1778,30 @@ class WaterfallHistoryCardEditor extends i {
               @change=${(ev) => this._entityChanged(index, 'show_labels', ev.target.checked)}
             ></ha-switch>
           </div>
+
+          <ha-selector
+            .hass=${this.hass}
+            .label=${'Label Count (override)'}
+            .value=${entityConfig.label_count || ''}
+            .selector=${{ number: { min: 1, max: 168, mode: 'box', step: 1 } }}
+            @value-changed=${(ev) => this._entityChanged(index, 'label_count', ev.detail.value ? Number(ev.detail.value) : undefined)}
+          ></ha-selector>
+
+          <ha-selector
+            .hass=${this.hass}
+            .label=${'Label Format (override)'}
+            .selector=${{
+            select: {
+                options: [
+                    { value: 'relative', label: 'Relative (e.g. 24h ago, Now)' },
+                    { value: '24h', label: '24-hour time (e.g. 14:30)' },
+                    { value: '12h', label: '12-hour time (e.g. 2:30 PM)' },
+                ]
+            }
+        }}
+            .value=${entityConfig.label_format || ''}
+            @value-changed=${(ev) => this._entityChanged(index, 'label_format', ev.detail.value || undefined)}
+          ></ha-selector>
 
           <div class="toggle-row">
             <label>Show Current (override)</label>
