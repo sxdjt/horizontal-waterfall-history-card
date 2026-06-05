@@ -608,6 +608,25 @@ export class WaterfallHistoryCard extends LitElement {
       });
     }
 
+    // For min/max mode: include initialState in bucket 0's extreme comparison.
+    // The pre-window state was active from the start of the window until the first change
+    // in bucket 0, so it must be considered as a candidate extreme for that bucket.
+    if (bucketExtreme !== null && initialState !== null &&
+        initialState !== UNKNOWN_STATE && initialState !== UNAVAILABLE_STATE) {
+      if (bucketExtreme[0] === null) {
+        bucketExtreme[0] = initialState;
+      } else if (intervalValue === 'min' && initialState < bucketExtreme[0]!) {
+        bucketExtreme[0] = initialState;
+      } else if (intervalValue === 'max' && initialState > bucketExtreme[0]!) {
+        bucketExtreme[0] = initialState;
+      }
+    }
+
+    // In min/max mode capture a copy of last raw values before overwriting with extremes.
+    // This is used for fill operations so empty buckets get the carry-over state (the value
+    // that was actually active during the gap), not an adjacent bucket's extreme.
+    const fillValues: (number | null)[] | null = bucketExtreme !== null ? [...processed] : null;
+
     // Merge extreme values into processed array.
     // Where a real extreme exists, it replaces the last value for that bucket.
     // Buckets that only had special states (unknown/unavailable) are left as-is.
@@ -622,22 +641,32 @@ export class WaterfallHistoryCard extends LitElement {
     // Apply initial state to bucket 0 if it wasn't set by a state change within the window
     if (initialState !== null && !bucket0ExplicitlySet) {
       processed[0] = initialState;
+      if (fillValues !== null) fillValues[0] = initialState;
     }
 
-    // Forward fill - Propagate all states (including unavailable/unknown) until next actual state change
+    // Forward fill - Propagate all states (including unavailable/unknown) until next actual state change.
+    // In min/max mode, fill from the raw last-value array so empty buckets get the carry-over
+    // state rather than an adjacent bucket's extreme.
+    const fwd = fillValues ?? processed;
     for (let i = 1; i < processed.length; i++) {
-      if (processed[i] === null && processed[i - 1] !== null) {
-        processed[i] = processed[i - 1];
-      }
+      if (fwd[i] === null && fwd[i - 1] !== null) fwd[i] = fwd[i - 1];
+      if (processed[i] === null && fwd[i - 1] !== null) processed[i] = fwd[i - 1];
     }
     // Backward fill - Don't fill FROM unavailable/unknown states
     // Also don't overwrite unavailable/unknown states with normal states
+    const bwd = fillValues ?? processed;
     for (let i = processed.length - 2; i >= 0; i--) {
+      if (bwd[i] === null &&
+          bwd[i + 1] !== null &&
+          bwd[i + 1] !== UNKNOWN_STATE &&
+          bwd[i + 1] !== UNAVAILABLE_STATE) {
+        bwd[i] = bwd[i + 1];
+      }
       if (processed[i] === null &&
-          processed[i + 1] !== null &&
-          processed[i + 1] !== UNKNOWN_STATE &&
-          processed[i + 1] !== UNAVAILABLE_STATE) {
-        processed[i] = processed[i + 1];
+          bwd[i + 1] !== null &&
+          bwd[i + 1] !== UNKNOWN_STATE &&
+          bwd[i + 1] !== UNAVAILABLE_STATE) {
+        processed[i] = bwd[i + 1];
       }
     }
 
