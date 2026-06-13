@@ -1,5 +1,10 @@
 # Changelog
 
+## [4.8.0] - 2026-06-12
+
+### Added
+- Card picker thumbnail: `preview: true` added to card registration so HA renders a live preview in the "Add Card" dialog. `getStubConfig()` now accepts the `hass` object and selects a real sensor entity for a meaningful preview.
+
 ## [4.7.0] - 2026-06-04
 
 ### Added

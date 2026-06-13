@@ -158,12 +158,16 @@ class WaterfallHistoryCard extends i {
         await Promise.resolve().then(function () { return editor; });
         return document.createElement('waterfall-history-card-editor');
     }
-    // Provide default stub configuration
-    static getStubConfig() {
+    // Provide default stub configuration for the card picker preview.
+    // HA passes the hass object so we can pick a real entity to display.
+    static getStubConfig(hass) {
+        const sensorEntity = hass
+            ? Object.keys(hass.states).find((entityId) => entityId.startsWith('sensor.'))
+            : undefined;
         return {
             title: 'History',
             hours: 24,
-            entities: [],
+            entities: sensorEntity ? [sensorEntity] : [],
         };
     }
     setConfig(config) {
@@ -1129,9 +1133,10 @@ window.customCards = window.customCards || [];
 window.customCards.push({
     type: 'waterfall-history-card',
     name: 'Waterfall History Card',
-    description: 'A horizontal waterfall display for historical sensor data with visual editor'
+    description: 'A horizontal waterfall display for historical sensor data with visual editor',
+    preview: true,
 });
-console.info(`%c WATERFALL-HISTORY-CARD %c v4.7.0 `, 'color: black; background: #F2720C; font-weight: 600;', 'color: black; background: #00a5c9; font-weight: 600;');
+console.info(`%c WATERFALL-HISTORY-CARD %c v4.8.0 `, 'color: black; background: #F2720C; font-weight: 600;', 'color: black; background: #00a5c9; font-weight: 600;');
 
 var NumberFormat;
 (function (NumberFormat) {
