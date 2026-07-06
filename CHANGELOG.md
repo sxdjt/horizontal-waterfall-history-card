@@ -1,5 +1,11 @@
 # Changelog
 
+## [2026.7.6] - 2026-07-06
+
+### Changed
+- Adopted CalVer versioning (`YYYY.M.D`); this release follows 4.8.0.
+- Updated dev/build dependencies: rollup 4.60.3 -> 4.62.2, eslint 10.3.0 -> 10.6.0, typescript-eslint 8.59.3 -> 8.63.0, lit 3.3.2 -> 3.3.3, @rollup/plugin-commonjs 29.0.2 -> 29.0.3. No functional changes; Lit is loaded from CDN at runtime, so the shipped bundle is unchanged aside from the version banner.
+
 ## [4.8.0] - 2026-06-12
 
 ### Added
