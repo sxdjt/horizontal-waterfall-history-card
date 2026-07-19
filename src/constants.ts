@@ -37,6 +37,7 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
   en: {
     history: 'History',
     error_loading_data: 'Error loading historical data',
+    no_data: 'No data',
     min_label: 'Min',
     max_label: 'Max',
     hours_ago: 'h ago',
@@ -46,6 +47,7 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
   fr: {
     history: 'Historique',
     error_loading_data: 'Erreur lors du chargement des données historiques',
+    no_data: 'Aucune donnée',
     min_label: 'Min',
     max_label: 'Max',
     hours_ago: 'h',

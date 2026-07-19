@@ -1,5 +1,13 @@
 # Changelog
 
+## [2026.7.18] - 2026-07-18
+
+### Fixed
+- Card no longer paints history bars for periods before an entity existed (issue #81). Removed the backward-fill pass, which copied the first recorded value backward into every leading empty bucket and fabricated data for time the sensor had no state. Buckets with no data now render as an empty (transparent) track.
+
+### Changed
+- Tooltip for buckets with no data now reads "No data" instead of the error-loading message.
+
 ## [2026.7.6] - 2026-07-06
 
 ### Changed
