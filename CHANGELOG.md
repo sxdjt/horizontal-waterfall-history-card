@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.9.0] - 2026-07-20
+
+### Fixed
+- Custom Icon override now takes effect. The configured `icon` (per-entity, then card-level) was being ignored; icon resolution only read the entity's own `icon` attribute before falling back to a domain default. A value like `mdi:power-cycle` set in the editor's "Custom Icon" field now renders as expected (issue #82).
+
+### Changed
+- Reverted to SemVer versioning (`X.Y.Z`); this release follows the CalVer releases `2026.7.6` and `2026.7.18`, continuing from `4.8.0`.
+
 ## [2026.7.18] - 2026-07-18
 
 ### Fixed

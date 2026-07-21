@@ -78,6 +78,7 @@ entities:
 | `show_min_max`   | `boolean` | `false`     | Show min/max values under the chart.                                        |
 | `show_current`   | `boolean` | `true`      | Show the current value next to the entity name.                             |
 | `show_icons`     | `boolean` | `true`      | Show entity icons globally. Can be overridden per entity.                   |
+| `icon`           | `string`  | entity/domain default | Override the icon shown next to entity names (e.g. `mdi:power-cycle`). Falls back to the entity's own icon, then a domain default. Can be overridden per entity. |
 | `compact`        | `boolean` | `false`     | Use smaller font sizes and spacing.                                         |
 | `inline_layout`  | `boolean` | `false`     | Display name, graph, and value on a single line.                            |
 | `color_on`       | `string`  | `#EEEEEE`   | Color for binary sensors in "on" state (global default).                    |
@@ -114,6 +115,7 @@ Each item in `entities:` can be either a bare entity ID string, or an object wit
 | `color_unknown`  | `string`  | Inherits from card  | Color for this entity when in "unknown" state.            |
 | `digits`         | `number`  | Inherits from card  | Override decimal places for this entity.                            |
 | `hours`          | `number`  | Inherits from card  | Override the number of hours shown for this entity.                 |
+| `icon`           | `string`  | Inherits from card  | Override the icon for this entity (e.g. `mdi:power-cycle`). Takes precedence over the card-level `icon`, the entity's own icon, and the domain default. |
 | `inline_layout`  | `boolean` | Inherits from card  | Use inline layout for this entity.                        |
 | `interval_value` | `string`  | Inherits from card  | How to represent each bucket: `last`, `min`, or `max`.              |
 | `intervals`      | `number`  | Inherits from card  | Override the number of intervals (bars) for this entity.            |

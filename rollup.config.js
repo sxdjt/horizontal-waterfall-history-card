@@ -11,7 +11,7 @@ export default {
     format: 'es',
     sourcemap: true,
     inlineDynamicImports: true,
-    banner: `/* Waterfall History Card v4.4.1 */`,
+    banner: `/* Waterfall History Card v4.9.0 */`,
   },
   plugins: [
     resolve(),

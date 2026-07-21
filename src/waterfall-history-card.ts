@@ -940,8 +940,11 @@ export class WaterfallHistoryCard extends LitElement {
 
     const name = entityObj.name || entity.attributes.friendly_name || entityId;
 
-    // Resolve icon
-    let icon = entity.attributes?.icon;
+    // Resolve icon. Precedence: per-entity configured icon, then global
+    // configured icon, then the entity's own icon attribute, then a
+    // domain-based default. The configured overrides must win so that the
+    // "Custom Icon" editor field (e.g. mdi:power-cycle) actually takes effect.
+    let icon = entityObj.icon || this.config.icon || entity.attributes?.icon;
     if (!icon) {
       const domain = entityId.split('.')[0];
       icon = DEFAULT_DOMAIN_ICONS[domain] || 'mdi:bookmark';
@@ -1098,7 +1101,7 @@ declare global {
 });
 
 console.info(
-  `%c WATERFALL-HISTORY-CARD %c 2026.7.18 `,
+  `%c WATERFALL-HISTORY-CARD %c 4.9.0 `,
   'color: black; background: #F2720C; font-weight: 600;',
   'color: black; background: #00a5c9; font-weight: 600;'
 );
