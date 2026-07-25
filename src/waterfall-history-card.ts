@@ -1101,7 +1101,7 @@ declare global {
 });
 
 console.info(
-  `%c WATERFALL-HISTORY-CARD %c 4.9.0 `,
+  `%c WATERFALL-HISTORY-CARD %c 2026.7.25 `,
   'color: black; background: #F2720C; font-weight: 600;',
   'color: black; background: #00a5c9; font-weight: 600;'
 );
