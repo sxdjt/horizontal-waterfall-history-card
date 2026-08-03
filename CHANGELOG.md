@@ -1,5 +1,13 @@
 # Changelog
 
+## [2026.8.3] - 2026-08-03
+
+### Added
+- Themable typography via CSS variables. Every typographic property (font size, weight, letter spacing, text transform, color) for the header, entity names, current values, time labels, and min/max label now reads a `--waterfall-*` custom property that can be set from a theme, a `card_mod` block, or anywhere else that cascades into the card. The `--waterfall-value-*` group falls back to its `--waterfall-entity-name-*` counterpart, preserving the shared name/value styling. See the new "Styling: CSS Variables" section in the README. Defaults are unchanged: with no variable set, the card looks exactly as before. Thanks to @superflyer11 for the contribution (PR #83).
+
+### Changed
+- Dependency maintenance: bumped `brace-expansion` 5.0.8 -> 5.0.9 to clear a new high-severity advisory (GHSA-rgw5-rvv9-x895) that superseded the prior mitigation. Dev/build dependency only; the shipped bundle is unchanged aside from the version banner.
+
 ## [2026.7.25] - 2026-07-25
 
 ### Changed
