@@ -46,13 +46,13 @@ export class WaterfallHistoryCard extends LitElement {
     }
 
     .card-header {
-      font-size: var(--header-font-size, 11px);
-      font-weight: 600;
-      letter-spacing: 0.10em;
-      text-transform: uppercase;
+      font-size: var(--waterfall-header-font-size, var(--header-font-size, 11px));
+      font-weight: var(--waterfall-header-font-weight, 600);
+      letter-spacing: var(--waterfall-header-letter-spacing, 0.10em);
+      text-transform: var(--waterfall-header-text-transform, uppercase);
       padding-bottom: 10px;
       margin-bottom: 2px;
-      color: var(--secondary-text-color, #727272);
+      color: var(--waterfall-header-color, var(--secondary-text-color, #727272));
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -89,20 +89,20 @@ export class WaterfallHistoryCard extends LitElement {
     }
 
     .entity-name {
-      font-size: var(--entity-name-font-size, 11px);
-      font-weight: 500;
-      letter-spacing: 0.07em;
-      text-transform: uppercase;
-      color: var(--primary-text-color);
+      font-size: var(--waterfall-entity-name-font-size, var(--entity-name-font-size, 11px));
+      font-weight: var(--waterfall-entity-name-font-weight, 500);
+      letter-spacing: var(--waterfall-entity-name-letter-spacing, 0.07em);
+      text-transform: var(--waterfall-entity-name-text-transform, uppercase);
+      color: var(--waterfall-entity-name-color, var(--primary-text-color));
     }
 
     .current-value {
       margin-left: auto;
-      font-size: var(--entity-name-font-size, 11px);
-      font-weight: 500;
-      letter-spacing: 0.07em;
-      text-transform: uppercase;
-      color: var(--primary-text-color);
+      font-size: var(--waterfall-value-font-size, var(--waterfall-entity-name-font-size, var(--entity-name-font-size, 11px)));
+      font-weight: var(--waterfall-value-font-weight, var(--waterfall-entity-name-font-weight, 500));
+      letter-spacing: var(--waterfall-value-letter-spacing, var(--waterfall-entity-name-letter-spacing, 0.07em));
+      text-transform: var(--waterfall-value-text-transform, var(--waterfall-entity-name-text-transform, uppercase));
+      color: var(--waterfall-value-color, var(--waterfall-entity-name-color, var(--primary-text-color)));
       font-variant-numeric: tabular-nums lining-nums;
       font-feature-settings: 'tnum' 1;
     }
@@ -130,18 +130,18 @@ export class WaterfallHistoryCard extends LitElement {
     .labels {
       display: flex;
       justify-content: space-between;
-      font-size: 9.5px;
-      letter-spacing: 0.04em;
-      color: var(--primary-text-color);
+      font-size: var(--waterfall-labels-font-size, 9.5px);
+      letter-spacing: var(--waterfall-labels-letter-spacing, 0.04em);
+      color: var(--waterfall-labels-color, var(--primary-text-color));
       margin-top: var(--labels-margin-top, 5px);
     }
 
     .min-max-label {
       display: block;
       width: 100%;
-      font-size: 10px;
-      letter-spacing: 0.03em;
-      color: var(--primary-text-color);
+      font-size: var(--waterfall-min-max-font-size, 10px);
+      letter-spacing: var(--waterfall-min-max-letter-spacing, 0.03em);
+      color: var(--waterfall-min-max-color, var(--primary-text-color));
       text-align: center;
     }
 
@@ -151,11 +151,11 @@ export class WaterfallHistoryCard extends LitElement {
 
     /* Compact mode overrides */
     :host(.compact) .card-header {
-      font-size: 10px;
+      font-size: var(--waterfall-header-font-size, 10px);
     }
 
     :host(.compact) .entity-name {
-      font-size: 10px;
+      font-size: var(--waterfall-entity-name-font-size, 10px);
     }
 
     :host(.compact) .labels {
@@ -199,8 +199,8 @@ export class WaterfallHistoryCard extends LitElement {
     }
 
     .entity-inline-container .entity-name {
-      font-size: var(--entity-name-font-size, 11px);
-      font-weight: 500;
+      font-size: var(--waterfall-entity-name-font-size, var(--entity-name-font-size, 11px));
+      font-weight: var(--waterfall-entity-name-font-weight, 500);
       white-space: nowrap;
       line-height: var(--waterfall-height, 60px);
     }
@@ -221,11 +221,11 @@ export class WaterfallHistoryCard extends LitElement {
     .entity-inline-container .entity-inline-value {
       flex-shrink: 0;
       text-align: right;
-      font-size: var(--entity-name-font-size, 11px);
-      font-weight: 500;
-      letter-spacing: 0.07em;
-      text-transform: uppercase;
-      color: var(--primary-text-color);
+      font-size: var(--waterfall-value-font-size, var(--waterfall-entity-name-font-size, var(--entity-name-font-size, 11px)));
+      font-weight: var(--waterfall-value-font-weight, var(--waterfall-entity-name-font-weight, 500));
+      letter-spacing: var(--waterfall-value-letter-spacing, var(--waterfall-entity-name-letter-spacing, 0.07em));
+      text-transform: var(--waterfall-value-text-transform, var(--waterfall-entity-name-text-transform, uppercase));
+      color: var(--waterfall-value-color, var(--waterfall-entity-name-color, var(--primary-text-color)));
       font-variant-numeric: tabular-nums lining-nums;
       font-feature-settings: 'tnum' 1;
       white-space: nowrap;
@@ -247,7 +247,7 @@ export class WaterfallHistoryCard extends LitElement {
     }
 
     :host(.compact) .entity-inline-container .entity-name {
-      font-size: 10px;
+      font-size: var(--waterfall-entity-name-font-size, 10px);
     }
 
   `;
