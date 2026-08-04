@@ -97,7 +97,7 @@ entities:
 | `gradient`       | `boolean` | `false`     | Use gradient interpolation between thresholds.                              |
 | `digits`         | `number`  | `1`         | Number of decimal places for numeric values.                                |
 | `unit`           | `string`  | auto        | Override unit of measurement.                                               |
-| `card_mod`       | `object`  | -           | card-mod configuration for advanced styling.                                |
+| `card_mod`       | `object`  | -           | card-mod configuration for advanced styling. See [Styling: CSS Variables](#styling-css-variables). |
 
 ---
 
@@ -134,6 +134,85 @@ Each item in `entities:` can be either a bare entity ID string, or an object wit
 | `state_unknown`  | `string`  | Inherits from card  | Label to display when this entity is "unknown".           |
 | `thresholds`     | `array`   | Inherits from card  | Override color thresholds for this entity.                          |
 | `unit`           | `string`  | Inherits from card  | Override unit of measurement for this entity.                       |
+
+---
+
+## Styling: CSS Variables
+
+The card's typography is driven by CSS custom properties. Set them in your theme,
+in a `card-mod` block, or anywhere else that cascades into the card — no
+`!important` needed, since these are read directly by the card's own rules.
+
+Every variable below is optional. Leave it unset and the card looks exactly as it
+always has.
+
+### Typography
+
+| Variable                                | Default                  | Applies to                                  |
+|-----------------------------------------|--------------------------|---------------------------------------------|
+| `--waterfall-header-font-size`           | `11px` (`10px` compact)  | The card title.                             |
+| `--waterfall-header-font-weight`         | `600`                    | The card title.                             |
+| `--waterfall-header-letter-spacing`      | `0.10em`                 | The card title.                             |
+| `--waterfall-header-text-transform`      | `uppercase`              | The card title.                             |
+| `--waterfall-header-color`               | `--secondary-text-color` | The card title.                             |
+| `--waterfall-entity-name-font-size`      | `11px` (`10px` compact)  | Entity names, both layouts.                 |
+| `--waterfall-entity-name-font-weight`    | `500`                    | Entity names, both layouts.                 |
+| `--waterfall-entity-name-letter-spacing` | `0.07em`                 | Entity names, both layouts.                 |
+| `--waterfall-entity-name-text-transform` | `uppercase`              | Entity names, both layouts.                 |
+| `--waterfall-entity-name-color`          | `--primary-text-color`   | Entity names, both layouts.                 |
+| `--waterfall-value-font-size`            | inherits entity name     | The current-value readout.                  |
+| `--waterfall-value-font-weight`          | inherits entity name     | The current-value readout.                  |
+| `--waterfall-value-letter-spacing`       | inherits entity name     | The current-value readout.                  |
+| `--waterfall-value-text-transform`       | inherits entity name     | The current-value readout.                  |
+| `--waterfall-value-color`                | inherits entity name     | The current-value readout.                  |
+| `--waterfall-labels-font-size`           | `9.5px`                  | Time labels under the bar.                  |
+| `--waterfall-labels-letter-spacing`      | `0.04em`                 | Time labels under the bar.                  |
+| `--waterfall-labels-color`               | `--primary-text-color`   | Time labels under the bar.                  |
+| `--waterfall-min-max-font-size`          | `10px`                   | The min/max label.                          |
+| `--waterfall-min-max-letter-spacing`     | `0.03em`                 | The min/max label.                          |
+| `--waterfall-min-max-color`              | `--primary-text-color`   | The min/max label.                          |
+
+The `--waterfall-value-*` variables fall back to their `--waterfall-entity-name-*`
+counterparts, so setting the entity-name variable alone restyles names and values
+together — the card's long-standing behaviour. Set a `--waterfall-value-*`
+variable only when you want the readout to differ from the name.
+
+### Matching the Home Assistant UI
+
+The card ships with a deliberately compact, small-caps label style. If you would
+rather it blend into the surrounding dashboard, point the variables at Home
+Assistant's own typography tokens:
+
+```yaml
+# In your theme
+waterfall-header-font-size: var(--ha-font-size-l)
+waterfall-header-font-weight: var(--ha-font-weight-normal)
+waterfall-header-letter-spacing: normal
+waterfall-header-text-transform: none
+waterfall-header-color: var(--primary-text-color)
+waterfall-entity-name-font-size: var(--ha-font-size-m)
+waterfall-entity-name-font-weight: var(--ha-font-weight-normal)
+waterfall-entity-name-letter-spacing: normal
+waterfall-entity-name-text-transform: none
+```
+
+Because a theme cascades everywhere, this restyles every waterfall card at once.
+To restyle a single card instead, put the same declarations in a `card_mod`
+block under `:host { ... }`.
+
+### Internal variables
+
+The card writes `--header-font-size`, `--entity-name-font-size`,
+`--labels-margin-top`, `--waterfall-height` and `--waterfall-cell-gap` as inline
+styles on its host element every time the config is applied. Inline styles win
+over the cascade, so setting those five names in a theme has no effect — they are
+internal plumbing driven by the `compact`, `height` and `cell_gap` options, not
+styling hooks.
+
+The `--waterfall-*` typography variables documented above are never set inline,
+which is what makes them themable. The two font-size variables keep the old names
+as an inner fallback, so any existing override of those names keeps behaving
+exactly as it does today.
 
 ---
 

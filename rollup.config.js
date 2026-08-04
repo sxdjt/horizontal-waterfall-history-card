@@ -1,7 +1,12 @@
+import { readFileSync } from 'fs';
 import typescript from '@rollup/plugin-typescript';
 import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
 import json from '@rollup/plugin-json';
+
+// Read the version from package.json so the bundle banner cannot drift out of
+// date the way a hardcoded string does (it sat at v4.9.0 across two releases).
+const { version: packageVersion } = JSON.parse(readFileSync('./package.json', 'utf8'));
 
 
 export default {
@@ -11,7 +16,7 @@ export default {
     format: 'es',
     sourcemap: true,
     inlineDynamicImports: true,
-    banner: `/* Waterfall History Card v4.9.0 */`,
+    banner: `/* Waterfall History Card v${packageVersion} */`,
   },
   plugins: [
     resolve(),
