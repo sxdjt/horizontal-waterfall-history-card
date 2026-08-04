@@ -1,4 +1,4 @@
-/* Waterfall History Card v4.9.0 */
+/* Waterfall History Card v2026.8.3 */
 /******************************************************************************
 Copyright (c) Microsoft Corporation.
 

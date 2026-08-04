@@ -8,6 +8,9 @@
 ### Changed
 - Dependency maintenance: bumped `brace-expansion` 5.0.8 -> 5.0.9 to clear a new high-severity advisory (GHSA-rgw5-rvv9-x895) that superseded the prior mitigation. Dev/build dependency only; the shipped bundle is unchanged aside from the version banner.
 
+### Fixed
+- The bundle's first-line banner now reads the version from `package.json` instead of a hardcoded string, which had been stuck at `v4.9.0` since that release and no longer matched the file it labelled.
+
 ## [2026.7.25] - 2026-07-25
 
 ### Changed
