@@ -18,6 +18,11 @@ import {
   DEFAULTS
 } from './constants';
 
+// Injected by rollup (see `intro` in rollup.config.js) from the version in
+// package.json, so the console banner cannot drift out of date the way a
+// hardcoded string does.
+declare const CARD_VERSION: string;
+
 export class WaterfallHistoryCard extends LitElement {
   @property({ attribute: false }) public hass!: HomeAssistant;
   @state() private config!: WaterfallHistoryCardConfig;
@@ -1107,7 +1112,7 @@ declare global {
 });
 
 console.info(
-  `%c WATERFALL-HISTORY-CARD %c 2026.9.1 `,
+  `%c WATERFALL-HISTORY-CARD %c ${CARD_VERSION} `,
   'color: black; background: #F2720C; font-weight: 600;',
   'color: black; background: #00a5c9; font-weight: 600;'
 );

@@ -17,6 +17,9 @@ export default {
     sourcemap: true,
     inlineDynamicImports: true,
     banner: `/* Waterfall History Card v${packageVersion} */`,
+    // Defines the CARD_VERSION referenced by the console banner in the card
+    // source, which is declared but never assigned there.
+    intro: `const CARD_VERSION = ${JSON.stringify(packageVersion)};`,
   },
   plugins: [
     resolve(),

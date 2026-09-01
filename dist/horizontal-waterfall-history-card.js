@@ -1,4 +1,6 @@
 /* Waterfall History Card v2026.9.1 */
+const CARD_VERSION = "2026.9.1";
+
 /******************************************************************************
 Copyright (c) Microsoft Corporation.
 
@@ -1137,7 +1139,7 @@ window.customCards.push({
     description: 'A horizontal waterfall display for historical sensor data with visual editor',
     preview: true,
 });
-console.info(`%c WATERFALL-HISTORY-CARD %c 2026.9.1 `, 'color: black; background: #F2720C; font-weight: 600;', 'color: black; background: #00a5c9; font-weight: 600;');
+console.info(`%c WATERFALL-HISTORY-CARD %c ${CARD_VERSION} `, 'color: black; background: #F2720C; font-weight: 600;', 'color: black; background: #00a5c9; font-weight: 600;');
 
 var NumberFormat;
 (function (NumberFormat) {
