@@ -1,5 +1,15 @@
 # Changelog
 
+## [2026.9.1] - 2026-09-01
+
+### Fixed
+- Hover tooltips now always show clock times (e.g. `Sun 21:01 - 21:46`) instead of switching to relative times (`12.0h ago`) whenever `hours` was set above 24. The tooltip is the detail view for a single cell, so it no longer depends on the size of the window being charted. Charts with `start_offset` set were affected the same way and are also fixed.
+- On spans longer than 24 hours the tooltip now prefixes the weekday, so cells exactly a day apart are no longer indistinguishable.
+- The `console.info` version banner was hardcoded and had drifted to the previous release's version.
+
+### Changed
+- Documented in the README that `label_format` applies to the time labels under the bar only, not to the hover tooltip.
+
 ## [2026.8.3] - 2026-08-03
 
 ### Added

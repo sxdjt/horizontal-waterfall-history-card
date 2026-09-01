@@ -884,22 +884,28 @@ export class WaterfallHistoryCard extends LitElement {
     const intervalHoursAgo = (hours * (totalIntervals - index)) / totalIntervals;
     const actualHoursAgo = intervalHoursAgo + startOffset;
 
-    if (hours <= 24) {
-      // Show actual timestamps
-      const date = new Date(Date.now() - actualHoursAgo * 60 * 60 * 1000);
-      const nextDate = new Date(date.getTime() + (hours / totalIntervals) * 60 * 60 * 1000);
+    // The tooltip is the detail view for a single cell, so it always shows
+    // concrete clock times regardless of `label_format` (which controls the
+    // compact axis labels underneath the chart, not this).
+    const date = new Date(Date.now() - actualHoursAgo * 60 * 60 * 1000);
+    const nextDate = new Date(date.getTime() + (hours / totalIntervals) * 60 * 60 * 1000);
 
-      const locale = this.hass?.locale?.language || this.hass?.language || undefined;
-      const timeFormatter = new Intl.DateTimeFormat(locale, {
-        hour: 'numeric',
-        minute: '2-digit'
-      });
-      return `${timeFormatter.format(date)} - ${timeFormatter.format(nextDate)}`;
+    const locale = this.hass?.locale?.language || this.hass?.language || undefined;
+    const timeFormatter = new Intl.DateTimeFormat(locale, {
+      hour: 'numeric',
+      minute: '2-digit'
+    });
+
+    // Once the visible span passes 24 hours, two cells exactly a day apart
+    // would render identical times, so qualify the start with its weekday.
+    const totalSpanHours = hours + startOffset;
+    const HOURS_PER_DAY = 24;
+    if (totalSpanHours > HOURS_PER_DAY) {
+      const weekdayFormatter = new Intl.DateTimeFormat(locale, { weekday: 'short' });
+      return `${weekdayFormatter.format(date)} ${timeFormatter.format(date)} - ${timeFormatter.format(nextDate)}`;
     }
-    if (actualHoursAgo < 1) {
-      return `${Math.round(actualHoursAgo * 60)}${this.t('minutes_ago')}`;
-    }
-    return `${actualHoursAgo.toFixed(1)}${this.t('hours_ago')}`;
+
+    return `${timeFormatter.format(date)} - ${timeFormatter.format(nextDate)}`;
   }
 
   private _handleEntityClick(entityId: string, e: Event): void {
@@ -1101,7 +1107,7 @@ declare global {
 });
 
 console.info(
-  `%c WATERFALL-HISTORY-CARD %c 2026.8.3 `,
+  `%c WATERFALL-HISTORY-CARD %c 2026.9.1 `,
   'color: black; background: #F2720C; font-weight: 600;',
   'color: black; background: #00a5c9; font-weight: 600;'
 );
