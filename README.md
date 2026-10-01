@@ -140,7 +140,7 @@ Each item in `entities:` can be either a bare entity ID string, or an object wit
 ## Styling: CSS Variables
 
 The card's typography is driven by CSS custom properties. Set them in your theme,
-in a `card-mod` block, or anywhere else that cascades into the card — no
+in a `card_mod` block, or anywhere else that cascades into the card — no
 `!important` needed, since these are read directly by the card's own rules.
 
 Every variable below is optional. Leave it unset and the card looks exactly as it
@@ -199,6 +199,18 @@ waterfall-entity-name-text-transform: none
 Because a theme cascades everywhere, this restyles every waterfall card at once.
 To restyle a single card instead, put the same declarations in a `card_mod`
 block under `:host { ... }`.
+
+> **Note the `--` prefix.** Theme files omit it (Home Assistant adds it for
+> you), but inside `card_mod` you must write it yourself. Also check the key is
+> `card_mod` with an underscore — `card-mod:` is silently ignored.
+
+```yaml
+card_mod:
+  style: |
+    :host {
+      --waterfall-entity-name-text-transform: none;
+    }
+```
 
 ### Internal variables
 
