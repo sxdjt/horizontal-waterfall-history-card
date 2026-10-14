@@ -1,5 +1,13 @@
 # Changelog
 
+## [2026.10.14b1] - 2026-10-14 (pre-release)
+
+### Fixed
+- Card-level `state_colors` is now applied. Previously the card-level map was dropped when the config loaded, so multi-state entities (e.g. `input_select`) were only colored when `state_colors` was repeated on every entity (discussion #85).
+
+### Changed
+- Dependency maintenance: bumped `brace-expansion` 5.0.9 -> 5.0.12 to clear a new high-severity advisory (GHSA-q2hr-2g5m-vwhr). Dev/build dependency only.
+
 ## [2026.9.1] - 2026-09-01
 
 ### Fixed
