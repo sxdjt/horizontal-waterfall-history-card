@@ -311,6 +311,7 @@ export class WaterfallHistoryCard extends LitElement {
       digits: typeof config.digits === 'number' ? config.digits : DEFAULTS.digits,
       card_mod: config.card_mod || {},
       binary_colors: config.binary_colors ?? undefined,
+      state_colors: config.state_colors ?? undefined,
       color_on: config.color_on ?? undefined,
       color_off: config.color_off ?? undefined,
       state_on: config.state_on || DEFAULTS.state_on,
