@@ -1,5 +1,5 @@
-/* Waterfall History Card v2026.10.14b1 */
-const CARD_VERSION = "2026.10.14b1";
+/* Waterfall History Card v2026.10.15 */
+const CARD_VERSION = "2026.10.15";
 
 /******************************************************************************
 Copyright (c) Microsoft Corporation.

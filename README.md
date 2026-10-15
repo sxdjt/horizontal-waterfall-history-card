@@ -72,21 +72,21 @@ entities:
 | `intervals`      | `number`  | `48`        | Number of intervals (bars) to divide the history into.                      |
 | `start_offset`   | `number`  | `0`         | Hours to offset the time window (e.g., 24 = show 24-48h ago instead of 0-24h). |
 | `height`         | `number`  | `60`        | Height in pixels of each entity's waterfall chart.                          |
-| `show_labels`    | `boolean` | `true`      | Show time labels under the bar.                                             |
+| `show_labels`    | `boolean` | `true`      | Show time labels under the bar. Has no effect when `inline_layout: true` (inline rows never show time labels). |
 | `label_count`    | `number`  | `1`         | Number of label segments. `1` = start + end only; `2` = start + midpoint + end; max = `hours`. |
-| `label_format`   | `string`  | `"relative"`| Format for the time labels under the bar: `relative` (e.g. `24h ago`, `Now`), `24h` (e.g. `14:30`), `12h` (e.g. `2:30 PM`). Does not affect the hover tooltip, which always shows clock times. |
+| `label_format`   | `string`  | `"relative"`| Format for the time labels under the bar: `relative` (e.g. `24h ago`, `Now`), `24h` (e.g. `14:30`), `12h` (e.g. `2:30 PM`). Any other value falls back to `24h`. Does not affect the hover tooltip, which always shows clock times. |
 | `show_min_max`   | `boolean` | `false`     | Show min/max values under the chart.                                        |
 | `show_current`   | `boolean` | `true`      | Show the current value next to the entity name.                             |
 | `show_icons`     | `boolean` | `true`      | Show entity icons globally. Can be overridden per entity.                   |
 | `icon`           | `string`  | entity/domain default | Override the icon shown next to entity names (e.g. `mdi:power-cycle`). Falls back to the entity's own icon, then a domain default. Can be overridden per entity. |
 | `compact`        | `boolean` | `false`     | Use smaller font sizes and spacing.                                         |
-| `inline_layout`  | `boolean` | `false`     | Display name, graph, and value on a single line.                            |
+| `inline_layout`  | `boolean` | `false`     | Display name, graph, and value on a single line. Time labels are hidden in this layout. |
 | `color_on`       | `string`  | `#EEEEEE`   | Color for binary sensors in "on" state (global default).                    |
 | `color_off`      | `string`  | `#636363`   | Color for binary sensors in "off" state (global default).                   |
 | `binary_colors`  | `object`  | -           | Alternative way to set binary colors: `{on: '#color', off: '#color'}`.      |
 | `state_on`       | `string`  | `"On"`      | Matches the HA state string for "on" and sets the display label (global default). E.g. `"home"` for a person entity.  |
 | `state_off`      | `string`  | `"Off"`     | Matches the HA state string for "off" and sets the display label (global default). E.g. `"not_home"` for a person entity. |
-| `state_colors`   | `object`  | -           | Map HA state strings to colors for multi-state entities (e.g. HVAC modes). Keys are state names, values are hex colors. Order determines display precedence. Overrides binary on/off logic when present. |
+| `state_colors`   | `object`  | -           | Map HA state strings to colors for multi-state entities (e.g. HVAC modes). Keys are state names, values are hex colors. Applies to every entity unless the entity sets its own `state_colors`. List order ranks the states lowest to highest for `interval_value: min`/`max`. Overrides binary on/off logic when present. |
 | `color_unknown`  | `string`  | `#FF9800`   | Color for entities in "unknown" state (orange).                             |
 | `color_unavailable` | `string` | `#9E9E9E` | Color for entities in "unavailable" state (gray).                           |
 | `state_unknown`  | `string`  | `"Unknown"` | Label to display for entities in "unknown" state.                           |
@@ -350,7 +350,31 @@ entities:
       heat: '#EF5350'
 ```
 
-State names must match the HA state values exactly (case-insensitive). The order you list the states determines the key ordering used internally - it has no effect on color or display. Use `interval_value: last` (the default) for HVAC entities; `min` or `max` are not meaningful for mode states.
+State names must match the HA state values exactly (case-insensitive). The order you list the states only matters for `interval_value: min` / `max`: the first state listed is the lowest, the last is the highest. With `last` (the default) order has no effect. Use `last` for HVAC entities, since mode states have no natural ranking.
+
+### Shared State Colors (Card Level)
+
+Set `state_colors` once at the card level to apply it to every entity. An entity's own `state_colors` replaces the card-level map for that entity.
+
+```yaml
+type: custom:waterfall-history-card
+title: Daily Goals
+hours: 336
+intervals: 14
+interval_value: max
+state_colors:
+  Poor: '#e45e65'
+  Reasonable: '#e0b400'
+  Good: '#0da035'
+  Exceeded: '#039BE5'
+entities:
+  - entity: input_select.exercise_quality
+    name: Exercise
+  - entity: input_select.daily_steps_quality
+    name: Steps
+```
+
+Because the states are listed worst to best, `interval_value: max` shows the best state reached in each cell. Each cell is a rolling window ending at the current time, not a calendar day.
 
 ---
 

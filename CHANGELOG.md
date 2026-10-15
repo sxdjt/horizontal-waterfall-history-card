@@ -1,5 +1,16 @@
 # Changelog
 
+## [2026.10.15] - 2026-10-15
+
+Stable release of the 2026.10.14b1 pre-release.
+
+### Fixed
+- Card-level `state_colors` is now applied. Previously the card-level map was dropped when the config loaded, so multi-state entities (e.g. `input_select`) were only colored when `state_colors` was repeated on every entity (discussion #85).
+
+### Changed
+- README: documented that `inline_layout` hides the time labels (so `show_labels` has no effect there), that unrecognized `label_format` values fall back to `24h`, and that `state_colors` list order ranks states lowest to highest for `interval_value: min`/`max` (the HVAC section previously said order had no effect). Added a card-level `state_colors` example.
+- Dependency maintenance: bumped `brace-expansion` 5.0.9 -> 5.0.12 to clear a high-severity advisory (GHSA-q2hr-2g5m-vwhr). Dev/build dependency only.
+
 ## [2026.10.14b1] - 2026-10-14 (pre-release)
 
 ### Fixed
