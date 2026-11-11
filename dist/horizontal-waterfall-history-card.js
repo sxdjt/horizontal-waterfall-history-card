@@ -1,5 +1,5 @@
-/* Waterfall History Card v2026.10.15 */
-const CARD_VERSION = "2026.10.15";
+/* Waterfall History Card v2026.11.10 */
+const CARD_VERSION = "2026.11.10";
 
 /******************************************************************************
 Copyright (c) Microsoft Corporation.
@@ -1228,6 +1228,14 @@ class WaterfallHistoryCardEditor extends i {
         const newConfig = { ...this._config, [key]: value };
         fireEvent(this, 'config-changed', { config: newConfig });
     }
+    // Move keyboard focus to a control that survives re-render (the list's Add button),
+    // so focus is not lost to <body> when the row holding the clicked Remove button disappears
+    _focusControl(key) {
+        this.shadowRoot?.querySelector(`[data-focus-key="${key}"]`)?.focus();
+    }
+    _isValidColor(value) {
+        return !!value && CSS.supports('color', value);
+    }
     // Entity management methods
     _addEntity() {
         const newConfig = { ...this._config };
@@ -1242,6 +1250,7 @@ class WaterfallHistoryCardEditor extends i {
         newConfig.entities = [...newConfig.entities];
         newConfig.entities.splice(index, 1);
         fireEvent(this, 'config-changed', { config: newConfig });
+        this._focusControl('add-entity');
     }
     _entityChanged(index, key, value) {
         const newConfig = { ...this._config };
@@ -1272,6 +1281,7 @@ class WaterfallHistoryCardEditor extends i {
         newConfig.thresholds = [...newConfig.thresholds];
         newConfig.thresholds.splice(index, 1);
         fireEvent(this, 'config-changed', { config: newConfig });
+        this._focusControl('add-threshold');
     }
     _thresholdChanged(index, key, value) {
         const newConfig = { ...this._config };
@@ -1294,6 +1304,7 @@ class WaterfallHistoryCardEditor extends i {
         const entries = Object.entries(this._config.state_colors || {});
         entries.splice(index, 1);
         this._configValueChanged('state_colors', entries.length > 0 ? Object.fromEntries(entries) : undefined);
+        this._focusControl('add-state-color');
     }
     _stateColorChanged(index, key, value) {
         const entries = Object.entries(this._config.state_colors || {});
@@ -1327,6 +1338,7 @@ class WaterfallHistoryCardEditor extends i {
         entityConfig.state_colors = entries.length > 0 ? Object.fromEntries(entries) : undefined;
         newConfig.entities[entityIndex] = entityConfig;
         fireEvent(this, 'config-changed', { config: newConfig });
+        this._focusControl(`add-entity-state-color-${entityIndex}`);
     }
     _entityStateColorChanged(entityIndex, stateIndex, key, value) {
         const newConfig = { ...this._config };
@@ -1372,6 +1384,7 @@ class WaterfallHistoryCardEditor extends i {
         entityConfig.thresholds.splice(thresholdIndex, 1);
         newConfig.entities[entityIndex] = entityConfig;
         fireEvent(this, 'config-changed', { config: newConfig });
+        this._focusControl(`add-entity-threshold-${entityIndex}`);
     }
     _entityThresholdChanged(entityIndex, thresholdIndex, key, value) {
         const newConfig = { ...this._config };
@@ -1389,6 +1402,43 @@ class WaterfallHistoryCardEditor extends i {
         };
         newConfig.entities[entityIndex] = entityConfig;
         fireEvent(this, 'config-changed', { config: newConfig });
+    }
+    // Switch row with a visible label; aria-label gives the switch its accessible name,
+    // since a <label> outside ha-switch's shadow root cannot be associated with it
+    _renderToggle(label, checked, onChange) {
+        return b `
+      <div class="toggle-row">
+        <span>${label}</span>
+        <ha-switch
+          aria-label=${label}
+          .checked=${checked}
+          @change=${(ev) => onChange(ev.target.checked)}
+        ></ha-switch>
+      </div>
+    `;
+    }
+    // Color text input with accessible name and inline error for invalid colors
+    _renderColorInput(color, label, errorId, onInput) {
+        const invalid = !this._isValidColor(color);
+        return b `
+      <div>
+        <input
+          type="text"
+          class="row-input"
+          placeholder="e.g., #FF0000"
+          aria-label=${label}
+          aria-invalid=${invalid ? 'true' : 'false'}
+          aria-describedby=${invalid ? errorId : A}
+          .value=${color}
+          @input=${(ev) => onInput(ev.target.value)}
+        >
+        ${invalid ? b `
+          <p id=${errorId} class="error-text">
+            Not a valid color. Use a hex code (#FF0000) or a color name (red).
+          </p>
+        ` : ''}
+      </div>
+    `;
     }
     render() {
         if (!this._config || !this.hass) {
@@ -1474,21 +1524,9 @@ class WaterfallHistoryCardEditor extends i {
       <div class="section">
         <h3>Display Options</h3>
 
-        <div class="toggle-row">
-          <label>Show Icons</label>
-          <ha-switch
-            .checked=${this._config.show_icons !== false}
-            @change=${(ev) => this._configValueChanged('show_icons', ev.target.checked)}
-          ></ha-switch>
-        </div>
+        ${this._renderToggle('Show Icons', this._config.show_icons !== false, (checked) => this._configValueChanged('show_icons', checked))}
 
-        <div class="toggle-row">
-          <label>Show Labels</label>
-          <ha-switch
-            .checked=${this._config.show_labels !== false}
-            @change=${(ev) => this._configValueChanged('show_labels', ev.target.checked)}
-          ></ha-switch>
-        </div>
+        ${this._renderToggle('Show Labels', this._config.show_labels !== false, (checked) => this._configValueChanged('show_labels', checked))}
 
         <ha-selector
           .hass=${this.hass}
@@ -1514,45 +1552,15 @@ class WaterfallHistoryCardEditor extends i {
           @value-changed=${(ev) => this._configValueChanged('label_format', ev.detail.value)}
         ></ha-selector>
 
-        <div class="toggle-row">
-          <label>Show Current Value</label>
-          <ha-switch
-            .checked=${this._config.show_current !== false}
-            @change=${(ev) => this._configValueChanged('show_current', ev.target.checked)}
-          ></ha-switch>
-        </div>
+        ${this._renderToggle('Show Current Value', this._config.show_current !== false, (checked) => this._configValueChanged('show_current', checked))}
 
-        <div class="toggle-row">
-          <label>Show Min/Max</label>
-          <ha-switch
-            .checked=${this._config.show_min_max || false}
-            @change=${(ev) => this._configValueChanged('show_min_max', ev.target.checked)}
-          ></ha-switch>
-        </div>
+        ${this._renderToggle('Show Min/Max', this._config.show_min_max || false, (checked) => this._configValueChanged('show_min_max', checked))}
 
-        <div class="toggle-row">
-          <label>Compact Mode</label>
-          <ha-switch
-            .checked=${this._config.compact || false}
-            @change=${(ev) => this._configValueChanged('compact', ev.target.checked)}
-          ></ha-switch>
-        </div>
+        ${this._renderToggle('Compact Mode', this._config.compact || false, (checked) => this._configValueChanged('compact', checked))}
 
-        <div class="toggle-row">
-          <label>Inline Layout</label>
-          <ha-switch
-            .checked=${this._config.inline_layout || false}
-            @change=${(ev) => this._configValueChanged('inline_layout', ev.target.checked)}
-          ></ha-switch>
-        </div>
+        ${this._renderToggle('Inline Layout', this._config.inline_layout || false, (checked) => this._configValueChanged('inline_layout', checked))}
 
-        <div class="toggle-row">
-          <label>Gradient Mode</label>
-          <ha-switch
-            .checked=${this._config.gradient || false}
-            @change=${(ev) => this._configValueChanged('gradient', ev.target.checked)}
-          ></ha-switch>
-        </div>
+        ${this._renderToggle('Gradient Mode', this._config.gradient || false, (checked) => this._configValueChanged('gradient', checked))}
 
         <ha-selector
           .hass=${this.hass}
@@ -1663,26 +1671,21 @@ class WaterfallHistoryCardEditor extends i {
             <div class="threshold-item">
               <input
                 type="number"
+                class="row-input"
+                aria-label="Threshold ${index + 1} value"
                 .value=${String(threshold.value)}
-                style="flex:1;padding:4px 8px;font-size:14px;border:1px solid var(--divider-color,#e0e0e0);border-radius:4px;background:var(--card-background-color,#fff);color:var(--primary-text-color);"
                 @change=${(ev) => this._thresholdChanged(index, 'value', ev.target.value)}
               >
-              <input
-                type="text"
-                placeholder="e.g., #FF0000"
-                .value=${threshold.color}
-                style="flex:1;padding:4px 8px;font-size:14px;border:1px solid var(--divider-color,#e0e0e0);border-radius:4px;background:var(--card-background-color,#fff);color:var(--primary-text-color);"
-                @input=${(ev) => this._thresholdChanged(index, 'color', ev.target.value)}
-              >
-              <mwc-button @click=${() => this._removeThreshold(index)}>
-                Remove
-              </mwc-button>
+              ${this._renderColorInput(threshold.color, `Threshold ${index + 1} color`, `threshold-color-error-${index}`, (value) => this._thresholdChanged(index, 'color', value))}
+              <ha-button appearance="plain" variant="danger" @click=${() => this._removeThreshold(index)}>
+                Remove<span class="visually-hidden"> threshold ${index + 1}</span>
+              </ha-button>
             </div>
           `)}
 
-          <mwc-button raised @click=${this._addThreshold}>
+          <ha-button data-focus-key="add-threshold" @click=${this._addThreshold}>
             Add Threshold
-          </mwc-button>
+          </ha-button>
         </div>
       </ha-expansion-panel>
     `;
@@ -1703,24 +1706,25 @@ class WaterfallHistoryCardEditor extends i {
 
         ${entities.map((entity, index) => this._renderEntityConfig(entity, index))}
 
-        <mwc-button raised @click=${this._addEntity}>
+        <ha-button data-focus-key="add-entity" @click=${this._addEntity}>
           Add Entity
-        </mwc-button>
+        </ha-button>
       </div>
     `;
     }
     _renderEntityConfig(entity, index) {
         const entityConfig = typeof entity === 'string' ? { entity } : entity;
         const entityId = entityConfig.entity;
+        const displayName = entityConfig.name || entityId || `Entity ${index + 1}`;
         return b `
       <ha-expansion-panel
-        header="${entityConfig.name || entityId || `Entity ${index + 1}`}"
+        header="${displayName}"
         .expanded=${false}>
         <div class="entity-config">
           <div class="entity-header-row">
-            <mwc-button @click=${() => this._removeEntity(index)}>
-              Remove Entity
-            </mwc-button>
+            <ha-button appearance="plain" variant="danger" @click=${() => this._removeEntity(index)}>
+              Remove Entity<span class="visually-hidden"> ${displayName}</span>
+            </ha-button>
           </div>
 
           <ha-selector
@@ -1772,21 +1776,9 @@ class WaterfallHistoryCardEditor extends i {
 
           <h4>Display Overrides</h4>
 
-          <div class="toggle-row">
-            <label>Show Icons (override)</label>
-            <ha-switch
-              .checked=${entityConfig.show_icons ?? true}
-              @change=${(ev) => this._entityChanged(index, 'show_icons', ev.target.checked)}
-            ></ha-switch>
-          </div>
+          ${this._renderToggle('Show Icons (override)', entityConfig.show_icons ?? true, (checked) => this._entityChanged(index, 'show_icons', checked))}
 
-          <div class="toggle-row">
-            <label>Show Labels (override)</label>
-            <ha-switch
-              .checked=${entityConfig.show_labels ?? true}
-              @change=${(ev) => this._entityChanged(index, 'show_labels', ev.target.checked)}
-            ></ha-switch>
-          </div>
+          ${this._renderToggle('Show Labels (override)', entityConfig.show_labels ?? true, (checked) => this._entityChanged(index, 'show_labels', checked))}
 
           <ha-selector
             .hass=${this.hass}
@@ -1812,21 +1804,9 @@ class WaterfallHistoryCardEditor extends i {
             @value-changed=${(ev) => this._entityChanged(index, 'label_format', ev.detail.value || undefined)}
           ></ha-selector>
 
-          <div class="toggle-row">
-            <label>Show Current (override)</label>
-            <ha-switch
-              .checked=${entityConfig.show_current ?? true}
-              @change=${(ev) => this._entityChanged(index, 'show_current', ev.target.checked)}
-            ></ha-switch>
-          </div>
+          ${this._renderToggle('Show Current (override)', entityConfig.show_current ?? true, (checked) => this._entityChanged(index, 'show_current', checked))}
 
-          <div class="toggle-row">
-            <label>Inline Layout (override)</label>
-            <ha-switch
-              .checked=${entityConfig.inline_layout ?? false}
-              @change=${(ev) => this._entityChanged(index, 'inline_layout', ev.target.checked)}
-            ></ha-switch>
-          </div>
+          ${this._renderToggle('Inline Layout (override)', entityConfig.inline_layout ?? false, (checked) => this._entityChanged(index, 'inline_layout', checked))}
 
           <h4>Styling Overrides</h4>
 
@@ -1913,27 +1893,22 @@ class WaterfallHistoryCardEditor extends i {
           <div class="threshold-item">
             <input
               type="text"
+              class="row-input"
               placeholder="State name (e.g. cool)"
+              aria-label="State ${index + 1} name"
               .value=${stateName}
-              style="flex:1;padding:4px 8px;font-size:14px;border:1px solid var(--divider-color,#e0e0e0);border-radius:4px;background:var(--card-background-color,#fff);color:var(--primary-text-color);"
               @change=${(ev) => this._stateColorChanged(index, 'state', ev.target.value)}
             >
-            <input
-              type="text"
-              placeholder="e.g., #FF0000"
-              .value=${color}
-              style="flex:1;padding:4px 8px;font-size:14px;border:1px solid var(--divider-color,#e0e0e0);border-radius:4px;background:var(--card-background-color,#fff);color:var(--primary-text-color);"
-              @input=${(ev) => this._stateColorChanged(index, 'color', ev.target.value)}
-            >
-            <mwc-button @click=${() => this._removeStateColor(index)}>
-              Remove
-            </mwc-button>
+            ${this._renderColorInput(color, `State ${index + 1} color`, `state-color-error-${index}`, (value) => this._stateColorChanged(index, 'color', value))}
+            <ha-button appearance="plain" variant="danger" @click=${() => this._removeStateColor(index)}>
+              Remove<span class="visually-hidden"> state ${stateName || index + 1}</span>
+            </ha-button>
           </div>
         `)}
 
-        <mwc-button @click=${this._addStateColor}>
+        <ha-button appearance="plain" data-focus-key="add-state-color" @click=${this._addStateColor}>
           Add State Color
-        </mwc-button>
+        </ha-button>
       </div>
     `;
     }
@@ -1955,27 +1930,23 @@ class WaterfallHistoryCardEditor extends i {
           <div class="threshold-item">
             <input
               type="text"
+              class="row-input"
               placeholder="State name (e.g. cool)"
+              aria-label="State ${stateIndex + 1} name"
               .value=${stateName}
-              style="flex:1;padding:4px 8px;font-size:14px;border:1px solid var(--divider-color,#e0e0e0);border-radius:4px;background:var(--card-background-color,#fff);color:var(--primary-text-color);"
               @change=${(ev) => this._entityStateColorChanged(entityIndex, stateIndex, 'state', ev.target.value)}
             >
-            <input
-              type="text"
-              placeholder="e.g., #FF0000"
-              .value=${color}
-              style="flex:1;padding:4px 8px;font-size:14px;border:1px solid var(--divider-color,#e0e0e0);border-radius:4px;background:var(--card-background-color,#fff);color:var(--primary-text-color);"
-              @input=${(ev) => this._entityStateColorChanged(entityIndex, stateIndex, 'color', ev.target.value)}
-            >
-            <mwc-button @click=${() => this._removeEntityStateColor(entityIndex, stateIndex)}>
-              Remove
-            </mwc-button>
+            ${this._renderColorInput(color, `State ${stateIndex + 1} color`, `entity-${entityIndex}-state-color-error-${stateIndex}`, (value) => this._entityStateColorChanged(entityIndex, stateIndex, 'color', value))}
+            <ha-button appearance="plain" variant="danger" @click=${() => this._removeEntityStateColor(entityIndex, stateIndex)}>
+              Remove<span class="visually-hidden"> state ${stateName || stateIndex + 1}</span>
+            </ha-button>
           </div>
         `)}
 
-        <mwc-button @click=${() => this._addEntityStateColor(entityIndex)}>
+        <ha-button appearance="plain" data-focus-key="add-entity-state-color-${entityIndex}"
+          @click=${() => this._addEntityStateColor(entityIndex)}>
           Add State Color
-        </mwc-button>
+        </ha-button>
       </div>
     `;
     }
@@ -1996,26 +1967,22 @@ class WaterfallHistoryCardEditor extends i {
           <div class="threshold-item">
             <input
               type="number"
+              class="row-input"
+              aria-label="Threshold ${thresholdIndex + 1} value"
               .value=${String(threshold.value)}
-              style="flex:1;padding:4px 8px;font-size:14px;border:1px solid var(--divider-color,#e0e0e0);border-radius:4px;background:var(--card-background-color,#fff);color:var(--primary-text-color);"
               @change=${(ev) => this._entityThresholdChanged(entityIndex, thresholdIndex, 'value', ev.target.value)}
             >
-            <input
-              type="text"
-              placeholder="e.g., #FF0000"
-              .value=${threshold.color}
-              style="flex:1;padding:4px 8px;font-size:14px;border:1px solid var(--divider-color,#e0e0e0);border-radius:4px;background:var(--card-background-color,#fff);color:var(--primary-text-color);"
-              @input=${(ev) => this._entityThresholdChanged(entityIndex, thresholdIndex, 'color', ev.target.value)}
-            >
-            <mwc-button @click=${() => this._removeEntityThreshold(entityIndex, thresholdIndex)}>
-              Remove
-            </mwc-button>
+            ${this._renderColorInput(threshold.color, `Threshold ${thresholdIndex + 1} color`, `entity-${entityIndex}-threshold-color-error-${thresholdIndex}`, (value) => this._entityThresholdChanged(entityIndex, thresholdIndex, 'color', value))}
+            <ha-button appearance="plain" variant="danger" @click=${() => this._removeEntityThreshold(entityIndex, thresholdIndex)}>
+              Remove<span class="visually-hidden"> threshold ${thresholdIndex + 1}</span>
+            </ha-button>
           </div>
         `)}
 
-        <mwc-button @click=${() => this._addEntityThreshold(entityIndex)}>
+        <ha-button appearance="plain" data-focus-key="add-entity-threshold-${entityIndex}"
+          @click=${() => this._addEntityThreshold(entityIndex)}>
           Add Entity Threshold
-        </mwc-button>
+        </ha-button>
       </div>
     `;
     }
@@ -2075,7 +2042,7 @@ class WaterfallHistoryCardEditor extends i {
         border-bottom: none;
       }
 
-      .toggle-row label {
+      .toggle-row span {
         font-size: 14px;
         color: var(--primary-text-color);
       }
@@ -2086,6 +2053,42 @@ class WaterfallHistoryCardEditor extends i {
         gap: 8px;
         margin-bottom: 8px;
         align-items: start;
+      }
+
+      /* Border uses secondary text color to meet WCAG 1.4.11 (3:1 against the background) */
+      .row-input {
+        width: 100%;
+        box-sizing: border-box;
+        min-width: 0;
+        padding: 4px 8px;
+        font-size: 14px;
+        border: 1px solid var(--secondary-text-color, #727272);
+        border-radius: 4px;
+        background: var(--card-background-color, #fff);
+        color: var(--primary-text-color);
+      }
+
+      .row-input[aria-invalid='true'] {
+        border: 2px solid var(--error-color, #db4437);
+      }
+
+      /* Primary text color: --error-color is under 4.5:1 for small text on white */
+      .error-text {
+        font-size: 12px;
+        color: var(--primary-text-color);
+        margin: 4px 0 0 0;
+      }
+
+      .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
       }
 
       .entity-config {
@@ -2115,12 +2118,8 @@ class WaterfallHistoryCardEditor extends i {
         margin: 8px 0;
       }
 
-      mwc-button {
+      ha-button {
         margin-top: 8px;
-      }
-
-      mwc-button[raised] {
-        --mdc-theme-primary: var(--primary-color);
       }
     `;
     }

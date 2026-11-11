@@ -1,5 +1,17 @@
 # Changelog
 
+## [2026.11.10] - 2026-11-10
+
+### Fixed
+- Visual editor accessibility (WCAG 2.x AA):
+  - Threshold and state-color inputs now have accessible names (previously only a placeholder or nothing).
+  - Display toggles now announce their label to screen readers.
+  - Input borders now meet 3:1 non-text contrast.
+  - Replaced deprecated `mwc-button` with `ha-button`.
+  - Each Remove button now has a distinct accessible name (e.g. "Remove threshold 2").
+  - Focus moves to the list's Add button after a row is removed, instead of being lost.
+  - Invalid colors in threshold and state-color rows now show an inline error.
+
 ## [2026.10.15] - 2026-10-15
 
 Stable release of the 2026.10.14b1 pre-release.
