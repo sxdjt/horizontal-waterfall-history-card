@@ -1,5 +1,5 @@
-/* Waterfall History Card v2026.11.10 */
-const CARD_VERSION = "2026.11.10";
+/* Waterfall History Card v2026.11.10.1b1 */
+const CARD_VERSION = "2026.11.10.1b1";
 
 /******************************************************************************
 Copyright (c) Microsoft Corporation.
@@ -1434,7 +1434,8 @@ class WaterfallHistoryCardEditor extends i {
         >
         ${invalid ? b `
           <p id=${errorId} class="error-text">
-            Not a valid color. Use a hex code (#FF0000) or a color name (red).
+            <ha-icon icon="mdi:alert-circle" aria-hidden="true"></ha-icon>
+            <span><strong>Error:</strong> ${label} is not a valid color. Use a hex code (#FF0000), a color name (red), or var(--token).</span>
           </p>
         ` : ''}
       </div>
@@ -2072,11 +2073,23 @@ class WaterfallHistoryCardEditor extends i {
         border: 2px solid var(--error-color, #db4437);
       }
 
-      /* Primary text color: --error-color is under 4.5:1 for small text on white */
+      /* Text stays primary color for 4.5:1; red is used only on non-text parts
+         (bar, icon, input border), which need 3:1 */
       .error-text {
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
         font-size: 12px;
         color: var(--primary-text-color);
-        margin: 4px 0 0 0;
+        margin: 6px 0 0 0;
+        padding: 4px 8px;
+        border-left: 3px solid var(--error-color, #db4437);
+      }
+
+      .error-text ha-icon {
+        flex: 0 0 auto;
+        color: var(--error-color, #db4437);
+        --mdc-icon-size: 16px;
       }
 
       .visually-hidden {

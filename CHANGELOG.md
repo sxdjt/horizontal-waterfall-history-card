@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+- Visual editor: the invalid-color message in threshold and state-color rows is now marked as an error (red bar, alert icon, bold "Error:" prefix) and names the field. The message also lists `var(--token)` as an accepted format.
+
 ## [2026.11.10] - 2026-11-10
 
 ### Fixed
