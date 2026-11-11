@@ -1,6 +1,9 @@
 # Changelog
 
-## [Unreleased]
+## [2026.11.10.1] - 2026-11-10
+
+### Fixed
+- Visual editor: optional fields no longer show a required asterisk (*). Only each entity's Entity picker is marked required (WCAG 3.3.2).
 
 ### Changed
 - Visual editor: the invalid-color message in threshold and state-color rows is now marked as an error (red bar, alert icon, bold "Error:" prefix) and names the field. The message also lists `var(--token)` as an accepted format.

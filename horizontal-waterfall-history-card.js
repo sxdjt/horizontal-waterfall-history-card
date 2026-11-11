@@ -1,5 +1,5 @@
-/* Waterfall History Card v2026.11.10.1b1 */
-const CARD_VERSION = "2026.11.10.1b1";
+/* Waterfall History Card v2026.11.10.1 */
+const CARD_VERSION = "2026.11.10.1";
 
 /******************************************************************************
 Copyright (c) Microsoft Corporation.
@@ -1463,6 +1463,7 @@ class WaterfallHistoryCardEditor extends i {
 
         <ha-selector
           .hass=${this.hass}
+          .required=${false}
           .label=${'Card Title'}
           .value=${this._config.title || DEFAULTS.title}
           .selector=${{ text: {} }}
@@ -1471,6 +1472,7 @@ class WaterfallHistoryCardEditor extends i {
 
         <ha-selector
           .hass=${this.hass}
+          .required=${false}
           .label=${'Time Window (hours)'}
           .value=${this._config.hours || DEFAULTS.hours}
           .selector=${{ number: { min: 1, max: 168, mode: 'box', step: 1 } }}
@@ -1479,6 +1481,7 @@ class WaterfallHistoryCardEditor extends i {
 
         <ha-selector
           .hass=${this.hass}
+          .required=${false}
           .label=${'Intervals'}
           .value=${this._config.intervals || DEFAULTS.intervals}
           .selector=${{ number: { min: 24, max: 96, mode: 'box', step: 1 } }}
@@ -1487,6 +1490,7 @@ class WaterfallHistoryCardEditor extends i {
 
         <ha-selector
           .hass=${this.hass}
+          .required=${false}
           .label=${'Bar Height (pixels)'}
           .value=${this._config.height || DEFAULTS.height}
           .selector=${{ number: { min: 30, max: 200, mode: 'box', step: 1 } }}
@@ -1495,6 +1499,7 @@ class WaterfallHistoryCardEditor extends i {
 
         <ha-selector
           .hass=${this.hass}
+          .required=${false}
           .label=${'Decimal Places'}
           .value=${this._config.digits ?? DEFAULTS.digits}
           .selector=${{ number: { min: 0, max: 5, mode: 'box', step: 1 } }}
@@ -1503,6 +1508,7 @@ class WaterfallHistoryCardEditor extends i {
 
         <ha-selector
           .hass=${this.hass}
+          .required=${false}
           .selector=${{
             select: {
                 options: [
@@ -1531,6 +1537,7 @@ class WaterfallHistoryCardEditor extends i {
 
         <ha-selector
           .hass=${this.hass}
+          .required=${false}
           .label=${'Label Count'}
           .value=${this._config.label_count ?? DEFAULTS.label_count}
           .selector=${{ number: { min: 1, max: 168, mode: 'box', step: 1 } }}
@@ -1539,6 +1546,7 @@ class WaterfallHistoryCardEditor extends i {
 
         <ha-selector
           .hass=${this.hass}
+          .required=${false}
           .label=${'Label Format'}
           .selector=${{
             select: {
@@ -1565,6 +1573,7 @@ class WaterfallHistoryCardEditor extends i {
 
         <ha-selector
           .hass=${this.hass}
+          .required=${false}
           .label=${'Cell Gap (pixels)'}
           .value=${this._config.cell_gap ?? DEFAULTS.cell_gap}
           .selector=${{ number: { min: 0, max: 10, mode: 'box', step: 1 } }}
@@ -1584,6 +1593,7 @@ class WaterfallHistoryCardEditor extends i {
 
           <ha-selector
             .hass=${this.hass}
+            .required=${false}
             .label=${'On State Color'}
             .value=${this._config.color_on || DEFAULTS.color_on}
             .selector=${{ text: {} }}
@@ -1592,6 +1602,7 @@ class WaterfallHistoryCardEditor extends i {
 
           <ha-selector
             .hass=${this.hass}
+            .required=${false}
             .label=${'Off State Color'}
             .value=${this._config.color_off || DEFAULTS.color_off}
             .selector=${{ text: {} }}
@@ -1600,6 +1611,7 @@ class WaterfallHistoryCardEditor extends i {
 
           <ha-selector
             .hass=${this.hass}
+            .required=${false}
             .label=${'On State Label'}
             .value=${this._config.state_on || DEFAULTS.state_on}
             .selector=${{ text: {} }}
@@ -1608,6 +1620,7 @@ class WaterfallHistoryCardEditor extends i {
 
           <ha-selector
             .hass=${this.hass}
+            .required=${false}
             .label=${'Off State Label'}
             .value=${this._config.state_off || DEFAULTS.state_off}
             .selector=${{ text: {} }}
@@ -1618,6 +1631,7 @@ class WaterfallHistoryCardEditor extends i {
 
           <ha-selector
             .hass=${this.hass}
+            .required=${false}
             .label=${'Unknown State Color'}
             .value=${this._config.color_unknown || DEFAULTS.color_unknown}
             .selector=${{ text: {} }}
@@ -1626,6 +1640,7 @@ class WaterfallHistoryCardEditor extends i {
 
           <ha-selector
             .hass=${this.hass}
+            .required=${false}
             .label=${'Unknown State Label'}
             .value=${this._config.state_unknown || DEFAULTS.state_unknown}
             .selector=${{ text: {} }}
@@ -1634,6 +1649,7 @@ class WaterfallHistoryCardEditor extends i {
 
           <ha-selector
             .hass=${this.hass}
+            .required=${false}
             .label=${'Unavailable State Color'}
             .value=${this._config.color_unavailable || DEFAULTS.color_unavailable}
             .selector=${{ text: {} }}
@@ -1642,6 +1658,7 @@ class WaterfallHistoryCardEditor extends i {
 
           <ha-selector
             .hass=${this.hass}
+            .required=${false}
             .label=${'Unavailable State Label'}
             .value=${this._config.state_unavailable || DEFAULTS.state_unavailable}
             .selector=${{ text: {} }}
@@ -1730,6 +1747,7 @@ class WaterfallHistoryCardEditor extends i {
 
           <ha-selector
             .hass=${this.hass}
+            .required=${true}
             .selector=${{ entity: {} }}
             .value=${entityId}
             @value-changed=${(ev) => this._entityChanged(index, 'entity', ev.detail.value)}
@@ -1738,6 +1756,7 @@ class WaterfallHistoryCardEditor extends i {
 
           <ha-selector
             .hass=${this.hass}
+            .required=${false}
             .label=${'Custom Name (optional)'}
             .value=${entityConfig.name || ''}
             .selector=${{ text: {} }}
@@ -1761,6 +1780,7 @@ class WaterfallHistoryCardEditor extends i {
 
           <ha-selector
             .hass=${this.hass}
+            .required=${false}
             .label=${'Hours (override)'}
             .value=${entityConfig.hours || ''}
             .selector=${{ number: { min: 1, max: 168, mode: 'box', step: 1 } }}
@@ -1769,6 +1789,7 @@ class WaterfallHistoryCardEditor extends i {
 
           <ha-selector
             .hass=${this.hass}
+            .required=${false}
             .label=${'Intervals (override)'}
             .value=${entityConfig.intervals || ''}
             .selector=${{ number: { min: 24, max: 96, mode: 'box', step: 1 } }}
@@ -1783,6 +1804,7 @@ class WaterfallHistoryCardEditor extends i {
 
           <ha-selector
             .hass=${this.hass}
+            .required=${false}
             .label=${'Label Count (override)'}
             .value=${entityConfig.label_count || ''}
             .selector=${{ number: { min: 1, max: 168, mode: 'box', step: 1 } }}
@@ -1791,6 +1813,7 @@ class WaterfallHistoryCardEditor extends i {
 
           <ha-selector
             .hass=${this.hass}
+            .required=${false}
             .label=${'Label Format (override)'}
             .selector=${{
             select: {
@@ -1813,6 +1836,7 @@ class WaterfallHistoryCardEditor extends i {
 
           <ha-selector
             .hass=${this.hass}
+            .required=${false}
             .label=${'Custom Icon'}
             .value=${entityConfig.icon || ''}
             .selector=${{ text: {} }}
@@ -1821,6 +1845,7 @@ class WaterfallHistoryCardEditor extends i {
 
           <ha-selector
             .hass=${this.hass}
+            .required=${false}
             .label=${'Custom Unit'}
             .value=${entityConfig.unit || ''}
             .selector=${{ text: {} }}
@@ -1829,6 +1854,7 @@ class WaterfallHistoryCardEditor extends i {
 
           <ha-selector
             .hass=${this.hass}
+            .required=${false}
             .label=${'Decimal Places (override)'}
             .value=${entityConfig.digits ?? ''}
             .selector=${{ number: { min: 0, max: 5, mode: 'box', step: 1 } }}
@@ -1837,6 +1863,7 @@ class WaterfallHistoryCardEditor extends i {
 
           <ha-selector
             .hass=${this.hass}
+            .required=${false}
             .selector=${{
             select: {
                 options: [
@@ -1855,6 +1882,7 @@ class WaterfallHistoryCardEditor extends i {
 
           <ha-selector
             .hass=${this.hass}
+            .required=${false}
             .label=${'On State Color (override)'}
             .value=${entityConfig.color_on || ''}
             .selector=${{ text: {} }}
@@ -1863,6 +1891,7 @@ class WaterfallHistoryCardEditor extends i {
 
           <ha-selector
             .hass=${this.hass}
+            .required=${false}
             .label=${'Off State Color (override)'}
             .value=${entityConfig.color_off || ''}
             .selector=${{ text: {} }}
