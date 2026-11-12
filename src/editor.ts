@@ -230,8 +230,10 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
     fireEvent(this, 'config-changed', { config: newConfig });
   }
 
-  // Switch row with a visible label; aria-label gives the switch its accessible name,
-  // since a <label> outside ha-switch's shadow root cannot be associated with it
+  // Switch row with a visible label. A <label> outside ha-switch's shadow root cannot be
+  // associated with it. In current HA (Web Awesome) only slotted text names the switch's
+  // inner input, so the label is slotted visually hidden; the host aria-label covers older
+  // MWC-based releases.
   private _renderToggle(label: string, checked: boolean, onChange: (checked: boolean) => void) {
     return html`
       <div class="toggle-row">
@@ -240,7 +242,7 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
           aria-label=${label}
           .checked=${checked}
           @change=${(ev: Event) => onChange((ev.target as HTMLInputElement).checked)}
-        ></ha-switch>
+        ><span class="visually-hidden">${label}</span></ha-switch>
       </div>
     `;
   }

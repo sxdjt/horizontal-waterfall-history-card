@@ -1,5 +1,5 @@
-/* Waterfall History Card v2026.11.11 */
-const CARD_VERSION = "2026.11.11";
+/* Waterfall History Card v2026.11.12 */
+const CARD_VERSION = "2026.11.12";
 
 /******************************************************************************
 Copyright (c) Microsoft Corporation.
@@ -1434,8 +1434,10 @@ class WaterfallHistoryCardEditor extends i {
         newConfig.entities[entityIndex] = entityConfig;
         fireEvent(this, 'config-changed', { config: newConfig });
     }
-    // Switch row with a visible label; aria-label gives the switch its accessible name,
-    // since a <label> outside ha-switch's shadow root cannot be associated with it
+    // Switch row with a visible label. A <label> outside ha-switch's shadow root cannot be
+    // associated with it. In current HA (Web Awesome) only slotted text names the switch's
+    // inner input, so the label is slotted visually hidden; the host aria-label covers older
+    // MWC-based releases.
     _renderToggle(label, checked, onChange) {
         return b `
       <div class="toggle-row">
@@ -1444,7 +1446,7 @@ class WaterfallHistoryCardEditor extends i {
           aria-label=${label}
           .checked=${checked}
           @change=${(ev) => onChange(ev.target.checked)}
-        ></ha-switch>
+        ><span class="visually-hidden">${label}</span></ha-switch>
       </div>
     `;
     }
