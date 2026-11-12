@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased]
+
+## [2026.11.11] - 2026-11-11
+
+### Fixed
+- Visual editor: binary and unknown/unavailable state color fields now show an error for invalid colors.
+- Keyboard: each entity name is a button, so more-info opens with Enter or Space.
+- "Entity not found" message on the card now meets 4.5:1 text contrast. The text uses the theme's primary text color, with a red bar, alert icon and "Error:" prefix (previously red text, about 4.3:1 on white).
+
 ## [2026.11.10.1] - 2026-11-10
 
 ### Fixed

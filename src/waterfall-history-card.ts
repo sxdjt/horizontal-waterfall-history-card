@@ -101,6 +101,19 @@ export class WaterfallHistoryCard extends LitElement {
       color: var(--waterfall-entity-name-color, var(--primary-text-color));
     }
 
+    /* The name is a native button so keyboard users can open more-info (the whole
+       row stays clickable for the mouse; the button's click bubbles to the row) */
+    button.entity-name {
+      background: none;
+      border: 0;
+      padding: 0;
+      margin: 0;
+      font-family: inherit;
+      line-height: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+
     .current-value {
       margin-left: auto;
       font-size: var(--waterfall-value-font-size, var(--waterfall-entity-name-font-size, var(--entity-name-font-size, 11px)));
@@ -150,8 +163,21 @@ export class WaterfallHistoryCard extends LitElement {
       text-align: center;
     }
 
+    /* Text stays primary color for 4.5:1 (--error-color is 4.3:1 on white);
+       red only on the bar and icon, which need 3:1 */
     .error {
-      color: var(--error-color, red);
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      color: var(--primary-text-color);
+      padding: 4px 8px;
+      border-left: 3px solid var(--error-color, #db4437);
+    }
+
+    .error ha-icon {
+      flex: 0 0 auto;
+      color: var(--error-color, #db4437);
+      --mdc-icon-size: 16px;
     }
 
     /* Compact mode overrides */
@@ -947,7 +973,12 @@ export class WaterfallHistoryCard extends LitElement {
     const entity = this.hass.states[entityId];
 
     if (!entity) {
-      return html`<div class="error">Entity not found: ${entityId}</div>`;
+      return html`
+        <div class="error">
+          <ha-icon icon="mdi:alert-circle" aria-hidden="true"></ha-icon>
+          <span><strong>Error:</strong> Entity not found: ${entityId}</span>
+        </div>
+      `;
     }
 
     const name = entityObj.name || entity.attributes.friendly_name || entityId;
@@ -1030,7 +1061,7 @@ export class WaterfallHistoryCard extends LitElement {
         <div class="entity-inline-container" @click=${(e: Event) => this._handleEntityClick(entityId, e)}>
           <div class="entity-inline-name">
             ${showIcons ? html`<ha-icon class="entity-icon" .icon=${icon}></ha-icon>` : ''}
-            <span class="entity-name">${name}</span>
+            <button type="button" class="entity-name" aria-haspopup="dialog">${name}</button>
           </div>
           <div class="entity-inline-graph">
             <div class="waterfall-container">
@@ -1057,7 +1088,7 @@ export class WaterfallHistoryCard extends LitElement {
       <div class="entity-container" @click=${(e: Event) => this._handleEntityClick(entityId, e)}>
         <div class="entity-header">
           ${showIcons ? html`<ha-icon class="entity-icon" .icon=${icon}></ha-icon>` : ''}
-          <span class="entity-name">${name}</span>
+          <button type="button" class="entity-name" aria-haspopup="dialog">${name}</button>
           ${showCurrent ? html`<span class="current-value">${this.displayState(current, entityObj)}</span>` : ''}
         </div>
         <div class="waterfall-container">

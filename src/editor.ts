@@ -270,6 +270,27 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
     `;
   }
 
+  // ha-selector color field with an inline error for invalid colors. ha-selector keeps its input
+  // in a shadow root, so aria-describedby cannot reach it; the error is a live region instead.
+  // It is always rendered, and Lit only rewrites its content when validity flips, so it is
+  // announced once per change rather than on every keystroke.
+  private _renderColorField(label: string, value: string, onChange: (value: string) => void) {
+    const invalid = !!value && !this._isValidColor(value);
+    return html`
+      <div class="color-field">
+        <ha-selector
+          .hass=${this.hass}
+          .required=${false}
+          .label=${label}
+          .value=${value}
+          .selector=${{text: {}}}
+          @value-changed=${(ev: CustomEvent) => onChange(ev.detail.value)}
+        ></ha-selector>
+        <div class="error-text" aria-live="polite">${invalid ? html`<ha-icon icon="mdi:alert-circle" aria-hidden="true"></ha-icon><span><strong>Error:</strong> ${label} is not a valid color. Use a hex code (#FF0000), a color name (red), or var(--token).</span>` : nothing}</div>
+      </div>
+    `;
+  }
+
   protected render() {
     if (!this._config || !this.hass) {
       return html``;
@@ -440,25 +461,11 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
             Configure colors and labels for binary sensors (on/off states).
           </p>
 
-          <ha-selector
-            .hass=${this.hass}
-            .required=${false}
-            .label=${'On State Color'}
-            .value=${this._config.color_on || DEFAULTS.color_on}
-            .selector=${{text: {}}}
-            @value-changed=${(ev: CustomEvent) =>
-              this._configValueChanged('color_on', ev.detail.value)}
-          ></ha-selector>
+          ${this._renderColorField('On State Color', this._config.color_on || DEFAULTS.color_on, (value) =>
+            this._configValueChanged('color_on', value))}
 
-          <ha-selector
-            .hass=${this.hass}
-            .required=${false}
-            .label=${'Off State Color'}
-            .value=${this._config.color_off || DEFAULTS.color_off}
-            .selector=${{text: {}}}
-            @value-changed=${(ev: CustomEvent) =>
-              this._configValueChanged('color_off', ev.detail.value)}
-          ></ha-selector>
+          ${this._renderColorField('Off State Color', this._config.color_off || DEFAULTS.color_off, (value) =>
+            this._configValueChanged('color_off', value))}
 
           <ha-selector
             .hass=${this.hass}
@@ -482,15 +489,8 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
 
           <h4>Unknown & Unavailable States</h4>
 
-          <ha-selector
-            .hass=${this.hass}
-            .required=${false}
-            .label=${'Unknown State Color'}
-            .value=${this._config.color_unknown || DEFAULTS.color_unknown}
-            .selector=${{text: {}}}
-            @value-changed=${(ev: CustomEvent) =>
-              this._configValueChanged('color_unknown', ev.detail.value)}
-          ></ha-selector>
+          ${this._renderColorField('Unknown State Color', this._config.color_unknown || DEFAULTS.color_unknown, (value) =>
+            this._configValueChanged('color_unknown', value))}
 
           <ha-selector
             .hass=${this.hass}
@@ -502,15 +502,8 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
               this._configValueChanged('state_unknown', ev.detail.value)}
           ></ha-selector>
 
-          <ha-selector
-            .hass=${this.hass}
-            .required=${false}
-            .label=${'Unavailable State Color'}
-            .value=${this._config.color_unavailable || DEFAULTS.color_unavailable}
-            .selector=${{text: {}}}
-            @value-changed=${(ev: CustomEvent) =>
-              this._configValueChanged('color_unavailable', ev.detail.value)}
-          ></ha-selector>
+          ${this._renderColorField('Unavailable State Color', this._config.color_unavailable || DEFAULTS.color_unavailable, (value) =>
+            this._configValueChanged('color_unavailable', value))}
 
           <ha-selector
             .hass=${this.hass}
@@ -761,25 +754,11 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
 
           <h4>Binary State Overrides</h4>
 
-          <ha-selector
-            .hass=${this.hass}
-            .required=${false}
-            .label=${'On State Color (override)'}
-            .value=${entityConfig.color_on || ''}
-            .selector=${{text: {}}}
-            @value-changed=${(ev: CustomEvent) =>
-              this._entityChanged(index, 'color_on', ev.detail.value)}
-          ></ha-selector>
+          ${this._renderColorField('On State Color (override)', entityConfig.color_on || '', (value) =>
+            this._entityChanged(index, 'color_on', value))}
 
-          <ha-selector
-            .hass=${this.hass}
-            .required=${false}
-            .label=${'Off State Color (override)'}
-            .value=${entityConfig.color_off || ''}
-            .selector=${{text: {}}}
-            @value-changed=${(ev: CustomEvent) =>
-              this._entityChanged(index, 'color_off', ev.detail.value)}
-          ></ha-selector>
+          ${this._renderColorField('Off State Color (override)', entityConfig.color_off || '', (value) =>
+            this._entityChanged(index, 'color_off', value))}
 
           ${this._renderEntityStateColors(entityConfig, index)}
           ${this._renderEntityThresholds(entityConfig, index)}
@@ -1012,6 +991,18 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
         margin: 6px 0 0 0;
         padding: 4px 8px;
         border-left: 3px solid var(--error-color, #db4437);
+      }
+
+      .error-text:empty {
+        display: none;
+      }
+
+      .color-field {
+        margin-bottom: 12px;
+      }
+
+      .color-field ha-selector {
+        margin-bottom: 0;
       }
 
       .error-text ha-icon {
