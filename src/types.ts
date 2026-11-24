@@ -69,6 +69,12 @@ export interface EntityConfig {
   // Multi-state configuration: maps HA state strings to colors (e.g. HVAC modes)
   state_colors?: Record<string, string>;
 
+  // Track an attribute instead of the entity state (e.g. 'hvac_action' on a
+  // climate entity). The attribute's string value is matched against
+  // state_colors exactly like a state. Unknown/unavailable still follow the
+  // entity's own state.
+  attribute?: string;
+
   // Unknown and unavailable states
   color_unknown?: string;
   color_unavailable?: string;
@@ -115,6 +121,7 @@ export interface WaterfallHistoryCardConfig extends LovelaceCardConfig {
   state_on?: string;
   state_off?: string;
   state_colors?: Record<string, string>;
+  attribute?: string;  // Global default: track this attribute instead of the state
   color_unknown?: string;
   color_unavailable?: string;
   state_unknown?: string;
@@ -139,5 +146,10 @@ export interface ProcessedHistoryData {
     }>;
     minValue: number;
     maxValue: number;
+    // True when non-null integer values in `data` are indices into the
+    // entity's state_colors map (state mode, or a string-valued tracked
+    // attribute). False when they are readings (numeric/boolean attribute) -
+    // e.g. a 0/1 reading must not be colored as the map's first/second entry.
+    stateIndex?: boolean;
   };
 }

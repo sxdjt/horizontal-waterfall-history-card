@@ -12,6 +12,7 @@
 - **Binary sensor customization** - customize on/off colors and state labels for binary sensors, switches, and other binary entities.
 - **Binary state labels** - display "On"/"Off", "Open"/"Closed", "Unlocked"/"Locked" instead of numeric values.
 - **Multi-state sensor support** - map any set of HA state strings to distinct colors (e.g. HVAC modes: cool, heat, fan_only, idle, off).
+- **Attribute tracking** - chart an entity attribute instead of the state (e.g. `hvac_action: heating|idle` on climate entities).
 - **Unknown/unavailable state handling** - entities in unknown or unavailable states display with customizable colors and labels instead of errors.
 - **Entity icons** - show icons next to entity names; toggle globally or per-entity.
 - **Compact mode** - shrink fonts and spacing for tighter dashboards.
@@ -87,6 +88,7 @@ entities:
 | `state_on`       | `string`  | `"On"`      | Matches the HA state string for "on" and sets the display label (global default). E.g. `"home"` for a person entity.  |
 | `state_off`      | `string`  | `"Off"`     | Matches the HA state string for "off" and sets the display label (global default). E.g. `"not_home"` for a person entity. |
 | `state_colors`   | `object`  | -           | Map HA state strings to colors for multi-state entities (e.g. HVAC modes). Keys are state names, values are hex colors. Applies to every entity unless the entity sets its own `state_colors`. List order ranks the states lowest to highest for `interval_value: min`/`max`. Overrides binary on/off logic when present. |
+| `attribute`      | `string`  | -           | Track an entity attribute instead of the state (global default), e.g. `hvac_action`. Pair with `state_colors` to color the attribute's values. See [Tracking an Attribute](#tracking-an-attribute). |
 | `color_unknown`  | `string`  | `#FF9800`   | Color for entities in "unknown" state (orange).                             |
 | `color_unavailable` | `string` | `#9E9E9E` | Color for entities in "unavailable" state (gray).                           |
 | `state_unknown`  | `string`  | `"Unknown"` | Label to display for entities in "unknown" state.                           |
@@ -128,6 +130,7 @@ Each item in `entities:` can be either a bare entity ID string, or an object wit
 | `show_min_max`   | `boolean` | Inherits from card  | Show/hide min/max just for this entity.                             |
 | `start_offset`   | `number`  | Inherits from card  | Hours to offset the time window for this entity.                    |
 | `state_colors`   | `object`  | Inherits from card  | Map HA state strings to colors for this entity. Overrides global `state_colors`. |
+| `attribute`      | `string`  | Inherits from card  | Track this attribute instead of the state for this entity (e.g. `hvac_action`). |
 | `state_off`      | `string`  | Inherits from card  | Matches the HA state string for "off" and sets the display label for this entity. |
 | `state_on`       | `string`  | Inherits from card  | Matches the HA state string for "on" and sets the display label for this entity.  |
 | `state_unavailable` | `string` | Inherits from card | Label to display when this entity is "unavailable".      |
@@ -375,6 +378,31 @@ entities:
 ```
 
 Because the states are listed worst to best, `interval_value: max` shows the best state reached in each cell. Each cell is a rolling window ending at the current time, not a calendar day.
+
+### Tracking an Attribute
+
+By default the card charts the entity's state. Set `attribute` to chart one of the entity's attributes instead - for example, a climate entity's state is the HVAC mode (`heat`, `cool`, `off`), while `hvac_action` tells you what it is actually doing right now (`heating`, `idle`, `cooling`).
+
+```yaml
+type: custom:waterfall-history-card
+title: Bathroom Heating
+entities:
+  - entity: climate.koupelna
+    attribute: hvac_action
+    state_colors:
+      heating: '#EF5350'
+      idle: '#2d3245'
+```
+
+The attribute's string value is matched against `state_colors` (case-insensitive) exactly like a state, so all the multi-state behavior above applies. Notes:
+
+- `attribute` can be set per-entity (shown above) or once at the card level for all entities.
+- The attribute may change more often than the state, so the card fetches full history (with attributes) in this mode - the chart resolution reflects every attribute change.
+- Attribute values that are not in `state_colors` render as empty cells (no data), rather than falling back to binary on/off colors. A numeric attribute (e.g. `current_temperature`) still works like a sensor value and can use `thresholds`; its readings are never colored with `state_colors` even when a map is configured elsewhere on the card.
+- A boolean attribute (e.g. a template sensor's `some_flag: true`) maps to binary on/off, never to `state_colors` entries.
+- Numeric attribute values show no unit next to the value, because Home Assistant does not publish a unit per attribute (the entity's `unit_of_measurement` describes its state, not the attribute). Set `unit` explicitly to display one.
+- If the entity itself becomes `unknown`/`unavailable`, that still wins - it is shown in the unknown/unavailable color even in attribute mode.
+- History is fetched per (entity, attribute, time offset) combination, so the same entity can be charted twice - once by state and once by attribute - in the same card.
 
 ---
 
