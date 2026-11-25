@@ -201,6 +201,7 @@ class WaterfallHistoryCard extends i {
             height: config.height || DEFAULTS.height,
             thresholds: config.thresholds ?? undefined,
             gradient: config.gradient || DEFAULTS.gradient,
+            show_title: config.show_title !== false,
             show_current: config.show_current !== false,
             show_labels: config.show_labels !== false,
             label_count: typeof config.label_count === 'number' ? config.label_count : DEFAULTS.label_count,
@@ -1004,7 +1005,7 @@ class WaterfallHistoryCard extends i {
             return b ``;
         }
         return b `
-      ${this.config.title ? b `
+      ${this.config.show_title !== false && this.config.title ? b `
         <div class="card-header">
           <span>${this.config.title}</span>
         </div>
@@ -1887,6 +1888,8 @@ class WaterfallHistoryCardEditor extends i {
         return b `
       <div class="section">
         <h3>Display Options</h3>
+
+        ${this._renderToggle('Show Title', this._config.show_title !== false, (checked) => this._configValueChanged('show_title', checked))}
 
         ${this._renderToggle('Show Icons', this._config.show_icons !== false, (checked) => this._configValueChanged('show_icons', checked))}
 

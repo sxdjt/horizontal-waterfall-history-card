@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Added
+- `show_title` option and a Show Title switch in the visual editor (Display Options) to hide the card header. In the editor, clearing the Card Title field restores the default title, so the switch is how to hide the header there.
 - Automated test suite (`npm test`, Node's built-in runner, no new dependencies) covering every card and editor function against the built bundle. See `tests/README.md`.
 
 ### Removed

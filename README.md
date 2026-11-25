@@ -84,6 +84,7 @@ The card has a visual editor (dashboard -> Edit card). A few options are YAML-on
 | `show_icons`     | `boolean` | `true`      | Show entity icons globally. Can be overridden per entity.                   |
 | `show_labels`    | `boolean` | `true`      | Show time labels under the bar.                                             |
 | `show_min_max`   | `boolean` | `false`     | Show min/max values under the chart.                                        |
+| `show_title`     | `boolean` | `true`      | Show the card header. `false` hides it; so does `title: ''`.                |
 | `start_offset`   | `number`  | `0`         | Hours to offset the time window (e.g., 24 = show 24-48h ago instead of 0-24h). |
 | `state_colors`   | `object`  | -           | Map HA state strings to colors for multi-state entities (e.g. HVAC modes). Keys are state names, values are colors. Applies to every entity unless the entity sets its own `state_colors`. List order ranks the states lowest to highest for `interval_value: min`/`max`. Overrides binary on/off logic when present. |
 | `state_off`      | `string`  | `"Off"`     | Matches the HA state string for "off" and sets the display label (global default). E.g. `"not_home"` for a person entity. |
@@ -91,7 +92,7 @@ The card has a visual editor (dashboard -> Edit card). A few options are YAML-on
 | `state_unavailable` | `string` | `"INOP"`  | Label to display for entities in "unavailable" state.                       |
 | `state_unknown`  | `string`  | `"Unknown"` | Label to display for entities in "unknown" state.                           |
 | `thresholds`     | `array`   | see below   | Color thresholds for numeric sensors.                                       |
-| `title`          | `string`  | `"History"` | Card title shown at the top. Set to `''` to hide the header.                |
+| `title`          | `string`  | `"History"` | Card title shown at the top. Set to `''` (or `show_title: false`) to hide the header. |
 | `unit`           | `string`  | auto        | Override unit of measurement.                                               |
 
 ---

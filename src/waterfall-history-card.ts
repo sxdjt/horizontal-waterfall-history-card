@@ -323,6 +323,7 @@ export class WaterfallHistoryCard extends LitElement {
       height: config.height || DEFAULTS.height,
       thresholds: config.thresholds ?? undefined,
       gradient: config.gradient || DEFAULTS.gradient,
+      show_title: config.show_title !== false,
       show_current: config.show_current !== false,
       show_labels: config.show_labels !== false,
       label_count: typeof config.label_count === 'number' ? config.label_count : DEFAULTS.label_count,
@@ -1180,7 +1181,7 @@ export class WaterfallHistoryCard extends LitElement {
     }
 
     return html`
-      ${this.config.title ? html`
+      ${this.config.show_title !== false && this.config.title ? html`
         <div class="card-header">
           <span>${this.config.title}</span>
         </div>

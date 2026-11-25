@@ -256,7 +256,7 @@ describe('card-level controls are wired to the right keys', () => {
   }
 
   const toggles = [
-    ['Show Icons', 'show_icons'], ['Show Labels', 'show_labels'], ['Show Current Value', 'show_current'],
+    ['Show Title', 'show_title'], ['Show Icons', 'show_icons'], ['Show Labels', 'show_labels'], ['Show Current Value', 'show_current'],
     ['Show Min/Max', 'show_min_max'], ['Compact Mode', 'compact'], ['Inline Layout', 'inline_layout'],
     ['Gradient Mode', 'gradient'],
   ];
@@ -273,6 +273,8 @@ describe('card-level controls are wired to the right keys', () => {
     assert.equal(toggle(t, 'Show Icons').attrs['.checked'], false);
     assert.equal(toggle(t, 'Compact Mode').attrs['.checked'], true);
     assert.equal(toggle(t, 'Show Labels').attrs['.checked'], true);
+    assert.equal(toggle(t, 'Show Title').attrs['.checked'], true);
+    assert.equal(toggle(makeEditor(cfg({ show_title: false })).render(), 'Show Title').attrs['.checked'], false);
     assert.equal(toggle(t, 'Show Min/Max').attrs['.checked'], false);
   });
 

@@ -92,6 +92,7 @@ export interface WaterfallHistoryCardConfig extends LovelaceCardConfig {
 
   // Global defaults (all EntityConfig options can be set globally)
   title?: string;
+  show_title?: boolean;  // Card-level only: false hides the header
   hours?: number;
   intervals?: number;
   start_offset?: number;  // Global default for start_offset

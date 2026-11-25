@@ -50,6 +50,13 @@ describe('render', () => {
     assert.ok(visibleText(shown).startsWith('History'));
   });
 
+  test('show_title: false hides the header even with a title', () => {
+    const t = makeCard({ title: 'Temps', show_title: false, entities: ['sensor.temp'] }, temp).render();
+    assert.equal(findAll(t, 'div', (el) => el.attrs.class === 'card-header').length, 0);
+    assert.ok(!visibleText(t).includes('Temps'));
+    assert.equal(findAll(t, 'div', (el) => el.attrs.class === 'entity-container').length, 1);
+  });
+
   test('a missing entity shows a text error with a decorative icon', () => {
     const card = makeCard({ entities: ['sensor.nope'] }, {});
     const t = card.render();

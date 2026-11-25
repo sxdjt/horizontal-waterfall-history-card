@@ -46,7 +46,7 @@ describe('setConfig defaults', () => {
   const card = makeCard({ entities: ['sensor.a'] });
   const c = card.config;
   const expected = {
-    title: 'History', hours: 24, intervals: 48, start_offset: 0, height: 60,
+    title: 'History', show_title: true, hours: 24, intervals: 48, start_offset: 0, height: 60,
     gradient: false, show_current: true, show_labels: true, label_count: 1,
     label_format: 'relative', show_min_max: false, show_icons: true, compact: false,
     inline_layout: false, digits: 1, state_on: 'On', state_off: 'Off',
@@ -113,6 +113,11 @@ describe('setConfig values', () => {
     assert.equal(c.attribute, 'hvac_action');
     assert.deepEqual(c.state_colors, { a: '#000000' });
     assert.deepEqual(c.thresholds, [{ value: 1, color: '#123456' }]);
+  });
+
+  test('show_title is true unless explicitly false', () => {
+    assert.equal(makeCard({ show_title: false }).config.show_title, false);
+    assert.equal(makeCard({ show_title: null }).config.show_title, true);
   });
 
   test('title: missing or null keeps the default; an explicit empty string is kept', () => {

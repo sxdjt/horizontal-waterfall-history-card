@@ -408,6 +408,9 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
       <div class="section">
         <h3>Display Options</h3>
 
+        ${this._renderToggle('Show Title', this._config.show_title !== false, (checked) =>
+          this._configValueChanged('show_title', checked))}
+
         ${this._renderToggle('Show Icons', this._config.show_icons !== false, (checked) =>
           this._configValueChanged('show_icons', checked))}
 
