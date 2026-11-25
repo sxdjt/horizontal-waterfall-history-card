@@ -375,7 +375,7 @@ export class WaterfallHistoryCard extends LitElement {
     this.style.setProperty('--entity-name-font-size', this.config.compact ? '10px' : '11px');
     this.style.setProperty('--waterfall-height', `${this.config.height}px`);
     this.style.setProperty('--labels-margin-top', this.config.compact ? '2px' : '5px');
-    this.style.setProperty('--waterfall-cell-gap', `${this.config.cell_gap ?? DEFAULTS.cell_gap}px`);
+    this.style.setProperty('--waterfall-cell-gap', `${this.config.cell_gap}px`);
   }
 
   shouldUpdate(changedProps: PropertyValues): boolean {

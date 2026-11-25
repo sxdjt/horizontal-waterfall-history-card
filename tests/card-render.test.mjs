@@ -256,6 +256,14 @@ describe('inline layout', () => {
     assert.match(visibleText(t), /Min: 72\.0°F/);
   });
 
+  test('inline layout honors show_icons, show_labels and show_current off', () => {
+    const t = makeCard({ inline_layout: true, show_icons: false, show_labels: false, show_current: false, entities: ['sensor.temp'] }, temp).render();
+    assert.equal(findAll(t, 'ha-icon').length, 0);
+    assert.equal(labels(t), null);
+    assert.equal(findAll(t, 'div', (el) => el.attrs.class === 'entity-inline-value').length, 0);
+    assert.equal(find(t, 'button').text, 'Living Room');
+  });
+
   test('the stylesheet hides time labels in inline rows', () => {
     const css = makeCard().constructor.styles.cssText;
     assert.match(css, /\.entity-inline-container \.labels\s*\{\s*display: none;/);
@@ -273,6 +281,14 @@ describe('getTimeLabel', () => {
     const card = makeCard({}, temp);
     assert.equal(norm(card.getTimeLabel(0, 48, 48, 0)), 'Tue 12:00 PM - 1:00 PM');
     assert.equal(norm(card.getTimeLabel(0, 4, 4, 24)), 'Wed 8:00 AM - 9:00 AM');
+  });
+
+  test('falls back to hass.language, then the runtime default locale', () => {
+    const lang = makeCard({}, temp, { hass: { locale: undefined, language: 'de' } });
+    assert.equal(norm(lang.getTimeLabel(0, 4, 4, 0)), '8:00 - 9:00');
+    const none = makeCard({}, temp, { hass: { locale: undefined, language: undefined } });
+    const fmt = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' });
+    assert.equal(none.getTimeLabel(0, 4, 4, 0), `${fmt.format(new Date(NOW - 4 * HOUR))} - ${fmt.format(new Date(NOW - 3 * HOUR))}`);
   });
 
   test('uses the HA locale', () => {

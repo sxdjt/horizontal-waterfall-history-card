@@ -21,7 +21,7 @@ Coverage is reported against `src/` through the bundle's source maps:
 npm test && NODE_OPTIONS=--enable-source-maps node --test --experimental-test-coverage tests/
 ```
 
-Every function in `src/waterfall-history-card.ts` and `src/editor.ts` is covered. The line percentages under-report, because comments, declarations and the CSS template literals map as uncovered.
+Every function and every branch in `src/waterfall-history-card.ts` and `src/editor.ts` is covered. The line percentages under-report, because imports, comments, the CSS template literals and the module-level element registration map as uncovered through the source maps (the registration test shows that code runs). Keep both at 100%: a change that adds a function or branch should add the test that covers it.
 
 ## Files
 
@@ -31,6 +31,7 @@ Every function in `src/waterfall-history-card.ts` and `src/editor.ts` is covered
 | `card-parsing.test.mjs` | `parseState`, attribute tracking, cache keys, index vs reading mode, `state_colors` lookup, `isNumericReading`, `getMinMax`, translations |
 | `card-colors.test.mjs` | `getColorForValue` (special states, `state_colors`, thresholds, binary, gradient), binary color precedence, `interpolateColor`, `hexToRgb`, `getUnit`, `displayState` |
 | `card-history.test.mjs` | `processHistoryData` (bucketing, fill, `interval_value`, attribute mode), `updateCard` (API URLs, caching, refresh interval, backfill, errors, pruning), refresh checks, `shouldUpdate`, `updated`, card-mod, column width sync |
+| `card-fallbacks.test.mjs` | Guards for a config that has not been through `setConfig`: string entities and missing defaults in refresh, fetch, cache keys, parsing, display and rendering |
 | `card-render.test.mjs` | Entity header (name, icon, current value), bars and tooltips, time labels, min/max, inline layout, `getTimeLabel`, more-info click |
 | `editor.test.mjs` | Every editor handler, every control's wiring to its config key, and the accessibility checks from `docs/card-compatibility-guide.md` (A1, A2, A3, A6, A7, Part 1) |
 

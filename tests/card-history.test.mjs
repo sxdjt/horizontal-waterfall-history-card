@@ -157,6 +157,11 @@ describe('processHistoryData: attribute mode', () => {
     assert.deepEqual(values(bucket([p])), [5, 5, 5, 5]);
   });
 
+  test('state mode falls back to last_updated when last_changed is missing', () => {
+    const p = { state: '6', last_updated: new Date(at(2.5)).toISOString() };
+    assert.deepEqual(values(bucket([p])), [null, null, 6, 6]);
+  });
+
   test('falls back to last_changed when last_updated is missing', () => {
     const p = { state: 'heat', last_changed: new Date(at(1.5)).toISOString(), attributes: { hvac_action: 'heating' } };
     assert.deepEqual(values(bucket([p], { entity: 'climate.x', attribute: 'hvac_action' })), [null, 7, 7, 7]);

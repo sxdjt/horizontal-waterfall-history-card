@@ -235,6 +235,12 @@ describe('currentValueIsStateIndex', () => {
     assert.equal(card.currentValueIsStateIndex({ entity: 'climate.y', attribute: 'n' }, false), false);
   });
 
+  test('attribute mode with the entity missing from hass keeps the previous classification', () => {
+    const card = makeCard({}, {});
+    assert.equal(card.currentValueIsStateIndex({ entity: 'climate.gone', attribute: 'n' }, false), false);
+    assert.equal(card.currentValueIsStateIndex({ entity: 'climate.gone', attribute: 'n' }), true);
+  });
+
   test('attribute mode: an attribute whose value is the string "unavailable" is still a string', () => {
     const card = makeCard({}, { 'sensor.x': stateObj('on', { status: 'unavailable' }) });
     assert.equal(card.currentValueIsStateIndex({ entity: 'sensor.x', attribute: 'status' }, false), true);

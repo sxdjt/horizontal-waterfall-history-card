@@ -120,6 +120,7 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
 
   private _stateColorChanged(index: number, key: 'state' | 'color', value: string): void {
     const entries = Object.entries(this._config.state_colors || {});
+    if (!entries[index]) return;  // no such row (nothing to rename or recolor)
     if (key === 'state') {
       entries[index] = [value, entries[index][1]];
     } else {
@@ -160,6 +161,7 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
     const currentEntity = newConfig.entities[entityIndex];
     const entityConfig = typeof currentEntity === 'string' ? { entity: currentEntity } : { ...currentEntity };
     const entries = Object.entries((entityConfig as any).state_colors || {});
+    if (!entries[stateIndex]) return;  // no such row (nothing to rename or recolor)
     if (key === 'state') {
       entries[stateIndex] = [value, entries[stateIndex][1]];
     } else {

@@ -159,6 +159,21 @@ describe('global state color handlers', () => {
     assert.equal(lastConfig(single).state_colors, undefined);
   });
 
+  test('state color handlers with no map: add creates one, remove clears it, change is a no-op', () => {
+    const add = makeEditor(cfg());
+    add._addStateColor();
+    assert.deepEqual(lastConfig(add).state_colors, { '': '#cccccc' });
+    const remove = makeEditor(cfg());
+    remove._removeStateColor(0);
+    assert.equal(lastConfig(remove).state_colors, undefined);
+    const change = makeEditor(cfg());
+    change._stateColorChanged(0, 'state', 'x');
+    assert.equal(changed(change).length, 0);
+    const outOfRange = makeEditor(cfg({ state_colors: { a: '#000001' } }));
+    outOfRange._stateColorChanged(3, 'color', '#ffffff');
+    assert.equal(changed(outOfRange).length, 0);
+  });
+
   test('_stateColorChanged renames a state in place or changes its color', () => {
     const editor = makeEditor(cfg({ state_colors: { heat: '#ff0000', cool: '#0000ff' } }));
     editor._stateColorChanged(0, 'state', 'heating');
@@ -184,6 +199,18 @@ describe('per-entity state color handlers', () => {
     const single = makeEditor(cfg({ entities: [{ entity: 'climate.x', state_colors: { a: '#000001' } }] }));
     single._removeEntityStateColor(0, 0);
     assert.equal(lastConfig(single).entities[0].state_colors, undefined);
+  });
+
+  test('per-entity state color handlers normalize string entities and tolerate a missing map', () => {
+    const remove = makeEditor(cfg({ entities: ['climate.x'] }));
+    remove._removeEntityStateColor(0, 0);
+    assert.deepEqual(lastConfig(remove).entities[0], { entity: 'climate.x', state_colors: undefined });
+    const change = makeEditor(cfg({ entities: ['climate.x'] }));
+    change._entityStateColorChanged(0, 0, 'state', 'x');
+    assert.equal(changed(change).length, 0);
+    const objectNoMap = makeEditor(cfg({ entities: [{ entity: 'climate.x' }] }));
+    objectNoMap._entityStateColorChanged(0, 0, 'color', '#ffffff');
+    assert.equal(changed(objectNoMap).length, 0);
   });
 
   test('_entityStateColorChanged renames or recolors one row', () => {
@@ -359,6 +386,16 @@ describe('threshold and state color rows', () => {
 });
 
 describe('entity panels', () => {
+  test('a config with no entities key renders the empty-entities note', () => {
+    assert.match(visibleText(makeEditor({ type: 'x' }).render()), /No entities configured\./);
+  });
+
+  test('state rows with an empty name use the row number in the Remove suffix', () => {
+    const html = toHTML(makeEditor(cfg({ state_colors: { '': '#cccccc' }, entities: [{ entity: 'climate.x', state_colors: { '': '#cccccc' } }] })).render());
+    const suffixes = [...html.matchAll(/Remove<span class="visually-hidden">([^<]*)<\/span>/g)].map((m) => m[1].trim());
+    assert.deepEqual(suffixes, ['state 1', 'state 1']);
+  });
+
   test('no entities shows a note; Add Entity is wired', () => {
     const editor = makeEditor(cfg());
     const t = editor.render();

@@ -251,7 +251,7 @@ class WaterfallHistoryCard extends i {
         this.style.setProperty('--entity-name-font-size', this.config.compact ? '10px' : '11px');
         this.style.setProperty('--waterfall-height', `${this.config.height}px`);
         this.style.setProperty('--labels-margin-top', this.config.compact ? '2px' : '5px');
-        this.style.setProperty('--waterfall-cell-gap', `${this.config.cell_gap ?? DEFAULTS.cell_gap}px`);
+        this.style.setProperty('--waterfall-cell-gap', `${this.config.cell_gap}px`);
     }
     shouldUpdate(changedProps) {
         if (!this.config || !this.hass) {
@@ -1629,6 +1629,8 @@ class WaterfallHistoryCardEditor extends i {
     }
     _stateColorChanged(index, key, value) {
         const entries = Object.entries(this._config.state_colors || {});
+        if (!entries[index])
+            return; // no such row (nothing to rename or recolor)
         if (key === 'state') {
             entries[index] = [value, entries[index][1]];
         }
@@ -1667,6 +1669,8 @@ class WaterfallHistoryCardEditor extends i {
         const currentEntity = newConfig.entities[entityIndex];
         const entityConfig = typeof currentEntity === 'string' ? { entity: currentEntity } : { ...currentEntity };
         const entries = Object.entries(entityConfig.state_colors || {});
+        if (!entries[stateIndex])
+            return; // no such row (nothing to rename or recolor)
         if (key === 'state') {
             entries[stateIndex] = [value, entries[stateIndex][1]];
         }
