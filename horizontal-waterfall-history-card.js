@@ -1,5 +1,5 @@
-/* Waterfall History Card v2026.11.24b1 */
-const CARD_VERSION = "2026.11.24b1";
+/* Waterfall History Card v2026.11.24b2 */
+const CARD_VERSION = "2026.11.24b2";
 
 /******************************************************************************
 Copyright (c) Microsoft Corporation.
@@ -83,6 +83,21 @@ const DEFAULT_THRESHOLDS_BOOLEAN = [
     { value: 0, color: '#2d3245' }, // off - dark recessed
     { value: 1, color: '#4a9eff' }, // on - electric blue
 ];
+// Default state_colors when tracking a climate entity's hvac_action attribute
+// and no state_colors map is configured. Keys are every HVACAction value in
+// home-assistant/core (homeassistant/components/climate/const.py). Order ranks
+// them for interval_value min/max: inactive first, active last, so 'max'
+// shows any interval in which the system ran.
+const DEFAULT_HVAC_ACTION_COLORS = {
+    off: '#2d3245', // dark recessed, same as binary off
+    idle: '#9E9E9E', // gray
+    fan: '#66BB6A', // green
+    drying: '#FFB74D', // amber
+    defrosting: '#B39DDB', // lavender
+    preheating: '#FF8A65', // light orange
+    cooling: '#4FC3F7', // light blue
+    heating: '#EF5350', // red
+};
 // Default icons by domain
 const DEFAULT_DOMAIN_ICONS = {
     sensor: "mdi:gauge",
@@ -583,8 +598,16 @@ class WaterfallHistoryCard extends i {
         return [min, max];
     }
     // Returns the state_colors map for an entity, checking per-entity then global config.
+    // When neither is set and the entity tracks hvac_action, falls back to
+    // DEFAULT_HVAC_ACTION_COLORS; without a map every hvac_action value would
+    // parse as no data and the bar would render blank.
     getStateColors(entityConfig) {
-        return entityConfig?.state_colors ?? this.config?.state_colors;
+        const configured = entityConfig?.state_colors ?? this.config?.state_colors;
+        if (configured)
+            return configured;
+        if (this.getTrackedAttribute(entityConfig) === 'hvac_action')
+            return DEFAULT_HVAC_ACTION_COLORS;
+        return undefined;
     }
     // Returns the attribute to track for an entity, checking per-entity then
     // global config. Named to avoid colliding with LitElement.getAttribute (the
@@ -1764,7 +1787,8 @@ class WaterfallHistoryCardEditor extends i {
         ></ha-selector>
         <p class="helper-text">
           Track an entity attribute instead of the state (e.g. hvac_action on a climate entity).
-          Leave blank to track the state. Pair with Multi-State Colors to color the attribute values.
+          Leave blank to track the state. Pair with Multi-State Colors to color the attribute values
+          (hvac_action has default colors if none are set).
           An entity can track its state instead by setting its own attribute to "state".
         </p>
       </div>

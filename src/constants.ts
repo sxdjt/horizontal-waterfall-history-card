@@ -18,6 +18,22 @@ export const DEFAULT_THRESHOLDS_BOOLEAN: ThresholdConfig[] = [
   { value: 1, color: '#4a9eff' },  // on - electric blue
 ];
 
+// Default state_colors when tracking a climate entity's hvac_action attribute
+// and no state_colors map is configured. Keys are every HVACAction value in
+// home-assistant/core (homeassistant/components/climate/const.py). Order ranks
+// them for interval_value min/max: inactive first, active last, so 'max'
+// shows any interval in which the system ran.
+export const DEFAULT_HVAC_ACTION_COLORS: Record<string, string> = {
+  off: '#2d3245',         // dark recessed, same as binary off
+  idle: '#9E9E9E',        // gray
+  fan: '#66BB6A',         // green
+  drying: '#FFB74D',      // amber
+  defrosting: '#B39DDB',  // lavender
+  preheating: '#FF8A65',  // light orange
+  cooling: '#4FC3F7',     // light blue
+  heating: '#EF5350',     // red
+};
+
 // Default icons by domain
 export const DEFAULT_DOMAIN_ICONS: Record<string, string> = {
   sensor: "mdi:gauge",

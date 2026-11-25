@@ -383,6 +383,39 @@ Because the states are listed worst to best, `interval_value: max` shows the bes
 
 By default the card charts the entity's state. Set `attribute` to chart one of the entity's attributes instead - for example, a climate entity's state is the HVAC mode (`heat`, `cool`, `off`), while `hvac_action` tells you what it is actually doing right now (`heating`, `idle`, `cooling`).
 
+The attribute's string value is matched against `state_colors` (case-insensitive) exactly like a state, so all the multi-state behavior above applies.
+
+IMPORTANT: a string value with no color in `state_colors` renders as an empty cell. If the bar is blank, the attribute's values are missing from `state_colors`. Check the exact values in Developer Tools -> States. `hvac_action` is the one exception: it has built-in colors (see below).
+
+#### Example 1: what the thermostat is doing (`hvac_action`, no colors needed)
+
+```yaml
+type: custom:waterfall-history-card
+title: Heating and Cooling
+hours: 24
+interval_value: max
+attribute: hvac_action
+entities:
+  - entity: climate.home
+```
+
+`attribute` set at the card level applies to every entity. With no `state_colors`, these built-in colors are used:
+
+| `hvac_action` | Color     |
+|---------------|-----------|
+| `off`         | `#2d3245` |
+| `idle`        | `#9E9E9E` |
+| `fan`         | `#66BB6A` |
+| `drying`      | `#FFB74D` |
+| `defrosting`  | `#B39DDB` |
+| `preheating`  | `#FF8A65` |
+| `cooling`     | `#4FC3F7` |
+| `heating`     | `#EF5350` |
+
+The table runs from inactive to active, which is the ranking `interval_value: min`/`max` uses. `interval_value: max` (as above) colors a cell red if the heat ran at any point in it, even briefly.
+
+#### Example 2: your own `hvac_action` colors
+
 ```yaml
 type: custom:waterfall-history-card
 title: Bathroom Heating
@@ -390,13 +423,36 @@ entities:
   - entity: climate.koupelna
     attribute: hvac_action
     state_colors:
-      heating: '#EF5350'
+      'off': '#2d3245'
       idle: '#2d3245'
+      heating: '#EF5350'
 ```
 
-The attribute's string value is matched against `state_colors` (case-insensitive) exactly like a state, so all the multi-state behavior above applies. Notes:
+Your `state_colors` replaces the built-in colors entirely; they are not merged. List every value you want to see. Here `cooling` or `fan` would render as empty cells. Quote `'off'`: unquoted, YAML may read it as a boolean.
 
-- `attribute` can be set per-entity (shown above) or once at the card level for all entities.
+#### Example 3: any other attribute (`state_colors` required)
+
+Only `hvac_action` has built-in colors. For any other text attribute, map each value it can take. This charts an ecobee's `preset_mode`:
+
+```yaml
+type: custom:waterfall-history-card
+title: Thermostat Preset
+entities:
+  - entity: climate.home
+    attribute: preset_mode
+    state_colors:
+      sleep: '#5C6BC0'
+      home: '#66BB6A'
+      away: '#FFB74D'
+      away_indefinitely: '#9E9E9E'
+```
+
+Without `state_colors` this card would be blank.
+
+#### Notes
+
+- `attribute` can be set per-entity (Examples 2 and 3) or once at the card level for all entities (Example 1).
+- The built-in `hvac_action` colors apply only when neither the entity nor the card sets `state_colors`. A card-level `state_colors` meant for other entities also replaces them, so give the `hvac_action` entity its own `state_colors` in that case.
 - To track the state for one entity while a card-level `attribute` is set, give that entity `attribute: state` (case-insensitive). This is also how you opt an entity out from the visual editor, where clearing the field inherits the card-level value.
 - The attribute may change more often than the state, so the card fetches full history (with attributes) in this mode - the chart resolution reflects every attribute change. Each refresh fetches every recorded row with full attributes, so a long `hours` window on a frequently updating entity (e.g. a climate entity that reports `current_temperature` every few seconds) can mean thousands of rows per request and a noticeably larger history response.
 - Attribute values that are not in `state_colors` render as empty cells (no data), rather than falling back to binary on/off colors. A numeric attribute (e.g. `current_temperature`) still works like a sensor value and can use `thresholds`; its readings are never colored with `state_colors` even when a map is configured elsewhere on the card.

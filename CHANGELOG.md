@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [2026.11.24b2] - 2026-11-24 (pre-release)
+
+### Added
+- Default colors for `attribute: hvac_action` when no `state_colors` is set (`off`, `idle`, `fan`, `drying`, `defrosting`, `preheating`, `cooling`, `heating`). Previously the bar was blank without a `state_colors` map, because unmapped attribute values render as no data.
+
 ## [2026.11.24b1] - 2026-11-24 (pre-release)
 
 ### Added

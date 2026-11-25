@@ -14,6 +14,7 @@ import {
   DEFAULT_THRESHOLDS_NUMERIC,
   DEFAULT_THRESHOLDS_BOOLEAN,
   DEFAULT_DOMAIN_ICONS,
+  DEFAULT_HVAC_ACTION_COLORS,
   TRANSLATIONS,
   DEFAULTS
 } from './constants';
@@ -763,8 +764,14 @@ export class WaterfallHistoryCard extends LitElement {
   }
 
   // Returns the state_colors map for an entity, checking per-entity then global config.
+  // When neither is set and the entity tracks hvac_action, falls back to
+  // DEFAULT_HVAC_ACTION_COLORS; without a map every hvac_action value would
+  // parse as no data and the bar would render blank.
   private getStateColors(entityConfig?: EntityConfig): Record<string, string> | undefined {
-    return entityConfig?.state_colors ?? this.config?.state_colors;
+    const configured = entityConfig?.state_colors ?? this.config?.state_colors;
+    if (configured) return configured;
+    if (this.getTrackedAttribute(entityConfig) === 'hvac_action') return DEFAULT_HVAC_ACTION_COLORS;
+    return undefined;
   }
 
   // Returns the attribute to track for an entity, checking per-entity then
