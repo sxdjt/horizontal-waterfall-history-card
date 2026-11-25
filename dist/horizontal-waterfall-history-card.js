@@ -1817,7 +1817,7 @@ class WaterfallHistoryCardEditor extends i {
           .required=${false}
           .label=${'Time Window (hours)'}
           .value=${this._config.hours || DEFAULTS.hours}
-          .selector=${{ number: { min: 1, max: 168, mode: 'box', step: 1 } }}
+          .selector=${{ number: { min: 1, mode: 'box', step: 1 } }}
           @value-changed=${(ev) => this._configValueChanged('hours', Number(ev.detail.value))}
         ></ha-selector>
 
@@ -1826,7 +1826,7 @@ class WaterfallHistoryCardEditor extends i {
           .required=${false}
           .label=${'Intervals'}
           .value=${this._config.intervals || DEFAULTS.intervals}
-          .selector=${{ number: { min: 24, max: 96, mode: 'box', step: 1 } }}
+          .selector=${{ number: { min: 1, mode: 'box', step: 1 } }}
           @value-changed=${(ev) => this._configValueChanged('intervals', Number(ev.detail.value))}
         ></ha-selector>
 
@@ -1897,7 +1897,7 @@ class WaterfallHistoryCardEditor extends i {
           .required=${false}
           .label=${'Label Count'}
           .value=${this._config.label_count ?? DEFAULTS.label_count}
-          .selector=${{ number: { min: 1, max: 168, mode: 'box', step: 1 } }}
+          .selector=${{ number: { min: 1, mode: 'box', step: 1 } }}
           @value-changed=${(ev) => this._configValueChanged('label_count', Number(ev.detail.value))}
         ></ha-selector>
 
@@ -2112,7 +2112,7 @@ class WaterfallHistoryCardEditor extends i {
             .required=${false}
             .label=${'Hours (override)'}
             .value=${entityConfig.hours || ''}
-            .selector=${{ number: { min: 1, max: 168, mode: 'box', step: 1 } }}
+            .selector=${{ number: { min: 1, mode: 'box', step: 1 } }}
             @value-changed=${(ev) => this._entityChanged(index, 'hours', ev.detail.value ? Number(ev.detail.value) : undefined)}
           ></ha-selector>
 
@@ -2121,7 +2121,7 @@ class WaterfallHistoryCardEditor extends i {
             .required=${false}
             .label=${'Intervals (override)'}
             .value=${entityConfig.intervals || ''}
-            .selector=${{ number: { min: 24, max: 96, mode: 'box', step: 1 } }}
+            .selector=${{ number: { min: 1, mode: 'box', step: 1 } }}
             @value-changed=${(ev) => this._entityChanged(index, 'intervals', ev.detail.value ? Number(ev.detail.value) : undefined)}
           ></ha-selector>
 
@@ -2136,7 +2136,7 @@ class WaterfallHistoryCardEditor extends i {
             .required=${false}
             .label=${'Label Count (override)'}
             .value=${entityConfig.label_count || ''}
-            .selector=${{ number: { min: 1, max: 168, mode: 'box', step: 1 } }}
+            .selector=${{ number: { min: 1, mode: 'box', step: 1 } }}
             @value-changed=${(ev) => this._entityChanged(index, 'label_count', ev.detail.value ? Number(ev.detail.value) : undefined)}
           ></ha-selector>
 

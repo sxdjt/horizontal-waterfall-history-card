@@ -296,6 +296,23 @@ describe('card-level controls are wired to the right keys', () => {
     assert.equal(selector(makeEditor(cfg({ title: '' })).render(), 'Card Title').attrs['.value'], '');
   });
 
+  test('hours, intervals and label count accept any value of 1 or more (no maximum)', () => {
+    const t = makeEditor(cfg({ hours: 336, intervals: 14, entities: ['sensor.a'] })).render();
+    for (const label of ['Time Window (hours)', 'Intervals', 'Label Count', 'Hours (override)', 'Intervals (override)', 'Label Count (override)']) {
+      assert.deepEqual(selector(t, label).attrs['.selector'], { number: { min: 1, mode: 'box', step: 1 } }, label);
+    }
+    // The README's Daily Goals example (hours: 336, intervals: 14) shows as configured.
+    assert.equal(selector(t, 'Time Window (hours)').attrs['.value'], 336);
+    assert.equal(selector(t, 'Intervals').attrs['.value'], 14);
+  });
+
+  test('bar height, decimal places and cell gap keep their ranges', () => {
+    const t = makeEditor(cfg()).render();
+    assert.deepEqual(selector(t, 'Bar Height (pixels)').attrs['.selector'].number, { min: 30, max: 200, mode: 'box', step: 1 });
+    assert.deepEqual(selector(t, 'Decimal Places').attrs['.selector'].number, { min: 0, max: 5, mode: 'box', step: 1 });
+    assert.deepEqual(selector(t, 'Cell Gap (pixels)').attrs['.selector'].number, { min: 0, max: 10, mode: 'box', step: 1 });
+  });
+
   test('digits 0 is shown as 0, not the default', () => {
     assert.equal(selector(makeEditor(cfg({ digits: 0 })).render(), 'Decimal Places').attrs['.value'], 0);
   });
