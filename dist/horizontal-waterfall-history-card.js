@@ -443,8 +443,11 @@ class WaterfallHistoryCard extends i {
                 const currentRaw = attribute
                     ? this.readTrackedValue(this.hass?.states[entityId], entityConfig)
                     : this.hass?.states[entityId]?.state;
-                const currentValue = (currentRaw !== undefined && currentRaw !== null)
-                    ? this.parseState(currentRaw, entityConfig) : null;
+                // With no current value either, use default_value (if set): its
+                // original purpose was a value for when history is empty.
+                const currentValue = ((currentRaw !== undefined && currentRaw !== null)
+                    ? this.parseState(currentRaw, entityConfig) : null)
+                    ?? entityConfig.default_value ?? this.config.default_value ?? null;
                 const endTime = Date.now() - (startOffset * 60 * 60 * 1000);
                 const startTime = endTime - (hours * 60 * 60 * 1000);
                 processedHistories[cacheKey] = {
@@ -464,8 +467,7 @@ class WaterfallHistoryCard extends i {
         this.processedHistories = processedHistories;
     }
     processHistoryData(historyData, intervals, timeStep, entityConfig, startOffset = 0) {
-        const defaultValue = entityConfig.default_value ?? this.config.default_value;
-        const processed = new Array(intervals).fill(defaultValue);
+        const processed = new Array(intervals).fill(null);
         const hours = entityConfig.hours ?? this.config.hours;
         const intervalValue = entityConfig.interval_value ?? this.config.interval_value ?? DEFAULTS.interval_value;
         // Calculate start time with offset - endTime is (now - offset), startTime is (endTime - hours)
@@ -571,7 +573,20 @@ class WaterfallHistoryCard extends i {
         // The HA history API already returns the state active at the window start
         // (include_start_time_state), which initialState/bucket 0 handling covers, so
         // backward fill could only ever fabricate values for periods with no data.
-        // Leading nulls now render as transparent "no data" segments.
+        // Leading nulls render as transparent "no data" segments, unless
+        // default_value is set.
+        //
+        // default_value (PR #34: "value to use if no data is available for a
+        // segment") fills only these no-data buckets. It used to pre-fill every
+        // bucket, which blocked forward fill: buckets after a state change kept
+        // the default instead of carrying the state forward.
+        const defaultValue = entityConfig.default_value ?? this.config.default_value;
+        if (defaultValue !== null && defaultValue !== undefined) {
+            for (let i = 0; i < processed.length; i++) {
+                if (processed[i] === null)
+                    processed[i] = defaultValue;
+            }
+        }
         return processed.map((value, index) => ({
             time: new Date(startTime + index * timeStep),
             value

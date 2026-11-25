@@ -84,12 +84,20 @@ describe('processHistoryData: bucketing', () => {
     assert.equal(rows[0].time.getTime(), offsetStart);
   });
 
-  test('default_value pre-fills buckets and replaces forward fill', () => {
-    // Documents current behavior of the undocumented default_value option:
-    // buckets without a recorded change keep the default instead of carrying
-    // the previous state forward.
-    const rows = bucket([point('5', at(0.5))], { entity: 'sensor.a' }, { default_value: 0 });
-    assert.deepEqual(values(rows), [5, 0, 0, 0]);
+  test('default_value fills only buckets with no data; recorded states still carry forward', () => {
+    assert.deepEqual(values(bucket([point('5', at(0.5))], { entity: 'sensor.a' }, { default_value: 0 })), [5, 5, 5, 5]);
+    assert.deepEqual(values(bucket([point('5', at(2.5))], { entity: 'sensor.a' }, { default_value: 0 })), [0, 0, 5, 5]);
+    assert.deepEqual(values(bucket([point('5', at(1.5)), point('9', at(3.2))], { entity: 'sensor.a' }, { default_value: -1 })), [-1, 5, 5, 9]);
+  });
+
+  test('default_value: per-entity overrides the card; unset leaves no-data buckets null', () => {
+    assert.deepEqual(values(bucket([point('5', at(2.5))], { entity: 'sensor.a', default_value: 7 }, { default_value: 0 })), [7, 7, 5, 5]);
+    assert.deepEqual(values(bucket([point('5', at(2.5))], { entity: 'sensor.a' })), [null, null, 5, 5]);
+  });
+
+  test('default_value fills no-data buckets in min/max mode too', () => {
+    const pts = [point('5', at(2.2)), point('8', at(2.4)), point('6', at(2.6))];
+    assert.deepEqual(values(bucket(pts, { entity: 'sensor.a', interval_value: 'max', default_value: 0 })), [0, 0, 8, 6]);
   });
 });
 
@@ -255,6 +263,19 @@ describe('updateCard', () => {
     const card = makeCard({ hours: 4, intervals: 4, entities: ['sensor.gone'] }, {});
     await card.updateCard();
     assert.deepEqual(values(card.processedHistories['sensor.gone_state_0'].data), [null, null, null, null]);
+  });
+
+  test('empty history with no current value backfills with default_value', async () => {
+    const card = makeCard({ hours: 4, intervals: 4, default_value: 0, entities: ['sensor.gone', { entity: 'sensor.own', default_value: 3 }] }, { 'sensor.a': stateObj('1') });
+    await card.updateCard();
+    assert.deepEqual(values(card.processedHistories['sensor.gone_state_0'].data), [0, 0, 0, 0]);
+    assert.deepEqual(values(card.processedHistories['sensor.own_state_0'].data), [3, 3, 3, 3]);
+  });
+
+  test('empty history with a current value ignores default_value', async () => {
+    const card = makeCard({ hours: 4, intervals: 4, default_value: 0, entities: ['sensor.a'] }, { 'sensor.a': stateObj('8') });
+    await card.updateCard();
+    assert.deepEqual(values(card.processedHistories['sensor.a_state_0'].data), [8, 8, 8, 8]);
   });
 
   test('empty history keeps an existing cache (protects brief events)', async () => {

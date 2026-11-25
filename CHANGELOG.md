@@ -2,14 +2,15 @@
 
 ## [Unreleased]
 
+### Added
+- Automated test suite (`npm test`, Node's built-in runner, no new dependencies) covering every card and editor function against the built bundle. See `tests/README.md`.
+
 ### Removed
 - Per-entity `height` and `compact` from the config type. They were never applied: both options are card-level only.
 - Unused `min_value` and `max_value` options. They set the color scale in the original 2025 card, which thresholds replaced, and have had no effect since. Configs that still set them keep working; the keys are ignored.
 
-### Added
-- Automated test suite (`npm test`, Node's built-in runner, no new dependencies) covering every card and editor function against the built bundle. See `tests/README.md`.
-
 ### Fixed
+- `default_value` (YAML only) now fills only segments with no data: time before the entity's first recorded state, or an entity with no history and no current value. It used to fill every segment without a recorded change, so the bar showed the default between changes instead of the state the entity was in.
 - A numeric attribute (e.g. `attribute: current_temperature`) on a card with a `state_colors` map could be colored as map states after a history refresh while its entity was unavailable. The card now keeps the attribute's previous classification while the entity is unknown or unavailable.
 - Visual editor: the per-entity Decimal Places field can be set to 0. It was stored as "inherit".
 - A numeric sensor on a card with a card-level `state_colors` map was colored and labeled as a state: a reading of 2 showed as the map's third state. Numeric states that match no map key now keep their value, unit and numeric thresholds. Maps with numeric keys (e.g. `'1'`, `'2'`) still color matching states.
