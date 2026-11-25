@@ -42,12 +42,10 @@ export interface EntityConfig {
   show_min_max?: boolean;
   show_icons?: boolean;
 
-  // Styling
-  height?: number;
+  // Styling (height and compact are card-level only; see WaterfallHistoryCardConfig)
   unit?: string;
   icon?: string;
   digits?: number;
-  compact?: boolean;
   inline_layout?: boolean;
 
   // Data

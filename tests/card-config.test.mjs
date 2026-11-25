@@ -162,6 +162,12 @@ describe('setConfig host styling', () => {
     assert.equal(card.classList.contains('compact'), false);
   });
 
+  test('height and compact are card-level only; per-entity values are ignored', () => {
+    const card = makeCard({ entities: [{ entity: 'sensor.a', height: 200, compact: true }] });
+    assert.equal(card.style.getPropertyValue('--waterfall-height'), '60px');
+    assert.equal(card.classList.contains('compact'), false);
+  });
+
   test('cell_gap: 0 is applied as 0px', () => {
     assert.equal(makeCard({ cell_gap: 0 }).style.getPropertyValue('--waterfall-cell-gap'), '0px');
   });

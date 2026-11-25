@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Removed
+- Per-entity `height` and `compact` from the config type. They were never applied: both options are card-level only.
 - Unused `min_value` and `max_value` options. They set the color scale in the original 2025 card, which thresholds replaced, and have had no effect since. Configs that still set them keep working; the keys are ignored.
 
 ### Added
