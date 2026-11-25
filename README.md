@@ -52,8 +52,8 @@ For doors, switches and other binary entities, see [Binary State Label Customiza
 
 The card has a visual editor (dashboard -> Edit card). A few options are YAML-only:
 
-- Card level: `binary_colors`, `card_mod`, `icon`, `start_offset`, `unit`
-- Per entity: `binary_colors`, `gradient`, `show_min_max`, `start_offset`, `state_on`/`state_off`, and the unknown/unavailable colors and labels
+- Card level: `binary_colors`, `card_mod`, `default_value`, `icon`, `start_offset`, `unit`
+- Per entity: `binary_colors`, `default_value`, `gradient`, `show_min_max`, `start_offset`, `state_on`/`state_off`, and the unknown/unavailable colors and labels
 
 ### Card-Level Options
 
@@ -69,6 +69,7 @@ The card has a visual editor (dashboard -> Edit card). A few options are YAML-on
 | `color_unavailable` | `string` | `#9E9E9E` | Color for entities in "unavailable" state (gray).                           |
 | `color_unknown`  | `string`  | `#FF9800`   | Color for entities in "unknown" state (orange).                             |
 | `compact`        | `boolean` | `false`     | Use smaller font sizes and spacing.                                         |
+| `default_value`  | `number`  | -           | Value for segments with no data: the time before the entity's first recorded state, or an entity with no history and no current value. Unset, those segments are empty. Segments after a state change always show that state. |
 | `digits`         | `number`  | `1`         | Number of decimal places for numeric values.                                |
 | `gradient`       | `boolean` | `false`     | Use gradient interpolation between thresholds.                              |
 | `height`         | `number`  | `60`        | Height in pixels of each entity's waterfall chart.                          |
@@ -108,6 +109,7 @@ Each item in `entities:` can be either a bare entity ID string, or an object wit
 | `color_on`       | `string`  | Inherits from card  | Color for this binary entity's "on" state.                          |
 | `color_unavailable` | `string` | Inherits from card | Color for this entity when in "unavailable" state.       |
 | `color_unknown`  | `string`  | Inherits from card  | Color for this entity when in "unknown" state.            |
+| `default_value`  | `number`  | Inherits from card  | Value for this entity's segments with no data.                      |
 | `digits`         | `number`  | Inherits from card  | Override decimal places for this entity.                            |
 | `gradient`       | `boolean` | Inherits from card  | Use gradient interpolation between thresholds for this entity.      |
 | `hours`          | `number`  | Inherits from card  | Override the number of hours shown for this entity.                 |
