@@ -1,4 +1,4 @@
-/* Last modified: 01-Feb-2026 */
+/* Last modified: 25-Nov-2026 */
 import { LitElement, html, css, PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { HomeAssistant, LovelaceCardEditor } from 'custom-card-helpers';
@@ -338,6 +338,7 @@ export class WaterfallHistoryCard extends LitElement {
       card_mod: config.card_mod || {},
       binary_colors: config.binary_colors ?? undefined,
       state_colors: config.state_colors ?? undefined,
+      attribute: config.attribute ?? undefined,
       color_on: config.color_on ?? undefined,
       color_off: config.color_off ?? undefined,
       state_on: config.state_on || DEFAULTS.state_on,
@@ -474,13 +475,10 @@ export class WaterfallHistoryCard extends LitElement {
 
     const now = Date.now();
     const entitiesToUpdate = this.config.entities.filter(entityConfig => {
-      const entityId = typeof entityConfig === 'string' ? entityConfig : entityConfig.entity;
+      const cacheKey = this.cacheKeyFor(entityConfig);
       const hours = typeof entityConfig !== 'string' ? (entityConfig.hours ?? this.config.hours) : this.config.hours;
       const intervals = typeof entityConfig !== 'string' ? (entityConfig.intervals ?? this.config.intervals) : this.config.intervals;
       const startOffset = typeof entityConfig !== 'string' ? (entityConfig.start_offset ?? this.config.start_offset ?? 0) : (this.config.start_offset ?? 0);
-
-      // Use composite key to support same entity with different offsets
-      const cacheKey = `${entityId}_${startOffset}`;
 
       // For offset data (historical), use longer refresh interval since it doesn't change as frequently
       const baseRefreshInterval = ((hours! / intervals!) * 60 * 60 * 1000) / 2;
@@ -500,13 +498,14 @@ export class WaterfallHistoryCard extends LitElement {
     const now = Date.now();
 
     const entitiesToUpdate = this.config.entities.filter(entityConfig => {
-      const entityId = typeof entityConfig === 'string' ? entityConfig : entityConfig.entity;
       const hours = typeof entityConfig !== 'string' ? (entityConfig.hours ?? this.config.hours) : this.config.hours;
       const intervals = typeof entityConfig !== 'string' ? (entityConfig.intervals ?? this.config.intervals) : this.config.intervals;
       const startOffset = typeof entityConfig !== 'string' ? (entityConfig.start_offset ?? this.config.start_offset ?? 0) : (this.config.start_offset ?? 0);
 
-      // Use composite key to support same entity with different offsets
-      const cacheKey = `${entityId}_${startOffset}`;
+      // Use the shared composite key so the key format lives in one place;
+      // it separates entries for the same entity with different
+      // attributes/offsets.
+      const cacheKey = this.cacheKeyFor(entityConfig);
 
       const baseRefreshInterval = ((hours! / intervals!) * 60 * 60 * 1000) / 2;
       const refreshInterval = startOffset && startOffset > 0 ? baseRefreshInterval * 4 : baseRefreshInterval;
@@ -521,50 +520,83 @@ export class WaterfallHistoryCard extends LitElement {
     const historyPromises = entitiesToUpdate.map(async (entityConfig) => {
       const entityObj = typeof entityConfig === 'string' ? { entity: entityConfig } : entityConfig;
       const entityId = entityObj.entity;
-      const hours = entityObj.hours ?? this.config.hours!;
-      const startOffset = entityObj.start_offset ?? this.config.start_offset ?? 0;
+      const attribute = this.getTrackedAttribute(entityObj);
 
-      // Use composite key to support same entity with different offsets
-      const cacheKey = `${entityId}_${startOffset}`;
+      // Use the shared composite key (see cacheKeyFor).
+      const cacheKey = this.cacheKeyFor(entityObj);
 
       // Calculate time window with offset
       // endTime is now shifted back by start_offset hours
+      const hours = entityObj.hours ?? this.config.hours!;
+      const startOffset = entityObj.start_offset ?? this.config.start_offset ?? 0;
       const endTime = new Date(Date.now() - startOffset * 60 * 60 * 1000);
       const startTime = new Date(endTime.getTime() - hours * 60 * 60 * 1000);
 
       try {
-        const history = await this.hass!.callApi('GET',
-          `history/period/${startTime.toISOString()}?filter_entity_id=${entityId}&end_time=${endTime.toISOString()}&significant_changes_only=1&minimal_response&no_attributes`
-        );
+        // In attribute mode the API must return attribute-only updates, which
+        // requires explicitly disabling the significant-change filter: the
+        // endpoint defaults it to ON when the parameter is absent (it is only
+        // off when sent as 0), and the recorder query then keeps only rows
+        // where last_changed == last_updated - excluding attribute-only
+        // updates for every domain outside HA's SIGNIFICANT_DOMAINS allowlist
+        // (climate, thermostat, ...). no_attributes and minimal_response are
+        // presence-based flags, so they are simply omitted. State-mode keeps
+        // the original compact URL.
+        const url = attribute
+          ? `history/period/${startTime.toISOString()}?filter_entity_id=${entityId}&end_time=${endTime.toISOString()}&significant_changes_only=0`
+          : `history/period/${startTime.toISOString()}?filter_entity_id=${entityId}&end_time=${endTime.toISOString()}&significant_changes_only=1&minimal_response&no_attributes`;
+        const history = await this.hass!.callApi('GET', url);
         this._lastHistoryFetch[cacheKey] = now;
-        return { entityId, history: (history as any[])[0], entityConfig: entityObj, startOffset, cacheKey };
+        return { entityId, history: (history as any[])[0], entityConfig: entityObj, startOffset, cacheKey, attribute };
       } catch (error) {
         console.error(`Error fetching history for ${entityId}:`, error);
-        return { entityId, history: null, entityConfig: entityObj, startOffset, cacheKey };
+        return { entityId, history: null, entityConfig: entityObj, startOffset, cacheKey, attribute };
       }
     });
 
     const results = await Promise.all(historyPromises);
 
+    // Prune cache entries no longer referenced by the config. The key embeds
+    // entity, attribute and offset, so editing any of those (e.g. re-typing
+    // the attribute in the editor) strands the old entries; each holds one
+    // bucket per interval, so the dead weight grows with every edit.
+    const liveKeys = new Set(this.config.entities.map(e => this.cacheKeyFor(e)));
+
     const processedHistories: ProcessedHistoryData = { ...this.processedHistories };
-    results.forEach(({ entityId, history, entityConfig, startOffset, cacheKey }) => {
+    Object.keys(processedHistories).forEach(key => {
+      if (!liveKeys.has(key)) delete processedHistories[key];
+    });
+    Object.keys(this._lastHistoryFetch).forEach(key => {
+      if (!liveKeys.has(key)) delete this._lastHistoryFetch[key];
+    });
+    results.forEach(({ entityId, history, entityConfig, startOffset, cacheKey, attribute }) => {
       const intervals = entityConfig.intervals ?? this.config.intervals!;
       const hours = entityConfig.hours ?? this.config.hours!;
       const timeStep = (hours * 60 * 60 * 1000) / intervals;
+      const previousStateIndex = processedHistories[cacheKey]?.stateIndex;
 
       if (history && history.length > 0) {
         // API returned data - process normally (no behavior change)
         processedHistories[cacheKey] = {
           data: this.processHistoryData(history, intervals, timeStep, entityConfig, startOffset),
           minValue: 0,
-          maxValue: 100
+          maxValue: 100,
+          // Whether stored integers are state_colors indices (see
+          // ProcessedHistoryData). Sampled from the current tracked value:
+          // a string maps by name (index mode), a number/boolean is a
+          // reading. While the entity is down (no current value), keep the
+          // previous classification; state mode defaults to index mode.
+          stateIndex: this.currentValueIsStateIndex(entityConfig, previousStateIndex)
         };
       } else if (!processedHistories[cacheKey]) {
         // No API data and no cached data (first load for a stable entity).
-        // Backfill all buckets with the entity's current state so stable sensors
-        // show a solid bar rather than a blank chart.
-        const currentState = this.hass?.states[entityId]?.state;
-        const currentValue = currentState ? this.parseState(currentState, entityConfig) : null;
+        // Backfill all buckets with the entity's current tracked value so
+        // stable sensors show a solid bar rather than a blank chart.
+        const currentRaw = attribute
+          ? this.readTrackedValue(this.hass?.states[entityId], entityConfig)
+          : this.hass?.states[entityId]?.state;
+        const currentValue = (currentRaw !== undefined && currentRaw !== null)
+          ? this.parseState(currentRaw, entityConfig) : null;
         const endTime = Date.now() - (startOffset * 60 * 60 * 1000);
         const startTime = endTime - (hours * 60 * 60 * 1000);
         processedHistories[cacheKey] = {
@@ -573,7 +605,8 @@ export class WaterfallHistoryCard extends LitElement {
             value: currentValue
           })),
           minValue: 0,
-          maxValue: 100
+          maxValue: 100,
+          stateIndex: this.currentValueIsStateIndex(entityConfig, previousStateIndex)
         };
       }
       // If history is empty AND cached data exists, do nothing - preserve the cache.
@@ -612,18 +645,24 @@ export class WaterfallHistoryCard extends LitElement {
     let initialState: number | null = null;
     let bucket0ExplicitlySet = false;
 
+    // In attribute mode, use last_updated: attribute-only changes leave
+    // last_changed at the last real state change, which would place every
+    // attribute update in the bucket of that old state change.
+    const timeKey: 'last_changed' | 'last_updated' =
+      this.getTrackedAttribute(entityConfig) ? 'last_updated' : 'last_changed';
+
     if (historyData) {
       historyData.forEach(point => {
-        const pointTime = new Date(point.last_changed || point.last_updated).getTime();
+        const pointTime = new Date(point[timeKey] || point.last_changed || point.last_updated).getTime();
         const timeDiff = pointTime - startTime;
         if (timeDiff < 0) {
           // This point's last_changed is before our window, but it represents
           // the state that was active at startTime. Capture it as initial state.
-          initialState = this.parseState(point.state, entityConfig);
+          initialState = this.parseState(this.readTrackedValue(point, entityConfig), entityConfig);
         } else {
           const bucketIndex = Math.floor(timeDiff / timeStep);
           if (bucketIndex >= 0 && bucketIndex < intervals) {
-            const value = this.parseState(point.state, entityConfig);
+            const value = this.parseState(this.readTrackedValue(point, entityConfig), entityConfig);
 
             // Always track the last value (needed for special state handling)
             processed[bucketIndex] = value;
@@ -728,12 +767,85 @@ export class WaterfallHistoryCard extends LitElement {
     return entityConfig?.state_colors ?? this.config?.state_colors;
   }
 
+  // Returns the attribute to track for an entity, checking per-entity then
+  // global config. Named to avoid colliding with LitElement.getAttribute (the
+  // DOM API).
+  //
+  // Opt-out: a per-entity `attribute: state` (case-insensitive) tracks the
+  // entity's state instead of the card-level attribute - without it there
+  // would be no way to opt an entity out from the visual editor, since
+  // clearing the field stores undefined, which inherits the card-level value.
+  // Empty and whitespace-only values resolve the same way. A card-level
+  // `attribute: state` is likewise treated as "track the state".
+  private getTrackedAttribute(entityConfig?: EntityConfig): string | undefined {
+    const resolve = (attr: string | undefined): string | undefined => {
+      if (attr === undefined || attr === null) return undefined;
+      // YAML parses unquoted on/off/yes/no as booleans and bare numbers as
+      // numbers, so coerce instead of trusting the declared string type -
+      // attr.trim() on a non-string would throw and break the whole card.
+      const normalized = String(attr).trim();
+      if (normalized === '' || normalized.toLowerCase() === 'state') return undefined;
+      return normalized;
+    };
+    if (entityConfig && entityConfig.attribute !== undefined && entityConfig.attribute !== null) {
+      return resolve(entityConfig.attribute);
+    }
+    return resolve(this.config?.attribute);
+  }
+
+  // Reads the tracked value from a state object: the configured attribute in
+  // attribute mode, otherwise the entity state. In attribute mode the entity
+  // itself being unknown/unavailable still wins - there is no meaningful
+  // attribute value while the entity is down, so that state is surfaced.
+  private readTrackedValue(stateObj: any, entityConfig?: EntityConfig): any {
+    const state = stateObj?.state;
+    const attribute = this.getTrackedAttribute(entityConfig);
+    if (attribute) {
+      const lowerState = typeof state === 'string' ? state.toLowerCase() : '';
+      if (lowerState === 'unknown' || lowerState === 'unavailable') return state;
+      return stateObj?.attributes?.[attribute];
+    }
+    return state;
+  }
+
+  // Cache key for processedHistories. The same entity can be charted twice
+  // (once by state, once by attribute) with different offsets, so the key
+  // must cover the entity id, the tracked attribute, and the offset.
+  private cacheKeyFor(entityConfig: string | EntityConfig): string {
+    const entityId = typeof entityConfig === 'string' ? entityConfig : entityConfig.entity;
+    const attribute = this.getTrackedAttribute(typeof entityConfig === 'string' ? undefined : entityConfig);
+    const startOffset = typeof entityConfig === 'string'
+      ? (this.config?.start_offset ?? 0)
+      : (entityConfig.start_offset ?? this.config?.start_offset ?? 0);
+    return `${entityId}_${attribute ?? 'state'}_${startOffset}`;
+  }
+
+  // Classifies the entity's current tracked value: are integer stored values
+  // indices into state_colors (string-valued source) or readings (numeric /
+  // boolean source)? Falls back to the previous classification while the
+  // entity is unavailable, and to index mode in state mode (states are
+  // always strings).
+  private currentValueIsStateIndex(entityConfig: EntityConfig, previous?: boolean): boolean {
+    if (!this.getTrackedAttribute(entityConfig)) return true;  // state mode: always index
+    const raw = this.readTrackedValue(this.hass?.states[entityConfig.entity], entityConfig);
+    if (typeof raw === 'string') return true;
+    if (typeof raw === 'number' || typeof raw === 'boolean') return false;
+    return previous ?? true;  // entity down: keep prior classification
+  }
+
   private parseState(state: any, entityConfig?: EntityConfig): number | null {
     if (typeof state === 'number') return state;
+    // Attribute values can be real booleans (states are always strings).
+    // They are readings: binary on/off, never state_colors indices (a bare
+    // true -> 1 would otherwise be colored/labeled as the second configured
+    // state wherever a state_colors map is in scope).
+    if (typeof state === 'boolean') return state ? 1 : 0;
     if (typeof state === 'string') {
       const lowerState = state.toLowerCase();
       if (lowerState === 'unknown') return UNKNOWN_STATE;
       if (lowerState === 'unavailable') return UNAVAILABLE_STATE;
+
+      const attributeMode = !!this.getTrackedAttribute(entityConfig);
 
       // Multi-state: check state_colors before binary on/off so that states like 'off'
       // in an HVAC context map to their configured index rather than binary 0.
@@ -742,8 +854,20 @@ export class WaterfallHistoryCard extends LitElement {
         const keys = Object.keys(stateColors);
         const matchIndex = keys.findIndex(k => k.toLowerCase() === lowerState);
         if (matchIndex !== -1) return matchIndex;
+        if (attributeMode) {
+          // Attribute mode under a configured map: an unmatched value must
+          // not alias through the binary on/off shortcut below - e.g.
+          // hvac_action 'off' with a heating/idle map would otherwise be
+          // colored as the first key. Numeric strings parse; anything else
+          // renders as no data.
+          const casted = parseFloat(state);
+          return Number.isNaN(casted) ? null : casted;
+        }
       }
 
+      // No map configured (or state mode): binary on/off and custom
+      // state_on/state_off labels still apply, so attribute values like
+      // 'on'/'off' keep binary colors in attribute mode too.
       if (lowerState === 'off') return 0;
       if (lowerState === 'on') return 1;
       // Check configured state_on / state_off so custom states (e.g. 'home', 'not_home') map to binary 1/0
@@ -757,7 +881,7 @@ export class WaterfallHistoryCard extends LitElement {
     return null;
   }
 
-  private displayState(state: number | null, entityConfig: EntityConfig): string {
+  private displayState(state: number | null, entityConfig: EntityConfig, allowStateIndex = true): string {
     // Handle special states first
     if (state === UNKNOWN_STATE) {
       return entityConfig.state_unknown ?? this.config.state_unknown ?? DEFAULTS.state_unknown;
@@ -768,7 +892,7 @@ export class WaterfallHistoryCard extends LitElement {
 
     // Multi-state: return the original state name for the given index
     const stateColors = this.getStateColors(entityConfig);
-    if (stateColors && state !== null) {
+    if (stateColors && allowStateIndex && state !== null) {
       const keys = Object.keys(stateColors);
       if (Number.isInteger(state) && state >= 0 && state < keys.length) {
         return keys[state];
@@ -788,11 +912,11 @@ export class WaterfallHistoryCard extends LitElement {
     // Numeric values
     if (typeof state === 'number') {
       const digits = entityConfig.digits ?? this.config.digits ?? DEFAULTS.digits;
-      return state.toFixed(digits) + this.getUnit(entityConfig);
+      return state.toFixed(digits) + this.getUnit(entityConfig, allowStateIndex);
     }
 
     // Fallback
-    return (state ?? 'N/A') + this.getUnit(entityConfig);
+    return (state ?? 'N/A') + this.getUnit(entityConfig, allowStateIndex);
   }
 
   private isBinaryValue(value: number | null): boolean {
@@ -836,7 +960,7 @@ export class WaterfallHistoryCard extends LitElement {
     return DEFAULT_THRESHOLDS_BOOLEAN;
   }
 
-  private getColorForValue(value: number | null, entityConfig: EntityConfig): string {
+  private getColorForValue(value: number | null, entityConfig: EntityConfig, allowStateIndex = true): string {
     // Null means no data exists for the bucket (e.g. before the entity was created).
     // Render transparent so the container background shows through as an empty track.
     if (value === null || isNaN(value)) return 'transparent';
@@ -851,7 +975,7 @@ export class WaterfallHistoryCard extends LitElement {
 
     // Multi-state: look up color by index into state_colors keys
     const stateColors = this.getStateColors(entityConfig);
-    if (stateColors) {
+    if (stateColors && allowStateIndex) {
       const keys = Object.keys(stateColors);
       if (Number.isInteger(value) && value >= 0 && value < keys.length) {
         return stateColors[keys[value]] || '#666666';
@@ -890,9 +1014,18 @@ export class WaterfallHistoryCard extends LitElement {
     return value < thresholds[0].value ? thresholds[0].color : thresholds[thresholds.length - 1].color;
   }
 
-  private getUnit(entityConfig: EntityConfig): string {
-    const entity = this.hass.states[entityConfig.entity];
-    return entityConfig.unit ?? this.config.unit ?? entity?.attributes?.unit_of_measurement ?? '';
+  private getUnit(entityConfig: EntityConfig, allowStateIndex = true): string {
+    // An explicit unit override always applies - including `unit: ""`, which
+    // suppresses the unit entirely (pre-existing behavior that must not
+    // change in state mode). The entity's own unit_of_measurement describes
+    // its STATE; a tracked attribute may have a different unit (or none -
+    // climate's current_temperature has temperature_unit, not
+    // unit_of_measurement), so in readings mode the state unit is not
+    // appended unless the user configured one.
+    const override = entityConfig.unit ?? this.config.unit;
+    if (override !== undefined && override !== null) return override;
+    if (!allowStateIndex) return '';
+    return this.hass.states[entityConfig.entity]?.attributes?.unit_of_measurement ?? '';
   }
 
   private interpolateColor(color1: string, color2: string, factor: number): string {
@@ -999,17 +1132,20 @@ export class WaterfallHistoryCard extends LitElement {
     // Get offset for this entity
     const startOffset = entityObj.start_offset ?? this.config.start_offset ?? 0;
 
-    // Use composite key to support same entity with different offsets
-    const cacheKey = `${entityId}_${startOffset}`;
+    // Use composite key to support same entity with different attributes/offsets
+    const cacheKey = this.cacheKeyFor(entityObj);
 
     // Get history data using composite key
     const historyData = this.processedHistories[cacheKey]?.data || [];
+
+    const trackedRaw = this.readTrackedValue(entity, entityObj);
+    const current = this.parseState(trackedRaw, entityObj);
 
     // For offset entities, don't append current state (it's historical data)
     // For non-offset entities, append current state as the last bar
     const history = startOffset > 0
       ? historyData.map(d => d.value)
-      : [...historyData.map(d => d.value), this.parseState(entity.state, entityObj)];
+      : [...historyData.map(d => d.value), current];
 
     const [actualMin, actualMax] = this.getMinMax(history);
 
@@ -1020,8 +1156,13 @@ export class WaterfallHistoryCard extends LitElement {
     const showCurrent = entityObj.show_current ?? this.config.show_current;
     const hours = entityObj.hours ?? this.config.hours!;
     const intervals = entityObj.intervals ?? this.config.intervals!;
-    const current = this.parseState(entity.state, entityObj);
     const inlineLayout = entityObj.inline_layout ?? this.config.inline_layout;
+
+    // Whether non-null integer values are state_colors indices (state mode,
+    // or a string-valued tracked attribute) or readings (numeric/boolean
+    // attribute). Recorded when the history was processed; state mode and a
+    // missing entry both default to index mode.
+    const stateIndexMode = this.processedHistories[cacheKey]?.stateIndex ?? true;
 
     // Build evenly-spaced time labels. label_count=1 gives [start, end].
     // label_count=N gives N+1 labels spaced (hours/N) apart, capped at hours.
@@ -1043,8 +1184,8 @@ export class WaterfallHistoryCard extends LitElement {
     const waterfallBars = html`
       ${history.map((value, index) => {
         const isLast = index === history.length - 1;
-        const color = this.getColorForValue(value, entityObj);
-        const title = `${this.getTimeLabel(index, intervals, hours, startOffset)} : ${value !== null ? this.displayState(value, entityObj) : this.t('no_data')}`;
+        const color = this.getColorForValue(value, entityObj, stateIndexMode);
+        const title = `${this.getTimeLabel(index, intervals, hours, startOffset)} : ${value !== null ? this.displayState(value, entityObj, stateIndexMode) : this.t('no_data')}`;
         return html`
           <div
             class="bar-segment ${isLast ? 'last-bar' : ''}"
@@ -1073,11 +1214,11 @@ export class WaterfallHistoryCard extends LitElement {
               </div>
             ` : ''}
           </div>
-          ${showCurrent ? html`<div class="entity-inline-value">${this.displayState(current, entityObj)}</div>` : ''}
+          ${showCurrent ? html`<div class="entity-inline-value">${this.displayState(current, entityObj, stateIndexMode)}</div>` : ''}
         </div>
         ${showMinMax ? html`
           <div class="min-max-label">
-            ${this.t('min_label')}: ${this.displayState(actualMin, entityObj)} / ${this.t('max_label')}: ${this.displayState(actualMax, entityObj)}
+            ${this.t('min_label')}: ${this.displayState(actualMin, entityObj, stateIndexMode)} / ${this.t('max_label')}: ${this.displayState(actualMax, entityObj, stateIndexMode)}
           </div>
         ` : ''}
       `;
@@ -1089,7 +1230,7 @@ export class WaterfallHistoryCard extends LitElement {
         <div class="entity-header">
           ${showIcons ? html`<ha-icon class="entity-icon" .icon=${icon}></ha-icon>` : ''}
           <button type="button" class="entity-name" aria-haspopup="dialog">${name}</button>
-          ${showCurrent ? html`<span class="current-value">${this.displayState(current, entityObj)}</span>` : ''}
+          ${showCurrent ? html`<span class="current-value">${this.displayState(current, entityObj, stateIndexMode)}</span>` : ''}
         </div>
         <div class="waterfall-container">
           ${waterfallBars}
@@ -1101,7 +1242,7 @@ export class WaterfallHistoryCard extends LitElement {
         ` : ''}
         ${showMinMax ? html`
           <div class="min-max-label">
-            ${this.t('min_label')}: ${this.displayState(actualMin, entityObj)} / ${this.t('max_label')}: ${this.displayState(actualMax, entityObj)}
+            ${this.t('min_label')}: ${this.displayState(actualMin, entityObj, stateIndexMode)} / ${this.t('max_label')}: ${this.displayState(actualMax, entityObj, stateIndexMode)}
           </div>
         ` : ''}
       </div>

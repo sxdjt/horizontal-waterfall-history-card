@@ -368,6 +368,7 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
         <ha-selector
           .hass=${this.hass}
           .required=${false}
+          .label=${'Interval Value'}
           .selector=${{
             select: {
               options: [
@@ -380,8 +381,22 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
           .value=${this._config.interval_value || DEFAULTS.interval_value}
           @value-changed=${(ev: CustomEvent) =>
             this._configValueChanged('interval_value', ev.detail.value)}
-          .label=${'Interval Value'}
         ></ha-selector>
+
+        <ha-selector
+          .hass=${this.hass}
+          .required=${false}
+          .label=${'Track Attribute (optional)'}
+          .value=${this._config.attribute || ''}
+          .selector=${{text: {}}}
+          @value-changed=${(ev: CustomEvent) =>
+            this._configValueChanged('attribute', ev.detail.value || undefined)}
+        ></ha-selector>
+        <p class="helper-text">
+          Track an entity attribute instead of the state (e.g. hvac_action on a climate entity).
+          Leave blank to track the state. Pair with Multi-State Colors to color the attribute values.
+          An entity can track its state instead by setting its own attribute to "state".
+        </p>
       </div>
     `;
   }
@@ -753,6 +768,21 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
               this._entityChanged(index, 'interval_value' as any, ev.detail.value || undefined)}
             .label=${'Interval Value (override)'}
           ></ha-selector>
+
+          <ha-selector
+            .hass=${this.hass}
+            .required=${false}
+            .label=${'Track Attribute (override)'}
+            .value=${entityConfig.attribute || ''}
+            .selector=${{text: {}}}
+            @value-changed=${(ev: CustomEvent) =>
+              this._entityChanged(index, 'attribute', ev.detail.value || undefined)}
+          ></ha-selector>
+          <p class="helper-text">
+            Track this attribute instead of the state for this entity. Leave blank to use the
+            card-level attribute; enter "state" to track this entity's state even when a
+            card-level attribute is set.
+          </p>
 
           <h4>Binary State Overrides</h4>
 
