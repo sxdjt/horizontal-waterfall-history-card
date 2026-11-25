@@ -9,16 +9,16 @@
 - **Horizontal waterfall charts** - visualize entity history as a sequence of colored bar segments.
 - **Customizable time window** - choose how many hours to show and how many intervals to split into.
 - **Threshold-based colors** - colors automatically adapt to value thresholds (configurable).
-- **Binary sensor customization** - customize on/off colors and state labels for binary sensors, switches, and other binary entities.
-- **Binary state labels** - display "On"/"Off", "Open"/"Closed", "Unlocked"/"Locked" instead of numeric values.
-- **Multi-state sensor support** - map any set of HA state strings to distinct colors (e.g. HVAC modes: cool, heat, fan_only, idle, off).
+- **Binary entities** - custom on/off colors and labels (e.g. "Open"/"Closed", "Unlocked"/"Locked") for binary sensors, switches, locks and other two-state entities.
+- **Multi-state sensor support** - map any set of HA state strings to distinct colors (e.g. HVAC modes: cool, heat, fan_only, off).
 - **Attribute tracking** - chart an entity attribute instead of the state (e.g. `hvac_action: heating|idle` on climate entities).
 - **Unknown/unavailable state handling** - entities in unknown or unavailable states display with customizable colors and labels instead of errors.
 - **Entity icons** - show icons next to entity names; toggle globally or per-entity.
 - **Compact mode** - shrink fonts and spacing for tighter dashboards.
 - **Inline layout mode** - display entity name, graph, and current value on a single line.
-- **Short duration event detection** - captures brief state changes for binary entities (doors, motion, lights).
+- **Short duration event detection** - with `interval_value: max`, a cell shows a brief state change (e.g. a door opened and closed within it) that the default `last` would hide. See [How Each Interval Is Represented](#how-each-interval-is-represented-interval_value).
 - **Per-entity overrides** - customize hours, intervals, labels, icons, colors, state labels, and display options per entity.
+- **More-info on click** - click an entity to open its Home Assistant more-info dialog.
 
 <img  height="600" alt="Card" src="https://github.com/user-attachments/assets/d6a1f295-16be-461d-b332-b9c07b04f37e" />
 
@@ -44,62 +44,54 @@ entities:
     name: Inside
 ```
 
-### Binary Sensors with State Labels
-
-```yaml
-type: custom:waterfall-history-card
-title: Doors & Windows
-state_on: "Open"
-state_off: "Closed"
-color_on: '#FFC107'
-color_off: '#4CAF50'
-entities:
-  - binary_sensor.front_door
-  - binary_sensor.back_door
-  - binary_sensor.garage_door
-```
+For doors, switches and other binary entities, see [Binary State Label Customization](#binary-state-label-customization).
 
 ---
 
 ## Configuration
 
+The card has a visual editor (dashboard -> Edit card). A few options are YAML-only:
+
+- Card level: `binary_colors`, `card_mod`, `icon`, `start_offset`, `unit`
+- Per entity: `binary_colors`, `gradient`, `show_min_max`, `start_offset`, `state_on`/`state_off`, and the unknown/unavailable colors and labels
+
 ### Card-Level Options
 
 | Option           | Type      | Default     | Description                                                                 |
 |------------------|-----------|-------------|-----------------------------------------------------------------------------|
-| `title`          | `string`  | `"History"` | Card title shown at the top.                                                |
 | `entities`       | `array`   | **required**| List of entity objects to display (see per-entity options below).           |
-| `hours`          | `number`  | `24`        | Time range in hours to show history.                                        |
-| `intervals`      | `number`  | `48`        | Number of intervals (bars) to divide the history into.                      |
-| `start_offset`   | `number`  | `0`         | Hours to offset the time window (e.g., 24 = show 24-48h ago instead of 0-24h). |
+| `attribute`      | `string`  | -           | Track an entity attribute instead of the state (global default), e.g. `hvac_action`. Pair with `state_colors` to color the attribute's values. An entity can track its state instead with `attribute: state` (case-insensitive). See [Tracking an Attribute](#tracking-an-attribute). |
+| `binary_colors`  | `object`  | -           | Alternative way to set binary colors: `{on: '#color', off: '#color'}`.      |
+| `card_mod`       | `object`  | -           | card-mod configuration for advanced styling. See [Styling: CSS Variables](#styling-css-variables). |
+| `cell_gap`       | `number`  | `1`         | Gap in pixels between bar segments. Set to `0` to disable gaps (useful for e-ink/high-contrast themes). |
+| `color_off`      | `string`  | `#2d3245`   | Color for binary sensors in "off" state (global default).                   |
+| `color_on`       | `string`  | `#4a9eff`   | Color for binary sensors in "on" state (global default).                    |
+| `color_unavailable` | `string` | `#9E9E9E` | Color for entities in "unavailable" state (gray).                           |
+| `color_unknown`  | `string`  | `#FF9800`   | Color for entities in "unknown" state (orange).                             |
+| `compact`        | `boolean` | `false`     | Use smaller font sizes and spacing.                                         |
+| `digits`         | `number`  | `1`         | Number of decimal places for numeric values.                                |
+| `gradient`       | `boolean` | `false`     | Use gradient interpolation between thresholds.                              |
 | `height`         | `number`  | `60`        | Height in pixels of each entity's waterfall chart.                          |
-| `show_labels`    | `boolean` | `true`      | Show time labels under the bar. Has no effect when `inline_layout: true` (inline rows never show time labels). |
+| `hours`          | `number`  | `24`        | Time range in hours to show history.                                        |
+| `icon`           | `string`  | entity/domain default | Override the icon shown next to entity names (e.g. `mdi:power-cycle`). Falls back to the entity's own icon, then a domain default. Can be overridden per entity. |
+| `inline_layout`  | `boolean` | `false`     | Display name, graph, and value on a single line. Time labels are hidden in this layout. |
+| `interval_value` | `string`  | `"last"`    | How to represent each bucket: `last` (final value), `min` (lowest value), `max` (highest value). |
+| `intervals`      | `number`  | `48`        | Number of intervals (bars) to divide the history into.                      |
 | `label_count`    | `number`  | `1`         | Number of label segments. `1` = start + end only; `2` = start + midpoint + end; max = `hours`. |
-| `label_format`   | `string`  | `"relative"`| Format for the time labels under the bar: `relative` (e.g. `24h ago`, `Now`), `24h` (e.g. `14:30`), `12h` (e.g. `2:30 PM`). Any other value falls back to `24h`. Does not affect the hover tooltip, which always shows clock times. |
-| `show_min_max`   | `boolean` | `false`     | Show min/max values under the chart.                                        |
+| `label_format`   | `string`  | `"relative"`| Format for the time labels under the bar: `relative` (e.g. `24h ago`, `Now`), `24h` (e.g. `14:30`), `12h` (e.g. `2:30 PM`). Does not affect the hover tooltip, which always shows clock times. |
 | `show_current`   | `boolean` | `true`      | Show the current value next to the entity name.                             |
 | `show_icons`     | `boolean` | `true`      | Show entity icons globally. Can be overridden per entity.                   |
-| `icon`           | `string`  | entity/domain default | Override the icon shown next to entity names (e.g. `mdi:power-cycle`). Falls back to the entity's own icon, then a domain default. Can be overridden per entity. |
-| `compact`        | `boolean` | `false`     | Use smaller font sizes and spacing.                                         |
-| `inline_layout`  | `boolean` | `false`     | Display name, graph, and value on a single line. Time labels are hidden in this layout. |
-| `color_on`       | `string`  | `#EEEEEE`   | Color for binary sensors in "on" state (global default).                    |
-| `color_off`      | `string`  | `#636363`   | Color for binary sensors in "off" state (global default).                   |
-| `binary_colors`  | `object`  | -           | Alternative way to set binary colors: `{on: '#color', off: '#color'}`.      |
-| `state_on`       | `string`  | `"On"`      | Matches the HA state string for "on" and sets the display label (global default). E.g. `"home"` for a person entity.  |
+| `show_labels`    | `boolean` | `true`      | Show time labels under the bar.                                             |
+| `show_min_max`   | `boolean` | `false`     | Show min/max values under the chart.                                        |
+| `start_offset`   | `number`  | `0`         | Hours to offset the time window (e.g., 24 = show 24-48h ago instead of 0-24h). |
+| `state_colors`   | `object`  | -           | Map HA state strings to colors for multi-state entities (e.g. HVAC modes). Keys are state names, values are colors. Applies to every entity unless the entity sets its own `state_colors`. List order ranks the states lowest to highest for `interval_value: min`/`max`. Overrides binary on/off logic when present. |
 | `state_off`      | `string`  | `"Off"`     | Matches the HA state string for "off" and sets the display label (global default). E.g. `"not_home"` for a person entity. |
-| `state_colors`   | `object`  | -           | Map HA state strings to colors for multi-state entities (e.g. HVAC modes). Keys are state names, values are hex colors. Applies to every entity unless the entity sets its own `state_colors`. List order ranks the states lowest to highest for `interval_value: min`/`max`. Overrides binary on/off logic when present. |
-| `attribute`      | `string`  | -           | Track an entity attribute instead of the state (global default), e.g. `hvac_action`. Pair with `state_colors` to color the attribute's values. An entity can track its state instead with `attribute: state` (case-insensitive). See [Tracking an Attribute](#tracking-an-attribute). |
-| `color_unknown`  | `string`  | `#FF9800`   | Color for entities in "unknown" state (orange).                             |
-| `color_unavailable` | `string` | `#9E9E9E` | Color for entities in "unavailable" state (gray).                           |
-| `state_unknown`  | `string`  | `"Unknown"` | Label to display for entities in "unknown" state.                           |
+| `state_on`       | `string`  | `"On"`      | Matches the HA state string for "on" and sets the display label (global default). E.g. `"home"` for a person entity.  |
 | `state_unavailable` | `string` | `"INOP"`  | Label to display for entities in "unavailable" state.                       |
+| `state_unknown`  | `string`  | `"Unknown"` | Label to display for entities in "unknown" state.                           |
 | `thresholds`     | `array`   | see below   | Color thresholds for numeric sensors.                                       |
-| `interval_value` | `string`  | `"last"`    | How to represent each bucket: `last` (final value), `min` (lowest value), `max` (highest value). |
-| `cell_gap`       | `number`  | `1`         | Gap in pixels between bar segments. Set to `0` to disable gaps (useful for e-ink/high-contrast themes). |
-| `gradient`       | `boolean` | `false`     | Use gradient interpolation between thresholds.                              |
-| `digits`         | `number`  | `1`         | Number of decimal places for numeric values.                                |
+| `title`          | `string`  | `"History"` | Card title shown at the top.                                                |
 | `unit`           | `string`  | auto        | Override unit of measurement.                                               |
-| `card_mod`       | `object`  | -           | card-mod configuration for advanced styling. See [Styling: CSS Variables](#styling-css-variables). |
 
 ---
 
@@ -110,27 +102,28 @@ Each item in `entities:` can be either a bare entity ID string, or an object wit
 | Option           | Type      | Default             | Description                                                         |
 |------------------|-----------|---------------------|---------------------------------------------------------------------|
 | `entity`         | `string`  | **required**        | The entity ID (e.g., `sensor.living_room_temp`).                    |
+| `attribute`      | `string`  | Inherits from card  | Track this attribute instead of the state for this entity (e.g. `hvac_action`). Set to `state` (case-insensitive) to track the state, opting out of a card-level `attribute`. |
 | `binary_colors`  | `object`  | Inherits from card  | Alternative: `{on: '#color', off: '#color'}` for this entity.       |
 | `color_off`      | `string`  | Inherits from card  | Color for this binary entity's "off" state.                         |
 | `color_on`       | `string`  | Inherits from card  | Color for this binary entity's "on" state.                          |
 | `color_unavailable` | `string` | Inherits from card | Color for this entity when in "unavailable" state.       |
 | `color_unknown`  | `string`  | Inherits from card  | Color for this entity when in "unknown" state.            |
 | `digits`         | `number`  | Inherits from card  | Override decimal places for this entity.                            |
+| `gradient`       | `boolean` | Inherits from card  | Use gradient interpolation between thresholds for this entity.      |
 | `hours`          | `number`  | Inherits from card  | Override the number of hours shown for this entity.                 |
 | `icon`           | `string`  | Inherits from card  | Override the icon for this entity (e.g. `mdi:power-cycle`). Takes precedence over the card-level `icon`, the entity's own icon, and the domain default. |
 | `inline_layout`  | `boolean` | Inherits from card  | Use inline layout for this entity.                        |
 | `interval_value` | `string`  | Inherits from card  | How to represent each bucket: `last`, `min`, or `max`.              |
 | `intervals`      | `number`  | Inherits from card  | Override the number of intervals (bars) for this entity.            |
+| `label_count`    | `number`  | Inherits from card  | Override label segment count for this entity.                       |
+| `label_format`   | `string`  | Inherits from card  | Override label format: `relative`, `24h`, or `12h`.                |
 | `name`           | `string`  | Friendly name / ID  | Override the display name.                                          |
 | `show_current`   | `boolean` | Inherits from card  | Show/hide current value just for this entity.                       |
 | `show_icons`     | `boolean` | Inherits from card  | Show/hide the icon for just this entity (overrides global setting). |
 | `show_labels`    | `boolean` | Inherits from card  | Show/hide labels just for this entity.                              |
-| `label_count`    | `number`  | Inherits from card  | Override label segment count for this entity.                       |
-| `label_format`   | `string`  | Inherits from card  | Override label format: `relative`, `24h`, or `12h`.                |
 | `show_min_max`   | `boolean` | Inherits from card  | Show/hide min/max just for this entity.                             |
 | `start_offset`   | `number`  | Inherits from card  | Hours to offset the time window for this entity.                    |
 | `state_colors`   | `object`  | Inherits from card  | Map HA state strings to colors for this entity. Overrides global `state_colors`. |
-| `attribute`      | `string`  | Inherits from card  | Track this attribute instead of the state for this entity (e.g. `hvac_action`). Set to `state` (case-insensitive) to track the state, opting out of a card-level `attribute`. |
 | `state_off`      | `string`  | Inherits from card  | Matches the HA state string for "off" and sets the display label for this entity. |
 | `state_on`       | `string`  | Inherits from card  | Matches the HA state string for "on" and sets the display label for this entity.  |
 | `state_unavailable` | `string` | Inherits from card | Label to display when this entity is "unavailable".      |
@@ -142,49 +135,39 @@ Each item in `entities:` can be either a bare entity ID string, or an object wit
 
 ## Styling: CSS Variables
 
-The card's typography is driven by CSS custom properties. Set them in your theme,
-in a `card_mod` block, or anywhere else that cascades into the card — no
-`!important` needed, since these are read directly by the card's own rules.
-
-Every variable below is optional. Leave it unset and the card looks exactly as it
-always has.
+The card's typography is driven by CSS custom properties. Set them in your theme, in a `card_mod` block, or anywhere else that cascades into the card. No `!important` is needed. Every variable is optional; unset variables keep the defaults below.
 
 ### Typography
 
 | Variable                                | Default                  | Applies to                                  |
 |-----------------------------------------|--------------------------|---------------------------------------------|
-| `--waterfall-header-font-size`           | `11px` (`10px` compact)  | The card title.                             |
-| `--waterfall-header-font-weight`         | `600`                    | The card title.                             |
-| `--waterfall-header-letter-spacing`      | `0.10em`                 | The card title.                             |
-| `--waterfall-header-text-transform`      | `uppercase`              | The card title.                             |
-| `--waterfall-header-color`               | `--secondary-text-color` | The card title.                             |
+| `--waterfall-entity-name-color`          | `--primary-text-color`   | Entity names, both layouts.                 |
 | `--waterfall-entity-name-font-size`      | `11px` (`10px` compact)  | Entity names, both layouts.                 |
 | `--waterfall-entity-name-font-weight`    | `500`                    | Entity names, both layouts.                 |
 | `--waterfall-entity-name-letter-spacing` | `0.07em`                 | Entity names, both layouts.                 |
 | `--waterfall-entity-name-text-transform` | `uppercase`              | Entity names, both layouts.                 |
-| `--waterfall-entity-name-color`          | `--primary-text-color`   | Entity names, both layouts.                 |
+| `--waterfall-header-color`               | `--secondary-text-color` | The card title.                             |
+| `--waterfall-header-font-size`           | `11px` (`10px` compact)  | The card title.                             |
+| `--waterfall-header-font-weight`         | `600`                    | The card title.                             |
+| `--waterfall-header-letter-spacing`      | `0.10em`                 | The card title.                             |
+| `--waterfall-header-text-transform`      | `uppercase`              | The card title.                             |
+| `--waterfall-labels-color`               | `--primary-text-color`   | Time labels under the bar.                  |
+| `--waterfall-labels-font-size`           | `9.5px`                  | Time labels under the bar.                  |
+| `--waterfall-labels-letter-spacing`      | `0.04em`                 | Time labels under the bar.                  |
+| `--waterfall-min-max-color`              | `--primary-text-color`   | The min/max label.                          |
+| `--waterfall-min-max-font-size`          | `10px`                   | The min/max label.                          |
+| `--waterfall-min-max-letter-spacing`     | `0.03em`                 | The min/max label.                          |
+| `--waterfall-value-color`                | inherits entity name     | The current-value readout.                  |
 | `--waterfall-value-font-size`            | inherits entity name     | The current-value readout.                  |
 | `--waterfall-value-font-weight`          | inherits entity name     | The current-value readout.                  |
 | `--waterfall-value-letter-spacing`       | inherits entity name     | The current-value readout.                  |
 | `--waterfall-value-text-transform`       | inherits entity name     | The current-value readout.                  |
-| `--waterfall-value-color`                | inherits entity name     | The current-value readout.                  |
-| `--waterfall-labels-font-size`           | `9.5px`                  | Time labels under the bar.                  |
-| `--waterfall-labels-letter-spacing`      | `0.04em`                 | Time labels under the bar.                  |
-| `--waterfall-labels-color`               | `--primary-text-color`   | Time labels under the bar.                  |
-| `--waterfall-min-max-font-size`          | `10px`                   | The min/max label.                          |
-| `--waterfall-min-max-letter-spacing`     | `0.03em`                 | The min/max label.                          |
-| `--waterfall-min-max-color`              | `--primary-text-color`   | The min/max label.                          |
 
-The `--waterfall-value-*` variables fall back to their `--waterfall-entity-name-*`
-counterparts, so setting the entity-name variable alone restyles names and values
-together — the card's long-standing behaviour. Set a `--waterfall-value-*`
-variable only when you want the readout to differ from the name.
+The `--waterfall-value-*` variables fall back to their `--waterfall-entity-name-*` counterparts, so setting the entity-name variable alone restyles names and values together. Set a `--waterfall-value-*` variable only when you want the readout to differ from the name.
 
 ### Matching the Home Assistant UI
 
-The card ships with a deliberately compact, small-caps label style. If you would
-rather it blend into the surrounding dashboard, point the variables at Home
-Assistant's own typography tokens:
+The card ships with a deliberately compact, small-caps label style. If you would rather it blend into the surrounding dashboard, point the variables at Home Assistant's own typography tokens:
 
 ```yaml
 # In your theme
@@ -199,13 +182,9 @@ waterfall-entity-name-letter-spacing: normal
 waterfall-entity-name-text-transform: none
 ```
 
-Because a theme cascades everywhere, this restyles every waterfall card at once.
-To restyle a single card instead, put the same declarations in a `card_mod`
-block under `:host { ... }`.
+Because a theme cascades everywhere, this restyles every waterfall card at once. To restyle a single card instead, put the same declarations in a `card_mod` block under `:host { ... }`.
 
-> **Note the `--` prefix.** Theme files omit it (Home Assistant adds it for
-> you), but inside `card_mod` you must write it yourself. Also check the key is
-> `card_mod` with an underscore — `card-mod:` is silently ignored.
+> **Note the `--` prefix.** Theme files omit it (Home Assistant adds it for you), but inside `card_mod` you must write it yourself. Also check the key is `card_mod` with an underscore; `card-mod:` is silently ignored.
 
 ```yaml
 card_mod:
@@ -217,23 +196,13 @@ card_mod:
 
 ### Internal variables
 
-The card writes `--header-font-size`, `--entity-name-font-size`,
-`--labels-margin-top`, `--waterfall-height` and `--waterfall-cell-gap` as inline
-styles on its host element every time the config is applied. Inline styles win
-over the cascade, so setting those five names in a theme has no effect — they are
-internal plumbing driven by the `compact`, `height` and `cell_gap` options, not
-styling hooks.
-
-The `--waterfall-*` typography variables documented above are never set inline,
-which is what makes them themable. The two font-size variables keep the old names
-as an inner fallback, so any existing override of those names keeps behaving
-exactly as it does today.
+The card sets `--header-font-size`, `--entity-name-font-size`, `--labels-margin-top`, `--waterfall-height` and `--waterfall-cell-gap` as inline styles from the `compact`, `height` and `cell_gap` options, so a theme cannot override them. Use the `--waterfall-*` variables above instead.
 
 ---
 
 ## How Each Interval Is Represented: `interval_value`
 
-The time range is divided into equal-width buckets (controlled by `intervals`). Multiple state changes can occur within a single bucket. The `interval_value` option controls which value is used to represent each bucket.
+The time range is split into `intervals` equal buckets; when a bucket holds several changes, `interval_value` picks which value it shows:
 
 | Value  | Behavior                                         | Use case                                              |
 |--------|--------------------------------------------------|-------------------------------------------------------|
@@ -241,14 +210,7 @@ The time range is divided into equal-width buckets (controlled by `intervals`). 
 | `min`  | Lowest value recorded in the bucket              | Detecting brief dips (e.g., latency spike to 0)       |
 | `max`  | Highest value recorded in the bucket             | Detecting brief activations (e.g., door briefly opened) |
 
-**For binary sensors**, on=1 and off=0, so:
-- `interval_value: max` - shows the bucket as "on" if the entity was on at any point, even briefly
-- `interval_value: min` - shows the bucket as "off" if the entity was off at any point, even briefly
-- `interval_value: last` (default) - shows whichever state the entity was in at the end of the bucket; brief events that return to the original state are not visible
-
-**For numeric sensors**, `min` and `max` capture the extreme value within the bucket rather than just the final reading.
-
-**Examples (binary sensor, 1-minute buckets):**
+Binary sensors count on as 1 and off as 0, so `max` shows a bucket as on if the entity was on at any point in it:
 
 | Activity in bucket          | `last` | `min` | `max` |
 |-----------------------------|--------|-------|-------|
@@ -274,7 +236,9 @@ Set globally or per-entity:
 
 ## Examples
 
-### Basic Multi-Entity Temperature Card
+### Per-Entity Overrides
+
+Any per-entity option overrides the card-level value for that entity:
 
 ```yaml
 type: custom:waterfall-history-card
@@ -307,11 +271,9 @@ entities:
     start_offset: 24
 ```
 
-The `start_offset` shifts the time window back by the specified hours. With `hours: 24` and `start_offset: 24`, you see data from 24-48 hours ago instead of 0-24 hours ago.
+### Inline Column Widths with card-mod
 
-### Using CardMod to adjust spacing
-
-You can use card-mod to adjust the amount of space given for the entity name and graph 'columns'. Use this to adjust as necessary to avoid truncated entity names and give as much space as desired for the graph element.
+In inline layout, widen the name and value columns so names aren't truncated:
 
 ```yaml
 type: custom:waterfall-history-card
@@ -335,29 +297,20 @@ card_mod:
 ```yaml
 type: custom:waterfall-history-card
 title: HVAC History
-hours: 24
-intervals: 48
+state_colors:
+  'off': '#2d3245'
+  auto: '#9E9E9E'
+  cool: '#4FC3F7'
+  heat: '#EF5350'
+  fan_only: '#66BB6A'
 entities:
-  - entity: climate.living_room
-    state_colors:
-      'off': '#2d3245'
-      idle: '#9E9E9E'
-      cool: '#4FC3F7'
-      heat: '#EF5350'
-      fan_only: '#66BB6A'
-  - entity: climate.bedroom
-    state_colors:
-      'off': '#2d3245'
-      idle: '#9E9E9E'
-      cool: '#4FC3F7'
-      heat: '#EF5350'
+  - climate.living_room
+  - climate.bedroom
 ```
 
-State names must match the HA state values exactly (case-insensitive). The order you list the states only matters for `interval_value: min` / `max`: the first state listed is the lowest, the last is the highest. With `last` (the default) order has no effect. Use `last` for HVAC entities, since mode states have no natural ranking.
+State names must match the HA state values exactly (case-insensitive). A card-level `state_colors` applies to every entity; an entity's own `state_colors` replaces it for that entity. List order matters only for `interval_value: min` / `max`, where the first state is the lowest and the last is the highest. Use the default `last` for HVAC modes, since they have no natural ranking.
 
-### Shared State Colors (Card Level)
-
-Set `state_colors` once at the card level to apply it to every entity. An entity's own `state_colors` replaces the card-level map for that entity.
+### Ranked States with `interval_value: max`
 
 ```yaml
 type: custom:waterfall-history-card
@@ -447,23 +400,21 @@ entities:
       away_indefinitely: '#9E9E9E'
 ```
 
-Without `state_colors` this card would be blank.
-
 #### Notes
 
-- `attribute` can be set per-entity (Examples 2 and 3) or once at the card level for all entities (Example 1).
 - The built-in `hvac_action` colors apply only when neither the entity nor the card sets `state_colors`. A card-level `state_colors` meant for other entities also replaces them, so give the `hvac_action` entity its own `state_colors` in that case.
-- To track the state for one entity while a card-level `attribute` is set, give that entity `attribute: state` (case-insensitive). This is also how you opt an entity out from the visual editor, where clearing the field inherits the card-level value.
-- The attribute may change more often than the state, so the card fetches full history (with attributes) in this mode - the chart resolution reflects every attribute change. Each refresh fetches every recorded row with full attributes, so a long `hours` window on a frequently updating entity (e.g. a climate entity that reports `current_temperature` every few seconds) can mean thousands of rows per request and a noticeably larger history response.
-- Attribute values that are not in `state_colors` render as empty cells (no data), rather than falling back to binary on/off colors. A numeric attribute (e.g. `current_temperature`) still works like a sensor value and can use `thresholds`; its readings are never colored with `state_colors` even when a map is configured elsewhere on the card.
-- A boolean attribute (e.g. a template sensor's `some_flag: true`) maps to binary on/off, never to `state_colors` entries.
-- Numeric attribute values show no unit next to the value, because Home Assistant does not publish a unit per attribute (the entity's `unit_of_measurement` describes its state, not the attribute). Set `unit` explicitly to display one.
-- If the entity itself becomes `unknown`/`unavailable`, that still wins - it is shown in the unknown/unavailable color even in attribute mode.
-- History is fetched per (entity, attribute, time offset) combination, so the same entity can be charted twice - once by state and once by attribute - in the same card.
+- In the visual editor, clearing an entity's attribute field inherits the card-level value. Enter `state` to track the state instead.
+- Attribute mode fetches full history with attributes on every refresh. A long `hours` window on a frequently updating entity (e.g. a climate entity reporting `current_temperature` every few seconds) can mean thousands of rows per request.
+- Numeric attributes (e.g. `current_temperature`) use `thresholds` like a sensor, and boolean attributes (e.g. `some_flag: true`) use the on/off colors. Neither is matched against `state_colors`.
+- Numeric attribute values show no unit, because the entity's `unit_of_measurement` describes its state, not the attribute. Set `unit` to display one.
+- If the entity itself becomes `unknown`/`unavailable`, that still wins, even in attribute mode.
+- History is fetched per (entity, attribute, time offset) combination, so the same entity can be charted twice in one card, once by state and once by attribute.
 
 ---
 
-### Binary Sensors with Custom State Labels
+## Binary State Label Customization
+
+Labels and colors can be set for the whole card and overridden per entity:
 
 ```yaml
 type: custom:waterfall-history-card
@@ -492,38 +443,17 @@ entities:
     color_off: '#4CAF50'
 ```
 
----
+Binary colors resolve in this order: per-entity `binary_colors`, per-entity `color_on`/`color_off`, card-level `binary_colors`, card-level `color_on`/`color_off`, then the defaults in the options table. The first level that sets either color supplies both: a per-entity `color_on` alone pairs with the default off color, not the card-level `color_off`.
 
-## Binary State Label Customization
-
-### Global State Labels
-
-Set default labels for all binary entities:
+Any `thresholds` setting, at card or entity level, replaces on/off colors entirely, because on and off are colored as the values 1 and 0. A card-level temperature scale will therefore also color a door sensor on the same card, and per-entity `color_on`/`color_off` will not change that. Give the binary entity its own `thresholds` instead:
 
 ```yaml
-type: custom:waterfall-history-card
-title: Home Status
-state_on: "Active"
-state_off: "Inactive"
-entities:
-  - binary_sensor.motion_living_room
-  - switch.kitchen_light
-```
-
-### Per-Entity State Labels
-
-Override labels for specific entities:
-
-```yaml
-type: custom:waterfall-history-card
-title: Security
-entities:
-  - entity: binary_sensor.front_door
-    state_on: "Open"
-    state_off: "Closed"
-  - entity: lock.front_door
-    state_on: "Unlocked"
-    state_off: "Locked"
+- entity: binary_sensor.front_door
+  thresholds:
+    - value: 0
+      color: '#2d3245'
+    - value: 1
+      color: '#4a9eff'
 ```
 
 ### Custom State Matching for Non-Binary Entities
@@ -544,93 +474,45 @@ entities:
 
 Note: check the exact state values your entity uses in Developer Tools -> States. For example, `person.*` uses `home` and `not_home`; `device_tracker.*` may use `home` and `not_home` or zone names.
 
-### Supported Binary Entity Types
-
-`state_on`/`state_off` work with any entity type, including:
-
-- `binary_sensor.*` (motion, door, window, etc.)
-- `switch.*`
-- `light.*` (on/off only)
-- `input_boolean.*`
-- `person.*` (e.g. `home` / `not_home`)
-- `device_tracker.*`
-- `alarm_control_panel.*`
-- `cover.*` (e.g. `open` / `closed`)
-
 ---
 
-
-### Color Precedence
-
-When multiple color configurations exist, the card uses this priority:
-
-1. Per-entity `binary_colors` or `color_on`/`color_off`
-2. Global `binary_colors` or `color_on`/`color_off`
-3. Default colors (`#636363` off, `#EEEEEE` on)
-
-### Supported Color Formats
+## Supported Color Formats
 
 All standard CSS color formats are supported:
 - **Hex**: `#FF0000` or `#F00`
+- **HSL**: `hsl(0, 100%, 50%)`
+- **Named**: `red`, `blue`, `green`, etc.
 - **RGB**: `rgb(255, 0, 0)`
 - **RGBA**: `rgba(255, 0, 0, 0.5)`
-- **Named**: `red`, `blue`, `green`, etc.
-- **HSL**: `hsl(0, 100%, 50%)`
+
+NOTE: with `gradient: true`, threshold and on/off colors must be 6-digit hex (`#FF0000`). Blending treats any other format, including 3-digit hex, as black, so cells come out black or darkened.
 
 ---
 
-## Default Thresholds (Numeric Sensors)
+## Thresholds and Gradient
 
-For numeric sensors (like temperature), the card uses these default thresholds if none are specified:
+Numeric values are colored by `thresholds`, a list of `value`/`color` pairs ordered from lowest to highest value. Each color applies from its `value` up to the next threshold, and values below the first threshold use the first color.
 
-```yaml
-thresholds:
-  - value: 60
-    color: "#4FC3F7"
-  - value: 70
-    color: "#81C784"
-  - value: 80
-    color: "#FFB74D"
-  - value: 100
-    color: "#FF8A65"
-```
+With `gradient: true`, each color is exact at its `value` and blends toward the next, so with the defaults below a reading of 75 is halfway between green and amber. Values below the first threshold or above the last use that end's color. Gradient colors must be 6-digit hex (see [Supported Color Formats](#supported-color-formats)).
 
-| Threshold | Color     | Description |
-|-----------|-----------|-------------|
-| 60        | `#4FC3F7` | Cold (blue) |
-| 70        | `#81C784` | Cool (green)|
-| 80        | `#FFB74D` | Warm (orange)|
-| 100       | `#FF8A65` | Hot (red)   |
+Thresholds also override on/off colors on binary entities; see [Binary State Label Customization](#binary-state-label-customization).
 
----
+### Defaults
 
-## Default Colors (Binary Sensors)
+If no `thresholds` are set, the card uses these. They assume a temperature in Fahrenheit; set your own `thresholds` for Celsius or any other kind of sensor.
 
-For binary sensors (on/off), the card uses these default colors and labels if none are specified:
+Readings of exactly 0 or 1 are treated as off/on unless `thresholds` is set, so give sensors that can read 0 or 1 their own `thresholds`.
 
-| State | Color     | Label | Description       |
-|-------|-----------|-------|-------------------|
-| Off/0 | `#636363` | "Off" | Dark gray         |
-| On/1  | `#EEEEEE` | "On"  | Light gray        |
+| Value range     | Color     | Description  |
+|-----------------|-----------|--------------|
+| below 70        | `#5b8fce` | Cold (blue)  |
+| 70 to under 80  | `#52a870` | Cool (green) |
+| 80 to under 100 | `#d4894a` | Warm (amber) |
+| 100 and above   | `#c85c4a` | Hot (red)    |
 
-These can be overridden globally or per-entity using `color_on`/`color_off` and `state_on`/`state_off`.
+### Example: US National Weather Service Temperature Scale
 
----
-
-## Default Colors (Unknown & Unavailable States)
-
-For entities in unknown or unavailable states, v3.2 uses these default colors and labels:
-
-| State | Color     | Label | Description       |
-|-------|-----------|-------|-------------------|
-| Unknown | `#FF9800` | "Unknown" | Orange            |
-| Unavailable | `#9E9E9E` | "INOP" | Gray             |
-
-These can be overridden globally or per-entity using `color_unknown`/`color_unavailable` and `state_unknown`/`state_unavailable`.
-
----
-
-## US National Weather Service Temperature Color Scale
+This scale also works well with `gradient: true`, since every color is 6-digit hex.
 
 ```yaml
 type: custom:waterfall-history-card
