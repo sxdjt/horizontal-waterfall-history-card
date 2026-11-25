@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Changed
+- Removed the unused `@rollup/plugin-terser` development dependency. The build never used it, so the shipped JS is unchanged.
+
 ## [2026.11.12] - 2026-11-12
 
 Accessibility improvements (screen reader).
