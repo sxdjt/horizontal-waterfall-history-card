@@ -72,7 +72,8 @@ export interface EntityConfig {
   // Track an attribute instead of the entity state (e.g. 'hvac_action' on a
   // climate entity). The attribute's string value is matched against
   // state_colors exactly like a state. Unknown/unavailable still follow the
-  // entity's own state.
+  // entity's own state. The keyword 'state' (case-insensitive) explicitly
+  // tracks the state: per-entity it opts out of a card-level attribute.
   attribute?: string;
 
   // Unknown and unavailable states
@@ -121,7 +122,7 @@ export interface WaterfallHistoryCardConfig extends LovelaceCardConfig {
   state_on?: string;
   state_off?: string;
   state_colors?: Record<string, string>;
-  attribute?: string;  // Global default: track this attribute instead of the state
+  attribute?: string;  // Global default: track this attribute instead of the state ('state' = track the state)
   color_unknown?: string;
   color_unavailable?: string;
   state_unknown?: string;

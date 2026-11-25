@@ -341,13 +341,13 @@ class WaterfallHistoryCard extends i {
             return;
         const now = Date.now();
         const entitiesToUpdate = this.config.entities.filter(entityConfig => {
-            const entityId = typeof entityConfig === 'string' ? entityConfig : entityConfig.entity;
             const hours = typeof entityConfig !== 'string' ? (entityConfig.hours ?? this.config.hours) : this.config.hours;
             const intervals = typeof entityConfig !== 'string' ? (entityConfig.intervals ?? this.config.intervals) : this.config.intervals;
             const startOffset = typeof entityConfig !== 'string' ? (entityConfig.start_offset ?? this.config.start_offset ?? 0) : (this.config.start_offset ?? 0);
-            // Use composite key to support same entity with different attributes/offsets
-            const attribute = this.getTrackedAttribute(typeof entityConfig === 'string' ? undefined : entityConfig);
-            const cacheKey = `${entityId}_${attribute ?? 'state'}_${startOffset}`;
+            // Use the shared composite key so the key format lives in one place;
+            // it separates entries for the same entity with different
+            // attributes/offsets.
+            const cacheKey = this.cacheKeyFor(entityConfig);
             const baseRefreshInterval = ((hours / intervals) * 60 * 60 * 1000) / 2;
             const refreshInterval = startOffset && startOffset > 0 ? baseRefreshInterval * 4 : baseRefreshInterval;
             return !this._lastHistoryFetch[cacheKey] || (now - this._lastHistoryFetch[cacheKey] > refreshInterval);
@@ -359,12 +359,12 @@ class WaterfallHistoryCard extends i {
             const entityObj = typeof entityConfig === 'string' ? { entity: entityConfig } : entityConfig;
             const entityId = entityObj.entity;
             const attribute = this.getTrackedAttribute(entityObj);
-            const hours = entityObj.hours ?? this.config.hours;
-            const startOffset = entityObj.start_offset ?? this.config.start_offset ?? 0;
-            // Use composite key to support same entity with different attributes/offsets
-            const cacheKey = `${entityId}_${attribute ?? 'state'}_${startOffset}`;
+            // Use the shared composite key (see cacheKeyFor).
+            const cacheKey = this.cacheKeyFor(entityObj);
             // Calculate time window with offset
             // endTime is now shifted back by start_offset hours
+            const hours = entityObj.hours ?? this.config.hours;
+            const startOffset = entityObj.start_offset ?? this.config.start_offset ?? 0;
             const endTime = new Date(Date.now() - startOffset * 60 * 60 * 1000);
             const startTime = new Date(endTime.getTime() - hours * 60 * 60 * 1000);
             try {
@@ -586,10 +586,32 @@ class WaterfallHistoryCard extends i {
     getStateColors(entityConfig) {
         return entityConfig?.state_colors ?? this.config?.state_colors;
     }
-    // Returns the attribute to track for an entity, checking per-entity then global config.
-    // Named to avoid colliding with LitElement.getAttribute (the DOM API).
+    // Returns the attribute to track for an entity, checking per-entity then
+    // global config. Named to avoid colliding with LitElement.getAttribute (the
+    // DOM API).
+    //
+    // Opt-out: a per-entity `attribute: state` (case-insensitive) tracks the
+    // entity's state instead of the card-level attribute - without it there
+    // would be no way to opt an entity out from the visual editor, since
+    // clearing the field stores undefined, which inherits the card-level value.
+    // Empty and whitespace-only values resolve the same way. A card-level
+    // `attribute: state` is likewise treated as "track the state".
     getTrackedAttribute(entityConfig) {
-        return entityConfig?.attribute ?? this.config?.attribute;
+        const resolve = (attr) => {
+            if (attr === undefined || attr === null)
+                return undefined;
+            // YAML parses unquoted on/off/yes/no as booleans and bare numbers as
+            // numbers, so coerce instead of trusting the declared string type -
+            // attr.trim() on a non-string would throw and break the whole card.
+            const normalized = String(attr).trim();
+            if (normalized === '' || normalized.toLowerCase() === 'state')
+                return undefined;
+            return normalized;
+        };
+        if (entityConfig && entityConfig.attribute !== undefined && entityConfig.attribute !== null) {
+            return resolve(entityConfig.attribute);
+        }
+        return resolve(this.config?.attribute);
     }
     // Reads the tracked value from a state object: the configured attribute in
     // attribute mode, otherwise the entity state. In attribute mode the entity
@@ -804,18 +826,19 @@ class WaterfallHistoryCard extends i {
         return value < thresholds[0].value ? thresholds[0].color : thresholds[thresholds.length - 1].color;
     }
     getUnit(entityConfig, allowStateIndex = true) {
-        const entity = this.hass.states[entityConfig.entity];
-        // An explicit unit override always applies. The entity's own
-        // unit_of_measurement describes its STATE; a tracked attribute may have a
-        // different unit (or none - climate's current_temperature has
-        // temperature_unit, not unit_of_measurement), so in readings mode the
-        // state unit is not appended unless the user configured one.
-        if (entityConfig.unit || this.config.unit) {
-            return entityConfig.unit ?? this.config.unit;
-        }
+        // An explicit unit override always applies - including `unit: ""`, which
+        // suppresses the unit entirely (pre-existing behavior that must not
+        // change in state mode). The entity's own unit_of_measurement describes
+        // its STATE; a tracked attribute may have a different unit (or none -
+        // climate's current_temperature has temperature_unit, not
+        // unit_of_measurement), so in readings mode the state unit is not
+        // appended unless the user configured one.
+        const override = entityConfig.unit ?? this.config.unit;
+        if (override !== undefined && override !== null)
+            return override;
         if (!allowStateIndex)
             return '';
-        return entity?.attributes?.unit_of_measurement ?? '';
+        return this.hass.states[entityConfig.entity]?.attributes?.unit_of_measurement ?? '';
     }
     interpolateColor(color1, color2, factor) {
         const c1 = this.hexToRgb(color1);
@@ -1742,6 +1765,7 @@ class WaterfallHistoryCardEditor extends i {
         <p class="helper-text">
           Track an entity attribute instead of the state (e.g. hvac_action on a climate entity).
           Leave blank to track the state. Pair with Multi-State Colors to color the attribute values.
+          An entity can track its state instead by setting its own attribute to "state".
         </p>
       </div>
     `;
@@ -2079,6 +2103,11 @@ class WaterfallHistoryCardEditor extends i {
             .selector=${{ text: {} }}
             @value-changed=${(ev) => this._entityChanged(index, 'attribute', ev.detail.value || undefined)}
           ></ha-selector>
+          <p class="helper-text">
+            Track this attribute instead of the state for this entity. Leave blank to use the
+            card-level attribute; enter "state" to track this entity's state even when a
+            card-level attribute is set.
+          </p>
 
           <h4>Binary State Overrides</h4>
 

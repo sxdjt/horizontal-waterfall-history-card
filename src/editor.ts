@@ -395,6 +395,7 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
         <p class="helper-text">
           Track an entity attribute instead of the state (e.g. hvac_action on a climate entity).
           Leave blank to track the state. Pair with Multi-State Colors to color the attribute values.
+          An entity can track its state instead by setting its own attribute to "state".
         </p>
       </div>
     `;
@@ -777,6 +778,11 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
             @value-changed=${(ev: CustomEvent) =>
               this._entityChanged(index, 'attribute', ev.detail.value || undefined)}
           ></ha-selector>
+          <p class="helper-text">
+            Track this attribute instead of the state for this entity. Leave blank to use the
+            card-level attribute; enter "state" to track this entity's state even when a
+            card-level attribute is set.
+          </p>
 
           <h4>Binary State Overrides</h4>
 
