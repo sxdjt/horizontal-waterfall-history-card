@@ -8,7 +8,9 @@
     "prebuild": "node scripts/audit-gate.js",
     "build": "rollup -c && cp dist/horizontal-waterfall-history-card.js horizontal-waterfall-history-card.js",
     "watch": "rollup -c --watch",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "pretest": "rollup -c",
+    "test": "node --test tests/"
   },
   "keywords": [
     "home-assistant",

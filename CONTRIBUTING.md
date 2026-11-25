@@ -18,7 +18,7 @@ This project embraces the spirit of the Home Assistant community: **making home 
 1. **Fork the repository** and clone it locally
 2. **Create a new branch** for your feature or fix: `git checkout -b feature/your-feature-name`
 3. **Make your changes** following general coding good practices
-4. **Test thoroughly** to ensure everything works as expected
+4. **Test thoroughly**: run `npm test` (see `tests/README.md`), then check the card in Home Assistant
 5. **Submit a pull request** with a clear description
 
 ### Types of Contributions
