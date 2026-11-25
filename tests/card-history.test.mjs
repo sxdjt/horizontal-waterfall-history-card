@@ -199,6 +199,24 @@ describe('updateCard', () => {
     assert.equal(card.processedHistories['climate.x_t_0'].stateIndex, false);
   });
 
+  test('a refresh while the entity is unavailable keeps reading mode for a numeric attribute', async () => {
+    const states = { 'climate.x': stateObj('heat', { t: 1 }) };
+    const pts = [{ ...point('heat', at(0.5)), attributes: { t: 1 } }];
+    const card = makeCard({ hours: 4, intervals: 4, state_colors: { a: '#000001', b: '#000002' }, entities: [{ entity: 'climate.x', attribute: 't' }] }, states, {
+      history: () => [pts],
+    });
+    await card.updateCard();
+    assert.equal(card.processedHistories['climate.x_t_0'].stateIndex, false);
+    states['climate.x'] = stateObj('unavailable', {});
+    pts.push(point('unavailable', at(3.5)));
+    mock.timers.tick(HOUR);
+    await card.updateCard();
+    const entry = card.processedHistories['climate.x_t_0'];
+    assert.equal(entry.stateIndex, false);
+    // Readings of 1 keep their numeric color instead of the map's second entry.
+    assert.notEqual(card.getColorForValue(entry.data[0].value, { entity: 'climate.x', attribute: 't' }, entry.stateIndex), '#000002');
+  });
+
   test('does not refetch within the refresh interval (half a bucket)', async () => {
     const card = makeCard({ hours: 4, intervals: 4, entities: ['sensor.a'] }, { 'sensor.a': stateObj('1') });
     await card.updateCard();

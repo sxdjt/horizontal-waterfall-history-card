@@ -226,13 +226,18 @@ describe('currentValueIsStateIndex', () => {
     assert.equal(card.currentValueIsStateIndex(e, undefined), true);
   });
 
-  // KNOWN ISSUE: the source comment says the previous classification is kept
-  // "while the entity is unavailable", but readTrackedValue returns the state
-  // string 'unavailable' in that case, which classifies as index mode. A
-  // numeric-attribute entity that goes unavailable flips to index mode.
-  test('attribute mode while the entity is unavailable keeps the previous classification', { todo: 'known issue: unavailable reads as index mode' }, () => {
-    const card = makeCard({}, { 'climate.x': stateObj('unavailable', {}) });
-    assert.equal(card.currentValueIsStateIndex({ entity: 'climate.x', attribute: 'n' }, false), false);
+  test('attribute mode while the entity is unknown/unavailable keeps the previous classification', () => {
+    const card = makeCard({}, { 'climate.x': stateObj('unavailable', { n: 'stale' }), 'climate.y': stateObj('Unknown', {}) });
+    const e = { entity: 'climate.x', attribute: 'n' };
+    assert.equal(card.currentValueIsStateIndex(e, false), false);
+    assert.equal(card.currentValueIsStateIndex(e, true), true);
+    assert.equal(card.currentValueIsStateIndex(e), true);
+    assert.equal(card.currentValueIsStateIndex({ entity: 'climate.y', attribute: 'n' }, false), false);
+  });
+
+  test('attribute mode: an attribute whose value is the string "unavailable" is still a string', () => {
+    const card = makeCard({}, { 'sensor.x': stateObj('on', { status: 'unavailable' }) });
+    assert.equal(card.currentValueIsStateIndex({ entity: 'sensor.x', attribute: 'status' }, false), true);
   });
 });
 

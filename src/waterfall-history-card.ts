@@ -830,10 +830,16 @@ export class WaterfallHistoryCard extends LitElement {
   // Classifies the entity's current tracked value: are integer stored values
   // indices into state_colors (string-valued source) or readings (numeric /
   // boolean source)? Falls back to the previous classification while the
-  // entity is unavailable.
+  // entity is unknown/unavailable or the attribute is missing.
   private currentValueIsStateIndex(entityConfig: EntityConfig, previous?: boolean): boolean {
     if (!this.getTrackedAttribute(entityConfig)) return this.stateModeIsStateIndex(entityConfig, previous);
-    const raw = this.readTrackedValue(this.hass?.states[entityConfig.entity], entityConfig);
+    const stateObj = this.hass?.states[entityConfig.entity];
+    // Check the entity's own state: readTrackedValue returns that state
+    // ('unavailable', a string) while the entity is down, which would
+    // otherwise classify a numeric attribute as index mode.
+    const entityState = typeof stateObj?.state === 'string' ? stateObj.state.toLowerCase() : '';
+    if (entityState === 'unknown' || entityState === 'unavailable') return previous ?? true;
+    const raw = this.readTrackedValue(stateObj, entityConfig);
     if (typeof raw === 'string') return true;
     if (typeof raw === 'number' || typeof raw === 'boolean') return false;
     return previous ?? true;  // entity down: keep prior classification
