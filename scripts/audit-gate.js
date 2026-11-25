@@ -7,12 +7,7 @@ import { spawnSync } from 'node:child_process';
 
 const FAIL_SEVERITIES = new Set(['high', 'critical']);
 
-const ALLOWLIST = {
-  // picomatch ReDoS via repeated extglobs. Affects all versions <= 4.0.7
-  // (latest); no fix released. Pulled in by rollup plugins and
-  // typescript-eslint at build/lint time only, never shipped in the card.
-  'GHSA-fc5q-39xc-vjpf': 'picomatch ReDoS, no patched version (added 2026-11-17)',
-};
+const ALLOWLIST = {};
 
 const result = spawnSync('npm', ['audit', '--json'], { encoding: 'utf8' });
 
