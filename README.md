@@ -308,7 +308,7 @@ entities:
   - climate.bedroom
 ```
 
-State names must match the HA state values exactly (case-insensitive). A card-level `state_colors` applies to every entity; an entity's own `state_colors` replaces it for that entity. List order matters only for `interval_value: min` / `max`, where the first state is the lowest and the last is the highest. Use the default `last` for HVAC modes, since they have no natural ranking.
+State names must match the HA state values exactly (case-insensitive). A card-level `state_colors` applies to every entity; an entity's own `state_colors` replaces it for that entity. Entities with numeric states, such as temperature sensors on the same card, keep their numeric values and thresholds. List order matters only for `interval_value: min` / `max`, where the first state is the lowest and the last is the highest. Use the default `last` for HVAC modes, since they have no natural ranking.
 
 ### Ranked States with `interval_value: max`
 

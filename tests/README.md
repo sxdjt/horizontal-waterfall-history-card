@@ -39,5 +39,4 @@ Every function in `src/waterfall-history-card.ts` and `src/editor.ts` is covered
 Tests marked `todo` describe the intended behavior of a known bug. They run and report as `todo` without failing the suite. When a fix lands, remove the `todo` option so the test guards against regressions.
 
 - `card-parsing`: a numeric-attribute entity that goes unavailable switches to index mode instead of keeping its previous classification.
-- `card-render`: a numeric sensor on a card with a card-level `state_colors` map is colored and labeled as a state.
 - `editor`: the per-entity Decimal Places field cannot be set to 0.

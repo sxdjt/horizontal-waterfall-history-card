@@ -665,17 +665,44 @@ class WaterfallHistoryCard extends i {
     // Classifies the entity's current tracked value: are integer stored values
     // indices into state_colors (string-valued source) or readings (numeric /
     // boolean source)? Falls back to the previous classification while the
-    // entity is unavailable, and to index mode in state mode (states are
-    // always strings).
+    // entity is unavailable.
     currentValueIsStateIndex(entityConfig, previous) {
         if (!this.getTrackedAttribute(entityConfig))
-            return true; // state mode: always index
+            return this.stateModeIsStateIndex(entityConfig, previous);
         const raw = this.readTrackedValue(this.hass?.states[entityConfig.entity], entityConfig);
         if (typeof raw === 'string')
             return true;
         if (typeof raw === 'number' || typeof raw === 'boolean')
             return false;
         return previous ?? true; // entity down: keep prior classification
+    }
+    // State mode classification. States are always strings, but a numeric
+    // sensor's state ("2", "21.5") parses to a reading: when a state_colors map
+    // is in scope (e.g. a card-level map meant for other entities), its integer
+    // readings must not be colored and labeled as map entries. A state that
+    // matches a map key is always an index, so maps with numeric keys ('1',
+    // '2') keep working. While the entity is unknown/unavailable there is no
+    // state to inspect: keep the previous classification, else use
+    // unit_of_measurement / state_class, which only numeric sensors carry.
+    stateModeIsStateIndex(entityConfig, previous) {
+        const stateColors = this.getStateColors(entityConfig);
+        if (!stateColors)
+            return true; // no map: index lookups never happen
+        const stateObj = this.hass?.states[entityConfig.entity];
+        const raw = stateObj?.state;
+        if (typeof raw === 'string') {
+            const trimmed = raw.trim();
+            const lower = trimmed.toLowerCase();
+            if (Object.keys(stateColors).some(k => k.toLowerCase() === lower))
+                return true;
+            if (lower !== 'unknown' && lower !== 'unavailable') {
+                return !(trimmed !== '' && Number.isFinite(Number(trimmed)));
+            }
+        }
+        if (previous !== undefined)
+            return previous;
+        const attrs = stateObj?.attributes;
+        return attrs?.unit_of_measurement === undefined && attrs?.state_class === undefined;
     }
     parseState(state, entityConfig) {
         if (typeof state === 'number')
@@ -891,12 +918,13 @@ class WaterfallHistoryCard extends i {
         // change in state mode). The entity's own unit_of_measurement describes
         // its STATE; a tracked attribute may have a different unit (or none -
         // climate's current_temperature has temperature_unit, not
-        // unit_of_measurement), so in readings mode the state unit is not
-        // appended unless the user configured one.
+        // unit_of_measurement), so for attribute readings the state unit is not
+        // appended unless the user configured one. A numeric state in readings
+        // mode keeps its own unit.
         const override = entityConfig.unit ?? this.config.unit;
         if (override !== undefined && override !== null)
             return override;
-        if (!allowStateIndex)
+        if (!allowStateIndex && this.getTrackedAttribute(entityConfig))
             return '';
         return this.hass.states[entityConfig.entity]?.attributes?.unit_of_measurement ?? '';
     }
@@ -1007,11 +1035,11 @@ class WaterfallHistoryCard extends i {
         const hours = entityObj.hours ?? this.config.hours;
         const intervals = entityObj.intervals ?? this.config.intervals;
         const inlineLayout = entityObj.inline_layout ?? this.config.inline_layout;
-        // Whether non-null integer values are state_colors indices (state mode,
-        // or a string-valued tracked attribute) or readings (numeric/boolean
-        // attribute). Recorded when the history was processed; state mode and a
-        // missing entry both default to index mode.
-        const stateIndexMode = this.processedHistories[cacheKey]?.stateIndex ?? true;
+        // Whether non-null integer values are state_colors indices (a state or a
+        // string-valued tracked attribute) or readings (a numeric state or a
+        // numeric/boolean attribute). Recorded when the history was processed;
+        // before the first fetch, classify from the current value.
+        const stateIndexMode = this.processedHistories[cacheKey]?.stateIndex ?? this.currentValueIsStateIndex(entityObj);
         // Build evenly-spaced time labels. label_count=1 gives [start, end].
         // label_count=N gives N+1 labels spaced (hours/N) apart, capped at hours.
         const segments = Math.max(1, Math.min(Math.round(labelCount), hours));

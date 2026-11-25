@@ -131,15 +131,37 @@ describe('bars', () => {
     assert.equal(norm(b[0].attrs.title).split(' : ')[1], '1.0');
   });
 
-  // KNOWN ISSUE: in state mode every integer is treated as a state_colors
-  // index, so a numeric sensor on a card with a card-level state_colors map
-  // is colored and labeled as a state (a reading of 2 shows as the third
-  // state). The sensor should keep its numeric thresholds and value.
-  test('a numeric sensor ignores a card-level state_colors map', { todo: 'known issue: integers index into card-level state_colors' }, () => {
-    const card = makeCard({ hours: 4, intervals: 4, state_colors: { Poor: '#e45e65', Good: '#0da035', Great: '#039BE5' }, entities: ['sensor.count'] }, { 'sensor.count': stateObj('2', { unit_of_measurement: 'items' }) });
-    const b = bars(card.render());
+  // A card-level state_colors map applies to every entity, but a numeric
+  // sensor's integer readings must not be colored and labeled as map entries.
+  const goals = { Poor: '#e45e65', Good: '#0da035', Great: '#039BE5' };
+
+  test('a numeric sensor ignores a card-level state_colors map (before history loads)', () => {
+    const card = makeCard({ hours: 4, intervals: 4, state_colors: goals, entities: ['sensor.count'] }, { 'sensor.count': stateObj('2', { unit_of_measurement: 'items' }) });
+    const t = card.render();
+    const b = bars(t);
     assert.equal(barColor(b[b.length - 1]), DEFAULT_COLORS.numeric[0]);
-    assert.equal(find(card.render(), 'span', (el) => el.attrs.class === 'current-value').text, '2.0items');
+    assert.equal(find(t, 'span', (el) => el.attrs.class === 'current-value').text, '2.0items');
+  });
+
+  test('a numeric sensor ignores a card-level state_colors map (with history)', async () => {
+    const card = makeCard({ hours: 4, intervals: 4, state_colors: goals, entities: ['sensor.count', 'input_select.goal'] }, {
+      'sensor.count': stateObj('2', { unit_of_measurement: 'items' }),
+      'input_select.goal': stateObj('Great'),
+    }, { history: (url) => url.includes('sensor.count') ? [[{ state: '1', last_changed: new Date(NOW - 3.5 * HOUR).toISOString() }]] : [[{ state: 'Good', last_changed: new Date(NOW - 3.5 * HOUR).toISOString() }]] });
+    await card.updateCard();
+    const t = card.render();
+    const [countBars, goalBars] = [bars(t).slice(0, 5), bars(t).slice(5)];
+    assert.deepEqual(countBars.map(barColor), Array(5).fill(DEFAULT_COLORS.numeric[0]));
+    assert.equal(norm(countBars[0].attrs.title).split(' : ')[1], '1.0items');
+    assert.deepEqual(goalBars.map(barColor), ['#0da035', '#0da035', '#0da035', '#0da035', '#039BE5']);
+    assert.deepEqual(findAll(t, 'span', (el) => el.attrs.class === 'current-value').map((el) => el.text), ['2.0items', 'Great']);
+  });
+
+  test('a map with numeric keys still colors matching numeric states', () => {
+    const card = makeCard({ state_colors: { 1: '#000001', 2: '#000002' }, entities: ['input_select.level'] }, { 'input_select.level': stateObj('2') });
+    const t = card.render();
+    assert.equal(barColor(bars(t).at(-1)), '#000002');
+    assert.equal(find(t, 'span', (el) => el.attrs.class === 'current-value').text, '2');
   });
 });
 

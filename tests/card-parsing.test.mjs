@@ -177,9 +177,38 @@ describe('cacheKeyFor', () => {
 });
 
 describe('currentValueIsStateIndex', () => {
-  test('state mode is always index mode', () => {
+  test('state mode without a state_colors map is index mode (lookups never happen)', () => {
     const card = makeCard({}, { 'sensor.a': stateObj('5') });
     assert.equal(card.currentValueIsStateIndex({ entity: 'sensor.a' }), true);
+  });
+
+  test('state mode with a map: a numeric state not in the map is a reading', () => {
+    const card = makeCard({ state_colors: { Poor: '#000001', Good: '#000002' } }, {
+      'sensor.count': stateObj('2'), 'sensor.temp': stateObj(' 21.5 '), 'input_select.goal': stateObj('Good'), 'sensor.text': stateObj('Other'),
+    });
+    assert.equal(card.currentValueIsStateIndex({ entity: 'sensor.count' }), false);
+    assert.equal(card.currentValueIsStateIndex({ entity: 'sensor.temp' }), false);
+    assert.equal(card.currentValueIsStateIndex({ entity: 'input_select.goal' }), true);
+    assert.equal(card.currentValueIsStateIndex({ entity: 'sensor.text' }), true);
+  });
+
+  test('state mode with a map: a state matching a key is an index, even if numeric', () => {
+    const card = makeCard({ state_colors: { 1: '#000001', 2: '#000002' } }, { 'input_select.level': stateObj('2') });
+    assert.equal(card.currentValueIsStateIndex({ entity: 'input_select.level' }), true);
+  });
+
+  test('state mode with a map while unavailable: previous classification, else unit/state_class', () => {
+    const card = makeCard({ state_colors: { a: '#000001' } }, {
+      'sensor.u': stateObj('unavailable', { unit_of_measurement: 'W' }),
+      'sensor.s': stateObj('unknown', { state_class: 'measurement' }),
+      'input_select.x': stateObj('unavailable', {}),
+    });
+    assert.equal(card.currentValueIsStateIndex({ entity: 'sensor.u' }, true), true);
+    assert.equal(card.currentValueIsStateIndex({ entity: 'input_select.x' }, false), false);
+    assert.equal(card.currentValueIsStateIndex({ entity: 'sensor.u' }), false);
+    assert.equal(card.currentValueIsStateIndex({ entity: 'sensor.s' }), false);
+    assert.equal(card.currentValueIsStateIndex({ entity: 'input_select.x' }), true);
+    assert.equal(card.currentValueIsStateIndex({ entity: 'sensor.missing' }), true);
   });
 
   test('attribute mode: string -> index, number/boolean -> reading', () => {

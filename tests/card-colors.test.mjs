@@ -241,8 +241,11 @@ describe('getUnit', () => {
     assert.equal(c.getUnit({ entity: 'sensor.temp', unit: '' }), '');
   });
   test('reading mode (numeric attribute) shows no unit unless configured', () => {
-    assert.equal(card.getUnit({ entity: 'sensor.temp' }, false), '');
-    assert.equal(card.getUnit({ entity: 'sensor.temp', unit: 'C' }, false), 'C');
+    assert.equal(card.getUnit({ entity: 'sensor.temp', attribute: 'x' }, false), '');
+    assert.equal(card.getUnit({ entity: 'sensor.temp', attribute: 'x', unit: 'C' }, false), 'C');
+  });
+  test('reading mode for a numeric state keeps the state unit', () => {
+    assert.equal(card.getUnit({ entity: 'sensor.temp' }, false), '°F');
   });
 });
 
