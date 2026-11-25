@@ -2,15 +2,15 @@
 
 ## [Unreleased]
 
-### Fixed
-- State mode: a `unit: ""` override suppresses the unit again (an intermediate truthiness check made such entities show the entity's `unit_of_measurement`).
-- In attribute mode, numeric attribute values show no unit next to the value (the entity's `unit_of_measurement` describes its state, not the attribute). Set `unit` explicitly to show one.
-- Attribute mode: numeric attribute readings (e.g. `current_temperature` = 1.0) are no longer colored/labeled as `state_colors` entries when a state-color map is in scope, and boolean attributes no longer alias into `state_colors` indices. Readings use thresholds/binary colors.
-- Stale per-entity history cache entries (entity/attribute/offset removed from the config) are now pruned.
+## [2026.11.24b1] - 2026-11-24 (pre-release)
 
 ### Added
-- `attribute` option (global and per-entity): track an entity attribute instead of the state, e.g. `attribute: hvac_action` on `climate.koupelna` to chart `heating`/`idle`. Attribute values are matched against `state_colors` like states; unmapped attribute values render as no data; boolean attributes map to binary on/off; the entity's own unknown/unavailable state still takes precedence. In attribute mode history is fetched with `significant_changes_only=0` (the endpoint defaults the filter to on when the parameter is absent) so attribute-only updates are recorded, and each (entity, attribute, offset) combination gets its own cache entry.
+- `attribute` option (global and per-entity): track an entity attribute instead of the state, e.g. `attribute: hvac_action` on `climate.koupelna` to chart `heating`/`idle` (PR #86 by sogehige). Attribute values are matched against `state_colors` like states; unmapped attribute values render as no data; the entity's own unknown/unavailable state still takes precedence. In attribute mode history is fetched with `significant_changes_only=0` (the endpoint defaults the filter to on when the parameter is absent) so attribute-only updates are recorded, and each (entity, attribute, offset) combination gets its own cache entry.
+- Numeric and boolean attribute values are treated as readings: numbers use `thresholds`, booleans map to binary on/off, and neither is colored with `state_colors`. Numeric attribute values show no unit unless `unit` is set, because the entity's `unit_of_measurement` describes its state, not the attribute.
 - Per-entity `attribute: state` keyword: track the state for one entity while a card-level `attribute` is set (also the visual-editor opt-out path).
+
+### Fixed
+- Stale per-entity history cache entries (entity/attribute/offset removed from the config) are now pruned.
 
 ### Changed
 - Removed the unused `@rollup/plugin-terser` development dependency. The build never used it, so the shipped JS is unchanged.
