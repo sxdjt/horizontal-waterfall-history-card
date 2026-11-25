@@ -906,11 +906,12 @@ export class WaterfallHistoryCard extends LitElement {
       }
     }
 
-    // Only treat 0/1 as binary when no thresholds are configured. A numeric sensor whose
-    // current reading happens to be 0 or 1 (e.g. PM2.5 = 1.0) must not be shown as On/Off.
-    // This mirrors the guard already present in getColorForValue().
+    // Only treat 0/1 as binary when no thresholds are configured and the entity
+    // is not a numeric sensor. A numeric sensor whose reading happens to be 0 or 1
+    // (e.g. PM2.5 = 1.0) must not be shown as On/Off.
+    // This mirrors the guard in getColorForValue().
     const hasThresholds = !!(entityConfig.thresholds ?? this.config.thresholds);
-    if (!hasThresholds && this.isBinaryValue(state)) {
+    if (!hasThresholds && this.isBinaryValue(state) && !this.isNumericReading(entityConfig)) {
       const stateOn = entityConfig.state_on ?? this.config.state_on ?? DEFAULTS.state_on;
       const stateOff = entityConfig.state_off ?? this.config.state_off ?? DEFAULTS.state_off;
       return (state === 1) ? stateOn : stateOff;
@@ -928,6 +929,39 @@ export class WaterfallHistoryCard extends LitElement {
 
   private isBinaryValue(value: number | null): boolean {
     return value === 0 || value === 1;
+  }
+
+  // True when the entity reports numeric readings (a state such as "1.0", or a
+  // numeric attribute), so a stored 0 or 1 is a number, not off/on. Strings such
+  // as "on"/"off"/"home" and boolean attributes are binary.
+  //
+  // A per-entity state_on/state_off, color_on/color_off or binary_colors is an
+  // explicit request for binary display, so a sensor that reports 0/1 to mean
+  // off/on can opt back in. Truthiness, not `!== undefined`: the editor stores a
+  // cleared color field as ''.
+  //
+  // While the entity is unknown/unavailable there is no value to inspect. In
+  // state mode, fall back to unit_of_measurement / state_class, which only
+  // numeric sensors carry; otherwise keep the binary interpretation.
+  private isNumericReading(entityConfig: EntityConfig): boolean {
+    if (entityConfig.state_on || entityConfig.state_off ||
+        entityConfig.color_on || entityConfig.color_off || entityConfig.binary_colors) {
+      return false;
+    }
+    const stateObj = this.hass?.states[entityConfig.entity];
+    const raw = this.readTrackedValue(stateObj, entityConfig);
+    if (typeof raw === 'number') return Number.isFinite(raw);
+    if (typeof raw === 'boolean') return false;
+    if (typeof raw === 'string') {
+      const trimmed = raw.trim();
+      const lower = trimmed.toLowerCase();
+      if (lower !== 'unknown' && lower !== 'unavailable') {
+        return trimmed !== '' && Number.isFinite(Number(trimmed));
+      }
+    }
+    if (this.getTrackedAttribute(entityConfig)) return false;
+    const attrs = stateObj?.attributes;
+    return attrs?.unit_of_measurement !== undefined || attrs?.state_class !== undefined;
   }
 
   private getBinaryColors(entityConfig: EntityConfig): ThresholdConfig[] {
@@ -991,8 +1025,9 @@ export class WaterfallHistoryCard extends LitElement {
 
     let thresholds = entityConfig.thresholds ?? this.config.thresholds;
 
-    // Check if this is a binary value and apply binary colors
-    if (!thresholds && this.isBinaryValue(value)) {
+    // Check if this is a binary value and apply binary colors. A numeric sensor
+    // reading exactly 0 or 1 keeps the numeric thresholds (see isNumericReading).
+    if (!thresholds && this.isBinaryValue(value) && !this.isNumericReading(entityConfig)) {
       thresholds = this.getBinaryColors(entityConfig);
     } else if (!thresholds) {
       thresholds = DEFAULT_THRESHOLDS_NUMERIC;

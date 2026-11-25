@@ -456,6 +456,8 @@ Any `thresholds` setting, at card or entity level, replaces on/off colors entire
       color: '#4a9eff'
 ```
 
+A sensor with a numeric state (e.g. `1.0`) is shown as a number, even when it reads exactly 0 or 1. If a sensor reports `0`/`1` to mean off/on, set a per-entity `color_on`/`color_off`, `binary_colors` or `state_on`/`state_off` to show it as binary.
+
 ### Custom State Matching for Non-Binary Entities
 
 Entities like `person` or `device_tracker` use state strings other than `on`/`off`. Use `state_on` and `state_off` to tell the card which HA state values map to on/off. The same values are used as the display labels.
@@ -500,9 +502,6 @@ Thresholds also override on/off colors on binary entities; see [Binary State Lab
 ### Defaults
 
 If no `thresholds` are set, the card uses these. They assume a temperature in Fahrenheit; set your own `thresholds` for Celsius or any other kind of sensor.
-
-Readings of exactly 0 or 1 are treated as off/on unless `thresholds` is set, so give sensors that can read 0 or 1 their own `thresholds`.
-
 | Value range     | Color     | Description  |
 |-----------------|-----------|--------------|
 | below 70        | `#5b8fce` | Cold (blue)  |

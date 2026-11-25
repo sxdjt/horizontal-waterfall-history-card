@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- A numeric sensor reading exactly 0 or 1 with no `thresholds` (e.g. PM2.5 = 1.0, or 0 W) was shown as "Off"/"On" in binary colors. It now shows the number and uses the numeric thresholds. A sensor that reports `0`/`1` to mean off/on can opt back into binary display with a per-entity `color_on`/`color_off`, `binary_colors` or `state_on`/`state_off`.
+
 ## [2026.11.24b2] - 2026-11-24 (pre-release)
 
 ### Added
