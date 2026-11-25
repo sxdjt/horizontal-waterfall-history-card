@@ -193,7 +193,8 @@ class WaterfallHistoryCard extends i {
         // Use empty array as fallback - auto-entities calls setConfig without entities on first render
         const entities = Array.isArray(config.entities) ? config.entities : [];
         const globalConfig = {
-            title: config.title || 'History',
+            // Missing or null keeps the default; an explicit '' hides the header.
+            title: config.title ?? 'History',
             hours: config.hours || DEFAULTS.hours,
             intervals: config.intervals || DEFAULTS.intervals,
             start_offset: config.start_offset ?? DEFAULTS.start_offset,
@@ -1003,9 +1004,11 @@ class WaterfallHistoryCard extends i {
             return b ``;
         }
         return b `
-      <div class="card-header">
-        <span>${this.config.title}</span>
-      </div>
+      ${this.config.title ? b `
+        <div class="card-header">
+          <span>${this.config.title}</span>
+        </div>
+      ` : ''}
       ${this.config.entities.map(entityConfig => this._renderEntity(entityConfig))}
     `;
     }
@@ -1804,7 +1807,7 @@ class WaterfallHistoryCardEditor extends i {
           .hass=${this.hass}
           .required=${false}
           .label=${'Card Title'}
-          .value=${this._config.title || DEFAULTS.title}
+          .value=${this._config.title ?? DEFAULTS.title}
           .selector=${{ text: {} }}
           @value-changed=${(ev) => this._configValueChanged('title', ev.detail.value)}
         ></ha-selector>

@@ -115,6 +115,12 @@ describe('setConfig values', () => {
     assert.deepEqual(c.thresholds, [{ value: 1, color: '#123456' }]);
   });
 
+  test('title: missing or null keeps the default; an explicit empty string is kept', () => {
+    assert.equal(makeCard({}).config.title, 'History');
+    assert.equal(makeCard({ title: null }).config.title, 'History');
+    assert.equal(makeCard({ title: '' }).config.title, '');
+  });
+
   test('digits: 0 and label_count must be numbers to apply', () => {
     assert.equal(makeCard({ digits: 0 }).config.digits, 0);
     assert.equal(makeCard({ digits: '2' }).config.digits, 1);

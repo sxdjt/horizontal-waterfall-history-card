@@ -292,6 +292,10 @@ describe('card-level controls are wired to the right keys', () => {
     assert.equal(selector(t, 'Unavailable State Label').attrs['.value'], 'INOP');
   });
 
+  test("an empty title shows as empty, not the default", () => {
+    assert.equal(selector(makeEditor(cfg({ title: '' })).render(), 'Card Title').attrs['.value'], '');
+  });
+
   test('digits 0 is shown as 0, not the default', () => {
     assert.equal(selector(makeEditor(cfg({ digits: 0 })).render(), 'Decimal Places').attrs['.value'], 0);
   });

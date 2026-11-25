@@ -91,7 +91,7 @@ The card has a visual editor (dashboard -> Edit card). A few options are YAML-on
 | `state_unavailable` | `string` | `"INOP"`  | Label to display for entities in "unavailable" state.                       |
 | `state_unknown`  | `string`  | `"Unknown"` | Label to display for entities in "unknown" state.                           |
 | `thresholds`     | `array`   | see below   | Color thresholds for numeric sensors.                                       |
-| `title`          | `string`  | `"History"` | Card title shown at the top.                                                |
+| `title`          | `string`  | `"History"` | Card title shown at the top. Set to `''` to hide the header.                |
 | `unit`           | `string`  | auto        | Override unit of measurement.                                               |
 
 ---

@@ -315,7 +315,8 @@ export class WaterfallHistoryCard extends LitElement {
     const entities = Array.isArray(config.entities) ? config.entities : [];
 
     const globalConfig: Partial<WaterfallHistoryCardConfig> = {
-      title: config.title || 'History',
+      // Missing or null keeps the default; an explicit '' hides the header.
+      title: config.title ?? 'History',
       hours: config.hours || DEFAULTS.hours,
       intervals: config.intervals || DEFAULTS.intervals,
       start_offset: config.start_offset ?? DEFAULTS.start_offset,
@@ -1179,9 +1180,11 @@ export class WaterfallHistoryCard extends LitElement {
     }
 
     return html`
-      <div class="card-header">
-        <span>${this.config.title}</span>
-      </div>
+      ${this.config.title ? html`
+        <div class="card-header">
+          <span>${this.config.title}</span>
+        </div>
+      ` : ''}
       ${this.config.entities.map(entityConfig => this._renderEntity(entityConfig))}
     `;
   }

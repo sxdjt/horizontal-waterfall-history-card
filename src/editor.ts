@@ -319,7 +319,7 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
           .hass=${this.hass}
           .required=${false}
           .label=${'Card Title'}
-          .value=${this._config.title || DEFAULTS.title}
+          .value=${this._config.title ?? DEFAULTS.title}
           .selector=${{text: {}}}
           @value-changed=${(ev: CustomEvent) =>
             this._configValueChanged('title', ev.detail.value)}

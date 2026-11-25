@@ -10,6 +10,7 @@
 - Unused `min_value` and `max_value` options. They set the color scale in the original 2025 card, which thresholds replaced, and have had no effect since. Configs that still set them keep working; the keys are ignored.
 
 ### Fixed
+- `title: ''` now hides the card header. An empty title used to fall back to "History". A missing title still defaults to "History", and the visual editor shows an empty title as empty.
 - `default_value` (YAML only) now fills only segments with no data: time before the entity's first recorded state, or an entity with no history and no current value. It used to fill every segment without a recorded change, so the bar showed the default between changes instead of the state the entity was in.
 - A numeric attribute (e.g. `attribute: current_temperature`) on a card with a `state_colors` map could be colored as map states after a history refresh while its entity was unavailable. The card now keeps the attribute's previous classification while the entity is unknown or unavailable.
 - Visual editor: the per-entity Decimal Places field can be set to 0. It was stored as "inherit".
