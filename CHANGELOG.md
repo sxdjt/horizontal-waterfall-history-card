@@ -7,6 +7,7 @@
 
 ### Fixed
 - A numeric attribute (e.g. `attribute: current_temperature`) on a card with a `state_colors` map could be colored as map states after a history refresh while its entity was unavailable. The card now keeps the attribute's previous classification while the entity is unknown or unavailable.
+- Visual editor: the per-entity Decimal Places field can be set to 0. It was stored as "inherit".
 - A numeric sensor on a card with a card-level `state_colors` map was colored and labeled as a state: a reading of 2 showed as the map's third state. Numeric states that match no map key now keep their value, unit and numeric thresholds. Maps with numeric keys (e.g. `'1'`, `'2'`) still color matching states.
 - A numeric sensor reading exactly 0 or 1 with no `thresholds` (e.g. PM2.5 = 1.0, or 0 W) was shown as "Off"/"On" in binary colors. It now shows the number and uses the numeric thresholds. A sensor that reports `0`/`1` to mean off/on can opt back into binary display with a per-entity `color_on`/`color_off`, `binary_colors` or `state_on`/`state_off`.
 

@@ -749,7 +749,8 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
             .value=${entityConfig.digits ?? ''}
             .selector=${{number: {min: 0, max: 5, mode: 'box', step: 1}}}
             @value-changed=${(ev: CustomEvent) =>
-              this._entityChanged(index, 'digits', ev.detail.value ? Number(ev.detail.value) : undefined)}
+              this._entityChanged(index, 'digits', ev.detail.value === '' || ev.detail.value === null || ev.detail.value === undefined
+                ? undefined : Number(ev.detail.value))}
           ></ha-selector>
 
           <ha-selector

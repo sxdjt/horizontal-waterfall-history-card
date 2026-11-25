@@ -380,12 +380,17 @@ describe('entity panels', () => {
     });
   }
 
-  // KNOWN ISSUE: digits 0 is falsy, so the per-entity Decimal Places field
-  // stores undefined (inherit) instead of 0.
-  test('entity "Decimal Places (override)" can be set to 0', { todo: 'known issue: 0 is treated as empty' }, () => {
-    const editor = makeEditor(cfg({ entities: ['sensor.a'] }));
-    selector(editor.render(), 'Decimal Places (override)').attrs['@value-changed']({ detail: { value: 0 } });
-    assert.equal(lastConfig(editor).entities[0].digits, 0);
+  test('entity "Decimal Places (override)" can be set to 0; empty, null or cleared inherits', () => {
+    for (const [input, expected] of [[0, 0], ['0', 0], [2, 2], ['', undefined], [null, undefined], [undefined, undefined]]) {
+      const editor = makeEditor(cfg({ entities: ['sensor.a'] }));
+      selector(editor.render(), 'Decimal Places (override)').attrs['@value-changed']({ detail: { value: input } });
+      assert.equal(lastConfig(editor).entities[0].digits, expected, JSON.stringify(input));
+    }
+  });
+
+  test('entity Decimal Places 0 is shown as 0, not blank', () => {
+    const t = makeEditor(cfg({ entities: [{ entity: 'sensor.a', digits: 0 }] })).render();
+    assert.equal(selector(t, 'Decimal Places (override)').attrs['.value'], 0);
   });
 
   const entityToggles = [

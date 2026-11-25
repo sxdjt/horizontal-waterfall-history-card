@@ -36,6 +36,6 @@ Every function in `src/waterfall-history-card.ts` and `src/editor.ts` is covered
 
 ## Known issues
 
-Tests marked `todo` describe the intended behavior of a known bug. They run and report as `todo` without failing the suite. When a fix lands, remove the `todo` option so the test guards against regressions.
+Record a known bug as a test with the `todo` option, describing the intended behavior. It runs and reports as `todo` without failing the suite. When a fix lands, remove the `todo` option so the test guards against regressions.
 
-- `editor`: the per-entity Decimal Places field cannot be set to 0.
+There are no open `todo` tests.
