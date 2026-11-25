@@ -198,8 +198,6 @@ class WaterfallHistoryCard extends i {
             intervals: config.intervals || DEFAULTS.intervals,
             start_offset: config.start_offset ?? DEFAULTS.start_offset,
             height: config.height || DEFAULTS.height,
-            min_value: config.min_value || null,
-            max_value: config.max_value || null,
             thresholds: config.thresholds ?? undefined,
             gradient: config.gradient || DEFAULTS.gradient,
             show_current: config.show_current !== false,

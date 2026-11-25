@@ -63,11 +63,15 @@ describe('setConfig defaults', () => {
     }
   });
 
-  test('min_value, max_value and default_value default to null; card_mod to {}', () => {
-    assert.equal(c.min_value, null);
-    assert.equal(c.max_value, null);
+  test('default_value defaults to null; card_mod to {}', () => {
     assert.equal(c.default_value, null);
     assert.deepEqual(c.card_mod, {});
+  });
+
+  test('the removed min_value/max_value options are not carried into the config', () => {
+    const removed = makeCard({ min_value: 10, max_value: 90 }).config;
+    assert.equal('min_value' in removed, false);
+    assert.equal('max_value' in removed, false);
   });
 
   test('type is set to the card type', () => assert.equal(c.type, 'custom:waterfall-history-card'));

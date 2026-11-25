@@ -51,8 +51,6 @@ export interface EntityConfig {
   inline_layout?: boolean;
 
   // Data
-  min_value?: number | null;
-  max_value?: number | null;
   default_value?: number | null;
 
   // Thresholds for numeric sensors
@@ -111,8 +109,6 @@ export interface WaterfallHistoryCardConfig extends LovelaceCardConfig {
   digits?: number;
   compact?: boolean;
   inline_layout?: boolean;
-  min_value?: number | null;
-  max_value?: number | null;
   default_value?: number | null;
   thresholds?: ThresholdConfig[];
   gradient?: boolean;

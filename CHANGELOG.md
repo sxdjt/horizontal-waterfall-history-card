@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Removed
+- Unused `min_value` and `max_value` options. They set the color scale in the original 2025 card, which thresholds replaced, and have had no effect since. Configs that still set them keep working; the keys are ignored.
+
 ### Added
 - Automated test suite (`npm test`, Node's built-in runner, no new dependencies) covering every card and editor function against the built bundle. See `tests/README.md`.
 
