@@ -2,6 +2,32 @@
 
 ## [Unreleased]
 
+## [2026.11.25] - 2026-11-25
+
+Major update. This release combines the 2026.11.24b1, 2026.11.24b2 and 2026.11.25b1 pre-releases (details in their entries below).  A significant number of updates were made throughout the card to address subtle, previously undiscovered issues.  **Please be sure to test carefully**.
+
+### Added
+- `attribute` option (card-level and per-entity): chart an entity attribute instead of its state, e.g. `attribute: hvac_action`. Text values use `state_colors`, numbers use `thresholds`, booleans show as `on/off`. Per-entity `attribute: state` opts one entity out. See "Tracking an Attribute" in the README.  Thank you @sogehige (PR #86)!
+- Default colors for `attribute: hvac_action` when no `state_colors` is set.  Any other text attribute shows a blank bar until you add `state_colors` for it.
+- `show_title` option and a Show Title switch in the editor. `title: ''` also hides the header.
+
+**IMPORTANT NOTE:** In `attribute` mode, each refresh fetches **full history** with attributes, so long `hours` windows on frequently updating entities mean larger history requests.  Please pay attention to your system performance; YMMV.
+
+### Fixed
+- Numeric sensors reading exactly 0 or 1 (e.g. PM2.5 = 1.0, 0 W) showed as "Off"/"On". They now show the number. A sensor that uses 0/1 for off/on can opt back in with a per-entity `color_on`/`color_off`, `binary_colors` or `state_on`/`state_off`.
+- Numeric sensors on a card with a card-level `state_colors` map were shown as map states.
+- `default_value` now fills only segments with no data, instead of replacing the state between changes.
+- Editor: hours, intervals and label count no longer cap values the card accepts; per-entity Decimal Places can be set to 0.
+- Stale per-entity history cache entries are pruned.
+
+### Removed
+- Unused `min_value` and `max_value` options. They had no effect; configs that set them keep working.
+
+### Other
+- README shortened and corrected, with a new Thresholds and Gradient section.
+- Added a full-coverage test suite (`npm test`).
+- Removed the unused `@rollup/plugin-terser` dev dependency. The shipped JS is unchanged.
+
 ## [2026.11.25b1] - 2026-11-25 (pre-release)
 
 ### Added
