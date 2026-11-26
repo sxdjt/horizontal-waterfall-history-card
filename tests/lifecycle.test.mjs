@@ -54,7 +54,7 @@ test('WF2: the first render fetches each entity once', async () => {
   assert.equal(card.hass.apiCalls.length, 1);
 });
 
-test('WF3: an older fetch that resolves last does not overwrite the newer data', { todo: true }, async () => {
+test('WF3: an older fetch that resolves last does not overwrite the newer data', async () => {
   const releases = [];
   const card = makeCard({ entities: ['sensor.a'], hours: 2, intervals: 2 }, STATES, {
     history: () => new Promise((resolve) => releases.push(resolve)),

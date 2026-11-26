@@ -165,6 +165,9 @@ class WaterfallHistoryCard extends i {
         super();
         this.processedHistories = {};
         this._lastHistoryFetch = {};
+        // Newest fetch started per cache key; an answer from an older one is dropped (updateCard)
+        this._fetchSeq = 0;
+        this._latestFetch = {};
         this._historyRefreshInterval = 15 * 60 * 1000; // 15 minutes by default
         this._cardModApplied = false;
         this.language = 'en';
@@ -404,12 +407,16 @@ class WaterfallHistoryCard extends i {
         if (entitiesToUpdate.length === 0) {
             return;
         }
+        // A refresh, a saved edit and the first render can each start a fetch while another
+        // is out; only the newest per entity may write its history
+        const seq = ++this._fetchSeq;
         const historyPromises = entitiesToUpdate.map(async (entityConfig) => {
             const entityObj = typeof entityConfig === 'string' ? { entity: entityConfig } : entityConfig;
             const entityId = entityObj.entity;
             const attribute = this.getTrackedAttribute(entityObj);
             // Use the shared composite key (see cacheKeyFor).
             const cacheKey = this.cacheKeyFor(entityObj);
+            this._latestFetch[cacheKey] = seq;
             // Calculate time window with offset
             // endTime is now shifted back by start_offset hours
             const hours = entityObj.hours ?? this.config.hours;
@@ -454,6 +461,8 @@ class WaterfallHistoryCard extends i {
                 delete this._lastHistoryFetch[key];
         });
         results.forEach(({ entityId, history, entityConfig, startOffset, cacheKey, attribute }) => {
+            if (this._latestFetch[cacheKey] !== seq)
+                return;
             const intervals = entityConfig.intervals ?? this.config.intervals;
             const hours = entityConfig.hours ?? this.config.hours;
             const timeStep = (hours * 60 * 60 * 1000) / intervals;

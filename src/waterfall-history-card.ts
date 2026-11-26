@@ -30,6 +30,9 @@ export class WaterfallHistoryCard extends LitElement {
   @state() private processedHistories: ProcessedHistoryData = {};
 
   private _lastHistoryFetch: Record<string, number> = {};
+  // Newest fetch started per cache key; an answer from an older one is dropped (updateCard)
+  private _fetchSeq = 0;
+  private _latestFetch: Record<string, number> = {};
   private _historyRefreshInterval = 15 * 60 * 1000; // 15 minutes by default
   private _cardModApplied = false;
   private language = 'en';
@@ -552,6 +555,9 @@ export class WaterfallHistoryCard extends LitElement {
       return;
     }
 
+    // A refresh, a saved edit and the first render can each start a fetch while another
+    // is out; only the newest per entity may write its history
+    const seq = ++this._fetchSeq;
     const historyPromises = entitiesToUpdate.map(async (entityConfig) => {
       const entityObj = typeof entityConfig === 'string' ? { entity: entityConfig } : entityConfig;
       const entityId = entityObj.entity;
@@ -559,6 +565,7 @@ export class WaterfallHistoryCard extends LitElement {
 
       // Use the shared composite key (see cacheKeyFor).
       const cacheKey = this.cacheKeyFor(entityObj);
+      this._latestFetch[cacheKey] = seq;
 
       // Calculate time window with offset
       // endTime is now shifted back by start_offset hours
@@ -605,6 +612,7 @@ export class WaterfallHistoryCard extends LitElement {
       if (!liveKeys.has(key)) delete this._lastHistoryFetch[key];
     });
     results.forEach(({ entityId, history, entityConfig, startOffset, cacheKey, attribute }) => {
+      if (this._latestFetch[cacheKey] !== seq) return;
       const intervals = entityConfig.intervals ?? this.config.intervals!;
       const hours = entityConfig.hours ?? this.config.hours!;
       const timeStep = (hours * 60 * 60 * 1000) / intervals;
