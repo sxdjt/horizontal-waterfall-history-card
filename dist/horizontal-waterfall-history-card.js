@@ -190,6 +190,9 @@ class WaterfallHistoryCard extends i {
         };
     }
     setConfig(config) {
+        // HA calls setConfig again on the live card when an edit is saved; remember each
+        // entity's time window so history fetched for another window can be dropped below
+        const previousWindows = this.hass ? this.historyWindows() : undefined;
         // Use empty array as fallback - auto-entities calls setConfig without entities on first render
         const entities = Array.isArray(config.entities) ? config.entities : [];
         const globalConfig = {
@@ -252,6 +255,30 @@ class WaterfallHistoryCard extends i {
         this.style.setProperty('--waterfall-height', `${this.config.height}px`);
         this.style.setProperty('--labels-margin-top', this.config.compact ? '2px' : '5px');
         this.style.setProperty('--waterfall-cell-gap', `${this.config.cell_gap}px`);
+        if (previousWindows) {
+            // Refetch everything (updated() starts it): a new entity would otherwise wait for
+            // a tracked state change, and the refresh timer would keep old buckets for hours.
+            this._lastHistoryFetch = {};
+            // History bucketed for another hours/intervals no longer fits; a refetch that
+            // comes back empty (a stable sensor) would keep it, so drop it now
+            const windows = this.historyWindows();
+            const kept = {};
+            for (const [key, data] of Object.entries(this.processedHistories)) {
+                if (windows[key] !== undefined && windows[key] === previousWindows[key])
+                    kept[key] = data;
+            }
+            this.processedHistories = kept;
+        }
+    }
+    // Each entity's history window ("hours/intervals"), by cache key
+    historyWindows() {
+        const windows = {};
+        for (const entityConfig of this.config.entities) {
+            const hours = typeof entityConfig !== 'string' ? (entityConfig.hours ?? this.config.hours) : this.config.hours;
+            const intervals = typeof entityConfig !== 'string' ? (entityConfig.intervals ?? this.config.intervals) : this.config.intervals;
+            windows[this.cacheKeyFor(entityConfig)] = `${hours}/${intervals}`;
+        }
+        return windows;
     }
     shouldUpdate(changedProps) {
         if (!this.config || !this.hass) {
@@ -295,12 +322,19 @@ class WaterfallHistoryCard extends i {
             if (!oldHass) {
                 this.updateCard();
             }
-            else if (this._entitiesChanged(oldHass, this.hass)) {
-                // Only update current values, not full history fetch
-                this.requestUpdate();
+            else {
+                if (this._entitiesChanged(oldHass, this.hass)) {
+                    // Only update current values, not full history fetch
+                    this.requestUpdate();
+                }
+                // Check if we need to refresh history data. Not on the first render: the
+                // fetch above has not answered yet, so this would send every request twice
+                this._checkHistoryRefresh();
             }
-            // Check if we need to refresh history data
-            this._checkHistoryRefresh();
+        }
+        else if (changedProps.has('config')) {
+            // A saved edit (setConfig on the live card cleared the fetch times)
+            this.updateCard();
         }
         this._syncInlineColumnWidths();
         // Apply card-mod once

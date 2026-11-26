@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+- After saving an edit, the dashboard card fetched no history: a newly added entity stayed empty until one of the card's entities changed state, and a changed `hours` or `intervals` kept the old bars until the next scheduled refresh. The card now refetches straight away.
+- The first load sent every history request twice.
+
 ## [2026.11.25] - 2026-11-25
 
 Major update. This release combines the 2026.11.24b1, 2026.11.24b2 and 2026.11.25b1 pre-releases (details in their entries below).  A significant number of updates were made throughout the card to address subtle, previously undiscovered issues.  **Please be sure to test carefully**.

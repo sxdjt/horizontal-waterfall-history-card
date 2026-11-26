@@ -16,7 +16,7 @@ async function firstRender(config) {
   return card;
 }
 
-test('WF1: a saved edit refetches with the new entities, hours and intervals', { todo: true }, async () => {
+test('WF1: a saved edit refetches with the new entities, hours and intervals', async () => {
   const card = await firstRender({});
   const before = card.hass.apiCalls.length;
   const old = card.config;
@@ -29,7 +29,27 @@ test('WF1: a saved edit refetches with the new entities, hours and intervals', {
   assert.ok(card.processedHistories['sensor.b_state_0']);
 });
 
-test('WF2: the first render fetches each entity once', { todo: true }, async () => {
+test('WF1: history for an unchanged window is kept across a saved edit', async () => {
+  const card = await firstRender({});
+  const cached = card.processedHistories['sensor.a_state_0'];
+  card.setConfig({ type: 'custom:waterfall-history-card', entities: ['sensor.a'], hours: 24, intervals: 48, title: 'New' });
+  assert.equal(card.processedHistories['sensor.a_state_0'], cached);
+});
+
+test('WF1: a card without hass keeps setConfig side-effect free', () => {
+  const card = makeCard({ entities: ['sensor.a'] }, STATES);
+  card.hass = undefined;
+  card._lastHistoryFetch = { x: 1 };
+  card.setConfig({ type: 'custom:waterfall-history-card', entities: ['sensor.b'] });
+  assert.deepEqual(card._lastHistoryFetch, { x: 1 });
+});
+
+test('WF1: per-entity hours and intervals define the window', async () => {
+  const card = await firstRender({ entities: [{ entity: 'sensor.a', hours: 6, intervals: 12 }] });
+  assert.equal(card.historyWindows()['sensor.a_state_0'], '6/12');
+});
+
+test('WF2: the first render fetches each entity once', async () => {
   const card = await firstRender({});
   assert.equal(card.hass.apiCalls.length, 1);
 });
