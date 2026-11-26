@@ -1,6 +1,6 @@
 # Tests
 
-Run with `npm test`. It rebuilds `dist/` (rollup only, no audit gate), then runs every `*.test.mjs` file here with Node's built-in test runner. There are no test dependencies; Node 20.11 or newer is required (for `mock.timers` with `Date`).
+Run with `npm test`. It rebuilds `dist/` (rollup only, no audit gate), then runs every `*.test.mjs` file here with Node's built-in test runner. The run goes through `scripts/run-capped.sh`, which kills it past 1 GB of memory or 60 seconds (`MAX_RSS_MB`, `MAX_SECONDS` to override), as in every card in this monorepo. There are no test dependencies; Node 20.11 or newer is required (for `mock.timers` with `Date`).
 
 ## How it works
 

@@ -10,7 +10,7 @@
     "watch": "rollup -c --watch",
     "lint": "eslint src",
     "pretest": "rollup -c",
-    "test": "node --test tests/"
+    "test": "scripts/run-capped.sh node --test tests/"
   },
   "keywords": [
     "home-assistant",
