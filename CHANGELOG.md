@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [2026.11.26-beta.1] - 2026-11-26 (pre-release)
+
 ### Fixed
 - After saving an edit, the dashboard card fetched no history: a newly added entity stayed empty until one of the card's entities changed state, and a changed `hours` or `intervals` kept the old bars until the next scheduled refresh. The card now refetches straight away.
 - The first load sent every history request twice.
