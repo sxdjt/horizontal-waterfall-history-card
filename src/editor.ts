@@ -4,6 +4,15 @@ import { HomeAssistant, fireEvent, LovelaceCardEditor } from 'custom-card-helper
 import { WaterfallHistoryCardConfig, EntityConfig } from './types';
 import { DEFAULTS } from './constants';
 
+// A number field's value for the config, or undefined to remove the key. HA's number
+// selector sends undefined when a field is cleared (not ''); a bare Number() saved NaN
+// (`.nan` in the YAML) and turned null into 0.
+function editorNumber(value: unknown): number | undefined {
+  if (value === '' || value === null || value === undefined) return undefined;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : undefined;
+}
+
 export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCardEditor {
   @property({ attribute: false }) public hass!: HomeAssistant;
   @state() private _config!: WaterfallHistoryCardConfig;
@@ -16,7 +25,9 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
   private _configValueChanged(key: string, value: any): void {
     if (!this._config || !this.hass) return;
 
-    const newConfig = { ...this._config, [key]: value };
+    const newConfig: any = { ...this._config, [key]: value };
+    // A cleared option is removed, so the card's default applies
+    if (value === undefined) delete newConfig[key];
     fireEvent(this, 'config-changed', { config: newConfig });
   }
 
@@ -61,8 +72,9 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
       ? { entity: currentEntity }
       : { ...currentEntity };
 
-    // Update the specific key
+    // Update the specific key; a cleared option is removed so the card-level value applies
     (entityConfig as any)[key] = value;
+    if (value === undefined) delete (entityConfig as any)[key];
     newConfig.entities[index] = entityConfig;
 
     fireEvent(this, 'config-changed', { config: newConfig });
@@ -334,7 +346,7 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
           .value=${this._config.hours || DEFAULTS.hours}
           .selector=${{number: {min: 1, mode: 'box', step: 1}}}
           @value-changed=${(ev: CustomEvent) =>
-            this._configValueChanged('hours', Number(ev.detail.value))}
+            this._configValueChanged('hours', editorNumber(ev.detail.value))}
         ></ha-selector>
 
         <ha-selector
@@ -344,7 +356,7 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
           .value=${this._config.intervals || DEFAULTS.intervals}
           .selector=${{number: {min: 1, mode: 'box', step: 1}}}
           @value-changed=${(ev: CustomEvent) =>
-            this._configValueChanged('intervals', Number(ev.detail.value))}
+            this._configValueChanged('intervals', editorNumber(ev.detail.value))}
         ></ha-selector>
 
         <ha-selector
@@ -354,7 +366,7 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
           .value=${this._config.height || DEFAULTS.height}
           .selector=${{number: {min: 30, max: 200, mode: 'box', step: 1}}}
           @value-changed=${(ev: CustomEvent) =>
-            this._configValueChanged('height', Number(ev.detail.value))}
+            this._configValueChanged('height', editorNumber(ev.detail.value))}
         ></ha-selector>
 
         <ha-selector
@@ -364,7 +376,7 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
           .value=${this._config.digits ?? DEFAULTS.digits}
           .selector=${{number: {min: 0, max: 5, mode: 'box', step: 1}}}
           @value-changed=${(ev: CustomEvent) =>
-            this._configValueChanged('digits', Number(ev.detail.value))}
+            this._configValueChanged('digits', editorNumber(ev.detail.value))}
         ></ha-selector>
 
         <ha-selector
@@ -426,7 +438,7 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
           .value=${this._config.label_count ?? DEFAULTS.label_count}
           .selector=${{number: {min: 1, mode: 'box', step: 1}}}
           @value-changed=${(ev: CustomEvent) =>
-            this._configValueChanged('label_count', Number(ev.detail.value))}
+            this._configValueChanged('label_count', editorNumber(ev.detail.value))}
         ></ha-selector>
 
         <ha-selector
@@ -469,7 +481,7 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
           .value=${this._config.cell_gap ?? DEFAULTS.cell_gap}
           .selector=${{number: {min: 0, max: 10, mode: 'box', step: 1}}}
           @value-changed=${(ev: CustomEvent) =>
-            this._configValueChanged('cell_gap', Number(ev.detail.value))}
+            this._configValueChanged('cell_gap', editorNumber(ev.detail.value))}
         ></ha-selector>
       </div>
     `;
@@ -670,7 +682,7 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
             .value=${entityConfig.hours || ''}
             .selector=${{number: {min: 1, mode: 'box', step: 1}}}
             @value-changed=${(ev: CustomEvent) =>
-              this._entityChanged(index, 'hours', ev.detail.value ? Number(ev.detail.value) : undefined)}
+              this._entityChanged(index, 'hours', editorNumber(ev.detail.value) || undefined)}
           ></ha-selector>
 
           <ha-selector
@@ -680,7 +692,7 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
             .value=${entityConfig.intervals || ''}
             .selector=${{number: {min: 1, mode: 'box', step: 1}}}
             @value-changed=${(ev: CustomEvent) =>
-              this._entityChanged(index, 'intervals', ev.detail.value ? Number(ev.detail.value) : undefined)}
+              this._entityChanged(index, 'intervals', editorNumber(ev.detail.value) || undefined)}
           ></ha-selector>
 
           <h4>Display Overrides</h4>
@@ -698,7 +710,7 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
             .value=${entityConfig.label_count || ''}
             .selector=${{number: {min: 1, mode: 'box', step: 1}}}
             @value-changed=${(ev: CustomEvent) =>
-              this._entityChanged(index, 'label_count', ev.detail.value ? Number(ev.detail.value) : undefined)}
+              this._entityChanged(index, 'label_count', editorNumber(ev.detail.value) || undefined)}
           ></ha-selector>
 
           <ha-selector
@@ -754,8 +766,7 @@ export class WaterfallHistoryCardEditor extends LitElement implements LovelaceCa
             .value=${entityConfig.digits ?? ''}
             .selector=${{number: {min: 0, max: 5, mode: 'box', step: 1}}}
             @value-changed=${(ev: CustomEvent) =>
-              this._entityChanged(index, 'digits', ev.detail.value === '' || ev.detail.value === null || ev.detail.value === undefined
-                ? undefined : Number(ev.detail.value))}
+              this._entityChanged(index, 'digits', editorNumber(ev.detail.value))}
           ></ha-selector>
 
           <ha-selector

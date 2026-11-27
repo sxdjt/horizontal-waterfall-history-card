@@ -594,3 +594,26 @@ describe('_renderToggle', () => {
     assert.equal(got, false);
   });
 });
+
+// Found on ha-test (2026-11-26): HA's number selector sends undefined when a field is
+// cleared, not ''; a bare Number() saved NaN (`.nan` in the YAML) and turned null into 0
+describe('cleared number fields remove the key', () => {
+  const cardFields = [['Time Window (hours)', 'hours'], ['Intervals', 'intervals'], ['Bar Height (pixels)', 'height'],
+    ['Decimal Places', 'digits'], ['Label Count', 'label_count'], ['Cell Gap (pixels)', 'cell_gap']];
+  const entityFields = [['Hours (override)', 'hours'], ['Intervals (override)', 'intervals'],
+    ['Label Count (override)', 'label_count'], ['Decimal Places (override)', 'digits']];
+  for (const cleared of [undefined, null, 'abc']) {
+    test(`card and entity number fields cleared with ${JSON.stringify(cleared) ?? 'undefined'}`, () => {
+      const editor = makeEditor(cfg({ hours: 12, intervals: 24, height: 30, digits: 1, label_count: 2, cell_gap: 1,
+        entities: [{ entity: 'sensor.a', hours: 6, intervals: 12, label_count: 3, digits: 2 }] }));
+      for (const [label, key] of cardFields) {
+        selector(editor.render(), label).attrs['@value-changed']({ detail: { value: cleared } });
+        assert.equal(key in lastConfig(editor), false, label);
+      }
+      for (const [label, key] of entityFields) {
+        selector(editor.render(), label).attrs['@value-changed']({ detail: { value: cleared } });
+        assert.equal(key in lastConfig(editor).entities[0], false, label);
+      }
+    });
+  }
+});
