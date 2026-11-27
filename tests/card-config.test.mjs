@@ -190,7 +190,9 @@ describe('sizing', () => {
     assert.equal(makeCard({ entities: [] }).getCardSize(), 2);
   });
 
-  test('getGridOptions returns the sections-view grid', () => {
-    assert.deepEqual(makeCard().getGridOptions(), { rows: 3, columns: 12, min_rows: 2, min_columns: 6 });
+  // Guide D7 (ha-test, 2026-11-26): a fixed 3 rows was shorter than a card with more than
+  // one entity, so its rows drew outside the card, under the card below
+  test('getGridOptions sizes the card to its content (rows: auto)', () => {
+    assert.deepEqual(makeCard().getGridOptions(), { rows: 'auto', columns: 12, min_columns: 6 });
   });
 });

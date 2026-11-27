@@ -6,6 +6,7 @@
 - After saving an edit, the dashboard card fetched no history: a newly added entity stayed empty until one of the card's entities changed state, and a changed `hours` or `intervals` kept the old bars until the next scheduled refresh. The card now refetches straight away.
 - The first load sent every history request twice.
 - When two history requests for an entity overlapped, the one that answered last won, so an older answer could replace newer bars.
+- Sections view: the card was a fixed 3 rows tall, so a card with more than one entity drew its rows outside the card, under the card below (worst at phone width). The card is now exactly as tall as its entities (it can no longer be given a fixed height in the layout tab).
 
 ## [2026.11.25] - 2026-11-25
 

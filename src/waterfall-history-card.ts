@@ -1385,12 +1385,13 @@ export class WaterfallHistoryCard extends LitElement {
     return this.config?.entities?.length * 2 || 2;
   }
 
-  // Sections view (grid layout) sizing - 12-column grid system
+  // Sections view (grid layout) sizing - 12-column grid system. rows: 'auto' makes the card
+  // exactly as tall as its entities; a fixed 3 rows was shorter than a card with more than
+  // one entity, so its rows drew outside the card, under the card below (guide D7)
   getGridOptions() {
     return {
-      rows: 3,
+      rows: 'auto',
       columns: 12,
-      min_rows: 2,
       min_columns: 6,
     };
   }
